@@ -9,7 +9,7 @@ function invWsSnapshotPreview_(rows) {
     const cls=String(r.ClassOfMaterial||r.ClassOfMaterial_Name||'').trim();
     if(!allowed.has(warehouse)){excluded.warehouse++;return;}
     if(invIsExcludedMaterialClass_(cls)){excluded.fermentation++;return;}
-    const raw=cls.toLowerCase()!=='finished good';
+    const raw=!['finished good','finished_goods','finishedgoods'].includes(cls.toLowerCase());
     const uom=String(r.UnitOfMeasure||r.UOM||'').trim();
     const n=Number(r.Units!==undefined?r.Units:r.Quantity);
     if(!id||!uom||!Number.isFinite(n)||n<0){
@@ -52,7 +52,7 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
     if(index<0)throw new Error('Session not found.');
     if(String(all[index].OriginalWSSnapshotID||'').trim())
       throw new Error('Original WS snapshot already assigned; immutable.');
-    const snapshots=invSheet_('WSSnapshots'),ws=invSheet_('WSRows');
+    const snapshots=invSheet_('WSSnapshots'),ws=invSheet_('WSRows');\n    if(invRows_('WSSnapshots').some(x=>String(x.SessionID)===sessionId&&String(x.SnapshotType).toUpperCase()==='ORIGINAL'))\n      throw new Error('Original WS snapshot already exists for session.');
     const snapshotId='WS-'+Utilities.getUuid();
     // Commit rows first, then metadata and session pointer.
     const values=p.accepted.map(x=>[snapshotId,x.id,x.warehouse,x.uom,x.quantity,

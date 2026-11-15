@@ -21,7 +21,7 @@ small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
-<button id="save">Save count</button></div></section></main>
+<button id="save">Save count</button></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Users</h3><div id="users"></div></section></main>
 <script>
 let data=null, busy=false, pendingId=null;
 const el=id=>document.getElementById(id);
@@ -38,7 +38,7 @@ function selectUom(){const p=data.products.find(p=>p.id===el('product').value);i
  options('uom',units)}
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
 function bootstrap(){google.script.run.withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
- options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;
+ options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
  message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
  el('save').disabled=!r.sessions.length||!r.user.teamLocked;
  }).withFailureHandler(e=>message(e.message||String(e),true)).apiInventoryBootstrap()}
@@ -52,5 +52,28 @@ function save(){if(busy)return;busy=true;el('save').disabled=true;
  }).withFailureHandler(e=>{busy=false;el('save').disabled=false;message((e.message||String(e))+' — retry Save to use the same submission ID.',true)}).apiInventorySaveCount(request)}
 el('warehouse').addEventListener('change',locations);el('bay').addEventListener('change',updateLocations);
 el('barcode').addEventListener('input',search);el('product').addEventListener('change',selectUom);
-el('save').addEventListener('click',save);bootstrap();
+el('save').addEventListener('click',save);
+function adminMessage(t){el('adminStatus').textContent=t}
+function loadAdmin(){google.script.run.withSuccessHandler(r=>{
+ el('users').replaceChildren(...r.users.map(u=>{const p=document.createElement('p');
+ p.textContent=u.email+' — '+u.role+' — '+u.status+(u.team?' — Team '+u.team:'');
+ return p}));}).withFailureHandler(e=>adminMessage(e.message||String(e))).apiInventoryAdminOverview()}
+el('saveUser').addEventListener('click',()=>{
+ const request={email:el('userEmail').value,role:el('userRole').value,
+ status:el('userStatus').value,team:el('userTeam').value,
+ teamLocked:el('userLocked').value==='true'};
+ el('saveUser').disabled=true;
+ google.script.run.withSuccessHandler(r=>{el('saveUser').disabled=false;
+ adminMessage('Saved '+r.email);loadAdmin()}).withFailureHandler(e=>{
+ el('saveUser').disabled=false;adminMessage(e.message||String(e))
+ }).apiInventoryAdminUpsertUser(request)
+});
+el('createSession').addEventListener('click',()=>{
+ el('createSession').disabled=true;
+ google.script.run.withSuccessHandler(r=>{el('createSession').disabled=false;
+ adminMessage('Created session '+r.id);bootstrap();loadAdmin()}).withFailureHandler(e=>{
+ el('createSession').disabled=false;adminMessage(e.message||String(e))
+ }).apiInventoryAdminCreateSession({date:el('inventoryDate').value})
+});
+bootstrap();
 </script></body></html>

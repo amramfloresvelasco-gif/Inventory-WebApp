@@ -119,3 +119,7 @@ User clarified current reconciliation tab already updates live via ARRAYFORMULA,
 ### 2026-11-15 — Admin discrepancy requirements gathering, not implementation
 
 User clarified they are walking through **how discrepancies are handled**, and want existing live formulas revisited to see whether there is a better way. Do not choose an engine or implement before studying the rules and formulas. Await further workflow details.
+
+### 2026-11-15 — Clickable discrepancy map behavior confirmed
+
+User requires clicking a colored warehouse location to explain its color. For red, admin sees **Team A vs Team B aggregated product/UOM totals side by side**, e.g. 100 vs 99, **regardless of entry count**. Sum valid child records; do not show individual entry detail by default. Blind employee counts remain private. No implementation.

@@ -116,6 +116,66 @@ function apiInventorySaveCount(request) {
     return {ok:true,entryId,duplicate:false,elapsedMs:Date.now()-started};
   } finally { lock.releaseLock(); }
 }
+/** Administrator operations: all permissions checked server-side. */
+function apiInventoryAdminOverview() {
+  invRequireAdmin_();
+  return {
+    users:invRows_('AppUsers').map(r=>({
+      email:String(r.Email),role:String(r.Role),status:String(r.Status),
+      team:String(r.AssignedTeam||''),teamLocked:String(r.TeamLocked).toLowerCase()==='true'
+    })),
+    sessions:invRows_('InventorySessions').map(r=>({
+      id:String(r.SessionID),date:r.InventoryDate instanceof Date ?
+        Utilities.formatDate(r.InventoryDate,Session.getScriptTimeZone(),'yyyy-MM-dd') : String(r.InventoryDate),
+      status:String(r.Status)
+    }))
+  };
+}
+function apiInventoryAdminUpsertUser(input) {
+  const admin=invRequireAdmin_();
+  const email=String(input&&input.email||'').trim().toLowerCase();
+  const role=String(input&&input.role||'').trim().toLowerCase();
+  const status=String(input&&input.status||'').trim().toLowerCase();
+  const team=String(input&&input.team||'').trim().toUpperCase();
+  const locked=Boolean(input&&input.teamLocked);
+  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Invalid email.');
+  if(!['administrator','counter'].includes(role)) throw new Error('Invalid role.');
+  if(!['active','inactive'].includes(status)) throw new Error('Invalid status.');
+  if(team && !['A','B'].includes(team)) throw new Error('Invalid team.');
+  if(locked && !team) throw new Error('Assign a team before locking it.');
+  if(email===admin.email && (role!=='administrator'||status!=='active'))
+    throw new Error('Cannot revoke your own administrator access.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000)) throw new Error('Busy; retry.');
+  try {
+    const s=invSheet_('AppUsers'), rows=invRows_('AppUsers');
+    const matches=rows.map((r,i)=>({r,i})).filter(x=>String(x.r.Email).trim().toLowerCase()===email);
+    if(matches.length>1) throw new Error('Duplicate user records need review.');
+    const target=matches.length?matches[0].i+2:s.getLastRow()+1;
+    s.getRange(target,1,1,7).setValues([[email,role==='administrator'?'Administrator':'Counter',
+      status==='active'?'Active':'Inactive',team,locked,new Date(),admin.email]]);
+    return {ok:true,email};
+  } finally {lock.releaseLock();}
+}
+function apiInventoryAdminCreateSession(input) {
+  const admin=invRequireAdmin_();
+  const date=String(input&&input.date||'');
+  if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) ||
+     isNaN(new Date(date+'T12:00:00Z').getTime()) ||
+     new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)
+    throw new Error('Invalid inventory date.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000)) throw new Error('Busy; retry.');
+  try {
+    if(invRows_('InventorySessions').some(r=>String(r.Status).toUpperCase()==='OPEN'))
+      throw new Error('Close or freeze the existing open session before starting another.');
+    const id='INV-'+date+'-'+Utilities.getUuid().slice(0,8).toUpperCase();
+    const s=invSheet_('InventorySessions');
+    s.getRange(s.getLastRow()+1,1,1,10).setValues([[id,date,'OPEN',new Date(),admin.email,
+      '','','','','']]);
+    return {ok:true,id};
+  } finally {lock.releaseLock();}
+}
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('Index')
     .setTitle('BMD Inventory');

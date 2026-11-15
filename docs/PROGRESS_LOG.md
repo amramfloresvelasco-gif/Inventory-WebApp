@@ -131,3 +131,7 @@ User: Team A counting five products alone => yellow. As soon as Team B starts in
 ### 2026-11-15 — Separate admin reconciliation table required
 
 User confirms admin needs **both** interactive warehouse map **and** spreadsheet-like comparison module with filters by **location, item, and match status**. Table shows aggregate Team A/B quantities, not individual submissions. Keep map/table driven by same live comparison engine. No implementation.
+
+### 2026-11-15 — Finished Goods comparison identifier discussed
+
+Dry Goods use Item ID. Recommended using existing stable SPIRITS Finished Goods Product ID for FG comparison; exact field and uniqueness must be verified before treating as confirmed. No implementation.

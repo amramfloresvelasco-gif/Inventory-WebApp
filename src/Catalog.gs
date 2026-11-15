@@ -14,7 +14,7 @@ function invSourceRows_(name,cols) {
 }
 function invCatalogPreview_() {
   const materialRows=invSourceRows_('Material Reference',3);
-  const productRows=invSourceRows_('Products',12);
+  const productRows=invSourceRows_('Products',12);\n  const countWarehouses=invSourceRows_('RawMaterialWarehouses',6)\n    .filter(r=>String(r.Counts).toUpperCase()==='TRUE'&&String(r.Active).toUpperCase()==='TRUE');
   const catalog=new Map(), conflicts=[], missing=[];
   function add(id,name,cls,uom,units,source) {
     id=String(id||'').trim();name=String(name||'').trim();
@@ -30,7 +30,11 @@ function invCatalogPreview_() {
   }
   for(const row of materialRows) {
     const category=String(row.Category||'').trim().toLowerCase();
-    // Blending ingredients are Report 2-only; do not import them as countable products.\n    if(category==='blending'||category==='blending ingredient'||category==='blending ingredients')continue;\n    if(!['packaging','ingredients','bulk'].includes(category)) {\n      missing.push({source:'Material Reference',id:row['Material ID'],reason:'Unrecognized category: '+category});\n      continue;\n    }\n    // Ingredients and bulk liquids belong in extended reports, not physical count selection.\n    if(category!=='packaging')continue;\n    const cls='Packaging';
+    if(!['packaging','ingredients','bulk'].includes(category)) {
+      missing.push({source:'Material Reference',id:row['Material ID'],reason:'Unrecognized category: '+category});
+      continue;
+    }
+    const cls=category==='packaging'?'Packaging':'Raw Material';
     add(row['Material ID'],row['Material Name'],cls,'Each','', 'Material Reference');
   }
   for(const row of productRows) {
@@ -43,7 +47,14 @@ function invCatalogPreview_() {
       'Finished Good','Case',units,'Products');
   }
   return {items:[...catalog.values()],conflicts,missing,sourceRows:{
-    materialReference:materialRows.length,products:productRows.length}};
+    materialReference:materialRows.length,products:productRows.length,\n    countingWarehouses:countWarehouses.map(r=>({id:r.WarehouseID,name:r.WarehouseName}))}};
+}
+/** Only warehouses marked Counts=TRUE and Active=TRUE are eligible
+ * for physical inventory and WS snapshot reconciliation. */
+function invCountingWarehouseIds_() {
+  return new Set(invSourceRows_('RawMaterialWarehouses',6)
+    .filter(r=>String(r.Counts).toUpperCase()==='TRUE'&&String(r.Active).toUpperCase()==='TRUE')
+    .map(r=>String(r.WarehouseID).trim()));
 }
 function apiInventoryAdminCatalogPreview() {
   invRequireAdmin_();

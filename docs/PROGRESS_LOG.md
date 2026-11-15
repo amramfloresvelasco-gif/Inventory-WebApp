@@ -35,3 +35,7 @@ User confirmed that **Packaging and Finished Goods already use the same database
 ### 2026-11-15 — Existing labels and barcode formats
 
 Confirmed physical locations already have naming and printed barcodes. Dry Goods/Packaging currently use 2D barcodes; Finished Goods use QR codes. Future migration to all QR is possible. Preserve existing identifiers and support both formats; clarify code samples and whether formats apply to products/locations. Documentation only; no database or scanner implementation yet.
+
+### 2026-11-15 — Unique barcode confirmation
+
+User confirmed everything already has a unique barcode. Location scans and product scans will use existing identifiers. Barcode payload examples and location import source remain to be verified. No implementation yet.

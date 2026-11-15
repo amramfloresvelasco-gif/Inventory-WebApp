@@ -162,3 +162,7 @@ User specifically says they do **not believe WSFinishedGoodsID exists** and want
 ## Latest correction: ReleaseID is probably obsolete
 
 User says `ReleaseID` was discussed early then discarded and likely has no active role. Do not propose it as FG inventory key. Use `Products.ProductID` internally and identify actual WS Finished Goods ID from source; `Releases.WSMasterID` not yet confirmed equivalent. Audit source code/formulas for ReleaseID dependencies before deleting or changing legacy schema. No implementation yet.
+
+## Latest confirmed scan/search identity rules
+
+User: Dry Goods `WSRawMaterialID` and material name are two ways to select **the same item**. Finished Goods `WSFinishedGoodsID` and FG name must likewise resolve to **the same SKU**. Employees **never use or see internal SPIRITS IDs** (`MaterialID`, `ProductID`). These are backend-only. Canonical identity is used for Team A/B reconciliation irrespective of input mode. WS FG ID must still be found/verified and mapped. No code yet.

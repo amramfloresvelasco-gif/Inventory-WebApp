@@ -135,3 +135,7 @@ User confirms admin needs **both** interactive warehouse map **and** spreadsheet
 ### 2026-11-15 — Finished Goods comparison identifier discussed
 
 Dry Goods use Item ID. Recommended using existing stable SPIRITS Finished Goods Product ID for FG comparison; exact field and uniqueness must be verified before treating as confirmed. No implementation.
+
+### 2026-11-15 — Confirmed Finished Goods ProductID exists
+
+Read live SPIRITS `BMD V4 — Database`: `Products` column A = `ProductID` (UUIDs), with ProductName, SizeML, UnitsPerCase; `Releases` includes ReleaseID, WSMasterID, ProductID. Existing identifiers are available; need to determine product vs release granularity before final Inventory key selection. Read-only inspection, no implementation.

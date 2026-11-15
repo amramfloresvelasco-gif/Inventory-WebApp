@@ -147,3 +147,7 @@ User confirms FG records must include WS Finished Goods ID in addition to SPIRIT
 ### 2026-11-15 — Correction: WSFinishedGoodsID not verified
 
 User says WSFinishedGoodsID is missing; assistant had incorrectly implied `Releases.WSMasterID` definitely satisfied the requirement. No such column was observed in inspected SPIRITS Products/Releases. Verify against official WS finished goods source before reuse or adding field. No implementation.
+
+### 2026-11-15 — ReleaseID flagged as abandoned legacy design
+
+User says `ReleaseID` was originally discussed but later discarded and likely unused. Do not use it in Inventory App model absent proof of active use; audit dependencies before removing from SPIRITS. Keep ProductID plus verified WS FG ID as intended identifiers. No code changes.

@@ -111,3 +111,7 @@ User reports old AppSheet/script inventory entries take <4s and requires new Pha
 ### 2026-11-15 — Supervisor discrepancy monitoring discussed
 
 User shared screenshot of current spreadsheet columns Location, Item Name, UOM, Warehouse, Bay, Count 1, Count 2, Match, Helper Column and wants an admin module to monitor Team A/B discrepancies. Proposed supervisor-only live comparison, match/mismatch/pending states, event+location+product+UOM key and valid-child aggregation. Missing team count is not zero. No code.
+
+### 2026-11-15 — Existing comparison is live, not manual
+
+User clarified current reconciliation tab already updates live via ARRAYFORMULA, VLOOKUP, QUERY, MAP, etc. Corrected prior assumption. Future Admin design should first inspect formulas/dependencies and preserve working comparison logic; no implementation.

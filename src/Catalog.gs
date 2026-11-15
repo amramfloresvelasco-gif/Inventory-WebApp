@@ -30,7 +30,7 @@ function invCatalogPreview_() {
   }
   for(const row of materialRows) {
     const category=String(row.Category||'').trim().toLowerCase();
-    // Blending ingredients are Report 2-only; do not import them as countable products.\n    if(category==='blending'||category==='blending ingredient'||category==='blending ingredients')continue;\n    const cls=category==='packaging'?'Packaging':'Raw Material';
+    // Blending ingredients are Report 2-only; do not import them as countable products.\n    if(category==='blending'||category==='blending ingredient'||category==='blending ingredients')continue;\n    if(!['packaging','ingredients','bulk'].includes(category)) {\n      missing.push({source:'Material Reference',id:row['Material ID'],reason:'Unrecognized category: '+category});\n      continue;\n    }\n    // Ingredients and bulk liquids belong in extended reports, not physical count selection.\n    if(category!=='packaging')continue;\n    const cls='Packaging';
     add(row['Material ID'],row['Material Name'],cls,'Each','', 'Material Reference');
   }
   for(const row of productRows) {

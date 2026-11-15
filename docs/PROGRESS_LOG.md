@@ -75,3 +75,7 @@ User confirmed employees may view/edit/delete **only their own submitted entries
 ### 2026-11-15 — Workspace sign-in selected
 
 User selected Google Workspace sign-in for `@bsb.com`, `@bigmachinedistillery.com`, and additional group domains. Proposed configurable domain/user/role allowlists. Must verify Apps Script server-side caller identity for actual deployment before implementing blind ownership. No code yet.
+
+### 2026-11-15 — Team assignment clarified
+
+User confirmed admins grant app access only, **not** team assignment. Any authorized employee may choose Team A or Team B. Team choice stored per entry; personal blind visibility unchanged. Session-level team lock is an assistant proposal, not yet approved. No implementation.

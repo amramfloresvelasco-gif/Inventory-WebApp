@@ -89,7 +89,7 @@ function apiInventorySaveCount(request) {
   const quantity=Number(request.quantity);
   if(!/^[a-zA-Z0-9_-]{12,100}$/.test(entryId)) throw new Error('Invalid submission ID.');
   if(!Number.isSafeInteger(quantity) || quantity<0) throw new Error('Quantity must be a nonnegative integer.');
-  if(!['Case','Bottle','Each'].includes(uom)) throw new Error('Unsupported unit.');
+  if(!uom || uom.length>40) throw new Error('Invalid unit.');
   if(!sessionId || !locationId || !productId) throw new Error('Missing required field.');
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(15000)) throw new Error('Inventory busy; retry the same submission.');
@@ -100,9 +100,15 @@ function apiInventorySaveCount(request) {
     const product=ref.products.find(x=>String(x.WSItemID)===productId);
     if(!loc || !product) throw new Error('Invalid location or product.');
     const cls=String(product.ClassOfMaterial).toLowerCase();
-    if(uom==='Bottle' && cls!=='finished good') throw new Error('Bottle unit only allowed for finished goods.');
-    if(uom==='Case' && cls==='packaging') throw new Error('Packaging must use Each.');
-    if(uom==='Each' && cls==='finished good') throw new Error('Finished goods use Case or Bottle.');
+    if(cls==='finished good') {
+      if(!['Case','Bottle'].includes(uom)) throw new Error('Finished goods use Case or Bottle.');
+      if(uom==='Bottle' && !(Number(product.UnitsPerCase)>0))
+        throw new Error('Missing units-per-case conversion.');
+    } else {
+      const configured=String(product.DefaultUOM||'').trim();
+      if(!configured) throw new Error('Material UOM has not been verified.');
+      if(uom!==configured) throw new Error('Material must be counted in its configured UOM: '+configured);
+    }
     const sheet=invSheet_('CountEntries'), last=sheet.getLastRow();
     // Phase 1 correctness-first duplicate check; replace with indexed ID store after benchmark.
     if(last>1) {

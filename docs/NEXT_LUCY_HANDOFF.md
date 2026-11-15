@@ -142,3 +142,7 @@ Neutral: no team counted. Yellow: only one team has counted location. **As soon 
 ## Latest Admin UI requirement: map plus separate table
 
 Admin needs **two complementary modules/views**: interactive color-coded map with click-for-aggregated discrepancy detail, AND a spreadsheet-like reconciliation table based on screenshot with combined **location, item, match** filters. Include Team A/B aggregate totals per event+location+product+UOM and relevant warehouse/bay columns. Both must share comparison logic and be admin-only. Do not substitute map for table. No code yet.
+
+## Latest question: FG identifiers
+
+User asked what identifier to use for Finished Goods when Dry Goods use Item ID. Assistant recommended existing stable **SPIRITS Finished Goods Product ID**, not names, for inventory/reconciliation; verify actual master schema and stable uniqueness before coding. This is a recommendation, not yet confirmed by user.

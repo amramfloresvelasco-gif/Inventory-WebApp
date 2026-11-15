@@ -158,3 +158,7 @@ User says Finished Goods **must carry WSFinishedGoodsID too**. In existing SPIRI
 ## Latest correction: do not conflate WSMasterID with WSFinishedGoodsID
 
 User specifically says they do **not believe WSFinishedGoodsID exists** and want it brought into FG records. Existing SPIRITS `Releases.WSMasterID` is **only a candidate**, not verified equivalent. Inspect actual Whiskey Systems FG data/identifier; if equivalent reuse mapping, if not add distinct mapped WS Finished Goods ID. Do not claim this is already done. No data edits yet.
+
+## Latest correction: ReleaseID is probably obsolete
+
+User says `ReleaseID` was discussed early then discarded and likely has no active role. Do not propose it as FG inventory key. Use `Products.ProductID` internally and identify actual WS Finished Goods ID from source; `Releases.WSMasterID` not yet confirmed equivalent. Audit source code/formulas for ReleaseID dependencies before deleting or changing legacy schema. No implementation yet.

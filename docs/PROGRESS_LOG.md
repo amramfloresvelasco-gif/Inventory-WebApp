@@ -71,3 +71,7 @@ User confirmed edit operations may correct only the existing child records in a 
 ### 2026-11-15 — Blind inventory and own-entry permissions confirmed
 
 User confirmed employees may view/edit/delete **only their own submitted entries**; inventory is blind. No other employees' quantities or Blue/Green comparison data in employee UX. Supervisor-only progress map and discrepancies; server-side ownership checks mandatory. Documentation updated; no code yet.
+
+### 2026-11-15 — Workspace sign-in selected
+
+User selected Google Workspace sign-in for `@bsb.com`, `@bigmachinedistillery.com`, and additional group domains. Proposed configurable domain/user/role allowlists. Must verify Apps Script server-side caller identity for actual deployment before implementing blind ownership. No code yet.

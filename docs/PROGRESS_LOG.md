@@ -87,3 +87,7 @@ User confirmed Phase 1 = accurate independent counts for Team A and Team B; WS r
 ### 2026-11-15 — Voice Entry feature requested
 
 User wants speech recognition for location selection and complete entry: “Location PRA-L1-C4 5 pallets Pickers 1lt with 100 cases each.” Proposed Phase 1 tap-to-speak form autofill, exact master validation and confirmation before saving; generate five 100-case child rows. Test mobile browser/microphone compatibility and warehouse noise. No voice implementation yet.
+
+### 2026-11-15 — Separate voice microphones agreed
+
+User refined Phase 1 voice UX: location mic accepts only location identifier; product mic accepts product/pallet breakdown and may include `keep location`. Example 3 full pallets x 100 cases + 1 partial x 20 cases = 4 child records, 320 cases, location retained. No implementation.

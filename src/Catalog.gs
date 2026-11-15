@@ -14,7 +14,11 @@ function invSourceRows_(name,cols) {
 }
 function invCatalogPreview_() {
   const materialRows=invSourceRows_('Material Reference',3);
-  const productRows=invSourceRows_('Products',12);\n  const countWarehouses=invSourceRows_('RawMaterialWarehouses',6)\n    .filter(r=>String(r.Counts).toUpperCase()==='TRUE'&&String(r.Active).toUpperCase()==='TRUE');
+  const productRows=invSourceRows_('Products',12);
+  const materialDetails=invSourceRows_('Materials',10);
+  const detailByWsId=new Map(materialDetails.filter(r=>r.WSRawMaterialID).map(r=>[String(r.WSRawMaterialID).trim(),r]));
+  const countWarehouses=invSourceRows_('RawMaterialWarehouses',6)
+    .filter(r=>String(r.Counts).toUpperCase()==='TRUE'&&String(r.Active).toUpperCase()==='TRUE');
   const catalog=new Map(), conflicts=[], missing=[];
   function add(id,name,cls,uom,units,source) {
     id=String(id||'').trim();name=String(name||'').trim();
@@ -35,7 +39,12 @@ function invCatalogPreview_() {
       continue;
     }
     const cls=category==='packaging'?'Packaging':'Raw Material';
-    add(row['Material ID'],row['Material Name'],cls,'Each','', 'Material Reference');
+    const id=String(row['Material ID']).trim();
+    const detail=detailByWsId.get(id);
+    const uom=String(detail&&detail.UOM||'').trim();
+    // Do not invent UOM. Material Reference has no UOM and Materials may be empty.
+    if(!uom)missing.push({source:'Materials',id,reason:'Missing verified raw material UOM'});
+    add(id,row['Material Name'],cls,uom,'','Material Reference');
   }
   for(const row of productRows) {
     if(String(row.Status||'').trim().toLowerCase()!=='active')continue;
@@ -47,7 +56,8 @@ function invCatalogPreview_() {
       'Finished Good','Case',units,'Products');
   }
   return {items:[...catalog.values()],conflicts,missing,sourceRows:{
-    materialReference:materialRows.length,products:productRows.length,\n    countingWarehouses:countWarehouses.map(r=>({id:r.WarehouseID,name:r.WarehouseName}))}};
+    materialReference:materialRows.length,materialDetails:materialDetails.length,products:productRows.length,
+    countingWarehouses:countWarehouses.map(r=>({id:r.WarehouseID,name:r.WarehouseName}))}};
 }
 /** Only warehouses marked Counts=TRUE and Active=TRUE are eligible
  * for physical inventory and WS snapshot reconciliation. */
@@ -61,7 +71,7 @@ function apiInventoryAdminCatalogPreview() {
   const preview=invCatalogPreview_();
   return {sourceRows:preview.sourceRows,uniqueItems:preview.items.length,
     conflicts:preview.conflicts.slice(0,100),missing:preview.missing.slice(0,100),
-    importReady:preview.conflicts.length===0&&preview.missing.length===0};
+    missingCount:preview.missing.length,conflictCount:preview.conflicts.length,\n    importReady:preview.conflicts.length===0&&preview.missing.length===0};
 }
 /** Explicit admin action. Rejects ALL ambiguous source mappings. */
 function apiInventoryAdminImportCatalog() {

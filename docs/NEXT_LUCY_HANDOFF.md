@@ -122,3 +122,7 @@ User benchmark: existing AppSheet/legacy script inventory entry **<4 seconds**. 
 ## Latest discussion: Admin discrepancy dashboard
 
 User supplied screenshot of existing count comparison sheet (Location, Item Name, UOM, Warehouse, Bay, Count 1, Count 2, Match, Helper Column). Wants an **admin module** to monitor Team A vs B discrepancies during Phase 1. Suggested live supervisor-only summary and filterable comparison table; aggregate valid child entries by InventoryEventID+LocationID+ProductID+UOM and team. Distinguish **Match**, **Mismatch**, **Pending other team**; missing count != 0. Respect blind employee access; WS comparison remains Phase 2. Screenshot's visible sample rows are mostly matches; example mismatches shown in discussion are illustrative only. No code yet.
+
+## Important correction about existing reconciliation sheet
+
+The user explicitly says the existing Team A/B reconciliation spreadsheet **is already live**, with `ARRAYFORMULA`, `VLOOKUP`, `QUERY`, `MAP`, etc. Do not call it manual or assume live status is new functionality. Before changing comparison logic, inspect actual formulas and dependency chain, preserve parity and measure performance. Admin module still at design stage.

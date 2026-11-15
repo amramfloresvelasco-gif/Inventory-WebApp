@@ -103,3 +103,7 @@ User example: official `Borchetta Bourbon #473 2025 750mL/6pk` versus spoken `Bo
 ### 2026-11-15 — Mandatory voice review and Save/Cancel confirmed
 
 User explicitly requires that employees see what they said on screen before submission and choose **Save** or **Cancel**. Never auto-save speech recognition. Display transcript and interpreted count for verification; Save writes validated records, Cancel writes nothing. No implementation yet.
+
+### 2026-11-15 — Under-4-second performance requirement
+
+User reports old AppSheet/script inventory entries take <4s and requires new Phase 1 app to be **<4s**, including voice-assisted entry. This is an acceptance target, not yet measured. Record voice transcription, matching, human review, save and verified completion separately; one batched save for multiple pallet children, local preloaded master lookup where possible. No implementation.

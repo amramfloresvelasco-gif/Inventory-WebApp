@@ -88,3 +88,9 @@ Use **Google Workspace login**, including `@bsb.com`, `@bigmachinedistillery.com
 ## Latest confirmed team access rule
 
 Admins **grant access to the app only**. Authorized employees choose **Team A or Team B** themselves; no permanent administrator team assignment. This supersedes prior admin-team assignment proposals and the earlier Blue/Green names (two independent counting teams). Keep team on each entry; employee can only see/edit/delete their own entries. Suggested team lock during a count session is pending user approval. No code written.
+
+## Latest confirmed Phase 1 boundary and team lock
+
+**Phase 1:** accurate blind inventory counting by Team A and Team B; supervisor comparisons/maps are internal count validation. **Phase 2:** reconciliation against Whiskey Systems (WS). Do not conflate team-to-team count comparison with WS reconciliation.
+
+Authorized users may switch teams **within the same inventory event**, but the current Team A/B selection is locked until they press **Unlock Team**. They choose another team and lock it again. Team lock is separate from the location selection lock. Each entry records its actual team at save time; switching must not alter earlier records. Prompt for unsaved data on team switch is proposed safety behavior, not explicitly confirmed. No implementation yet.

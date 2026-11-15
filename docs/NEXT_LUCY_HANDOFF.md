@@ -130,3 +130,7 @@ The user explicitly says the existing Team A/B reconciliation spreadsheet **is a
 ## Latest user instruction: listen to discrepancy logic first
 
 User is explaining how the existing **live formula-driven** Team A/B discrepancy process works. They want formulas revisited to identify possible improvements, **not** an immediate decision to keep Sheets or migrate logic. Let them explain, inspect actual formulas/dependencies when appropriate, then propose alternatives grounded in observed rules. No Admin module implementation yet.
+
+## Latest admin map requirement
+
+Click any colored warehouse map location to explain its status. **Red:** show Team A and Team B **aggregated counts side by side**, broken down by product/UOM; e.g. A=100, B=99 regardless of how many entries each employee/team made. Compare valid child-row totals, not entry counts. Identify discrepant products. Keep supervisor-only; employees cannot see other users' counts. Existing neutral/yellow/red/green semantics apply; exact treatment of a team omitting a product while counting the location needs further discussion. No code yet.

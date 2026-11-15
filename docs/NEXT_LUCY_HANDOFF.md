@@ -114,3 +114,7 @@ Official example `Borchetta Bourbon #473 2025 750mL/6pk`; spoken example `Borche
 ## Mandatory voice review (confirmed)
 
 After voice input, **display the recognized spoken text and interpreted entry on screen**. Employee must explicitly press **Save** or **Cancel** before any database write. No automatic submission or speech-only bypass. Save validates/commits, Cancel discards; if `new location` was spoken, clear/unlock only after verified successful Save. This is a hard requirement. No code yet.
+
+## Latest hard performance target
+
+User benchmark: existing AppSheet/legacy script inventory entry **<4 seconds**. New Inventory App Phase 1 must target **<4s** for comparable entry workflow, particularly voice. Do not claim met until real device/warehouse testing. Voice still requires transcript preview and employee Save/Cancel; track **human review time separately** from controllable app latency. Proposed subtargets: location/product lookup <0.5s each, speech-to-preview <2s, save-to-verified acknowledgment <2s. Optimize by preloading masters and batching all child pallet records in one idempotent save call. Log end-to-end timing and stages. Never bypass verification for speed.

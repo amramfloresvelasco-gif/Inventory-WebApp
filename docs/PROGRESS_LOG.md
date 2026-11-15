@@ -143,3 +143,7 @@ Read live SPIRITS `BMD V4 — Database`: `Products` column A = `ProductID` (UUID
 ### 2026-11-15 — Require WS Finished Goods identifier
 
 User confirms FG records must include WS Finished Goods ID in addition to SPIRITS internal ID. Candidate existing source is `Releases.WSMasterID`; verify equivalence/mapping before implementation. No new field or code yet.
+
+### 2026-11-15 — Correction: WSFinishedGoodsID not verified
+
+User says WSFinishedGoodsID is missing; assistant had incorrectly implied `Releases.WSMasterID` definitely satisfied the requirement. No such column was observed in inspected SPIRITS Products/Releases. Verify against official WS finished goods source before reuse or adding field. No implementation.

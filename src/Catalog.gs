@@ -3,6 +3,14 @@
  * Deliberately does not auto-import until ID conflicts have been reviewed.
  */
 const INV_RAW_UOMS=['Each','Pounds','Gallons'];
+/** Exclude fermentation at the source-row level, regardless of quantity/UOM. */
+function invIsExcludedMaterialClass_(classOfMaterial) {
+  return String(classOfMaterial||'').trim().toLowerCase().replace(/[\\s-]+/g,'_')==='fermentation_support';
+}
+function invEligibleWSRawRow_(row,warehouseIds) {
+  return warehouseIds.has(String(row.WarehouseId||row.WarehouseID||'').trim()) &&
+    !invIsExcludedMaterialClass_(row.ClassOfMaterial||row.ClassOfMaterial_Name);
+}
 /** Legacy UOM is never converted to a different unit. It contributes zero. */
 function invNormalizeRawQuantity_(uom,quantity) {
   const unit=String(uom||'').trim();
@@ -80,7 +88,7 @@ function invCatalogPreview_() {
       missing.push({source:'Materials',id,reason:'Missing verified official UOM',
         candidateUOM:candidate||''});
     }
-    if(String(legacyClass.get(id)||'').trim().toLowerCase()==='fermentation_support') {\n      diagnostic.fermentationExcluded=(diagnostic.fermentationExcluded||0)+1;\n      // Remove any missing-UOM issue for excluded fermentation records.\n      for(let i=missing.length-1;i>=0;i--)if(String(missing[i].id)===id)missing.splice(i,1);\n      continue;\n    }\n    add(id,row['Material Name'],cls,uom,'','Material Reference');
+    if(invIsExcludedMaterialClass_(legacyClass.get(id))) {\n      diagnostic.fermentationExcluded=(diagnostic.fermentationExcluded||0)+1;\n      // Remove any missing-UOM issue for excluded fermentation records.\n      for(let i=missing.length-1;i>=0;i--)if(String(missing[i].id)===id)missing.splice(i,1);\n      continue;\n    }\n    add(id,row['Material Name'],cls,uom,'','Material Reference');
   }
   for(const row of productRows) {
     if(String(row.Status||'').trim().toLowerCase()!=='active')continue;

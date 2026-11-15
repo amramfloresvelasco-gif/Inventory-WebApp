@@ -115,3 +115,7 @@ User shared screenshot of current spreadsheet columns Location, Item Name, UOM, 
 ### 2026-11-15 — Existing comparison is live, not manual
 
 User clarified current reconciliation tab already updates live via ARRAYFORMULA, VLOOKUP, QUERY, MAP, etc. Corrected prior assumption. Future Admin design should first inspect formulas/dependencies and preserve working comparison logic; no implementation.
+
+### 2026-11-15 — Admin discrepancy requirements gathering, not implementation
+
+User clarified they are walking through **how discrepancies are handled**, and want existing live formulas revisited to see whether there is a better way. Do not choose an engine or implement before studying the rules and formulas. Await further workflow details.

@@ -27,3 +27,7 @@
 ### Next
 - Resume Phase 1 layout walkthrough with user; resolve remaining UX details, particularly fast direct-case entry and multiple partial pallets.
 - Only then plan and build backend. Keep this file and handoff current with verified commits and tests.
+
+### 2026-11-15 — Location master clarification
+
+User confirmed that **Packaging and Finished Goods already use the same databases as SPIRITS**. Do not duplicate them. **Inventory must create a new Locations table**. Active warehouses remain SPIRITS-managed. Proposed Location fields documented as a draft only; actual table not created. Next: confirm location hierarchy, barcode format and identifiers with user, then inspect SPIRITS schemas.

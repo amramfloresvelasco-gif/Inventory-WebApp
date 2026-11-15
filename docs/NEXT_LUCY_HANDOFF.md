@@ -76,3 +76,7 @@ User proposed either moving edited/deleted entries to an archive tab, or adding 
 ## Confirmed strict edit scope
 
 When editing a submission, **do not permit adding new child records or changing their type**. Example: five 100-case pallet records may have their five quantities corrected, but user cannot add bottles or a sixth pallet within Edit; additional counts use New Entry. Any versioned replacement must map one-to-one to corrected original child records. The earlier permissions question (own entries vs anyone on team) is still unresolved; user responded with edit scope instead. Valid flag + audit log was recommended but not yet explicitly approved.
+
+## CRITICAL: blind inventory permissions confirmed
+
+**Each employee sees only entries personally submitted by them and can edit/delete only those entries.** No visibility into other employees' counts, including same-team members, or Blue/Green team totals, matches, mismatches or supervisor map. Enforce server-side authenticated ownership on all reads/writes; client filtering alone is insufficient. Supervisor map/reconciliation is a separate authorized role. Preserve edit limit to existing child records only. User authentication and supervisor roles need design/verification. This is a firm user requirement, not a suggestion.

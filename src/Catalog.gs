@@ -2,6 +2,14 @@
  * Source is NEVER written. Preview is available to an administrator only.
  * Deliberately does not auto-import until ID conflicts have been reviewed.
  */
+const INV_RAW_UOMS=['Each','Pounds','Gallons'];
+/** Legacy UOM is never converted to a different unit. It contributes zero. */
+function invNormalizeRawQuantity_(uom,quantity) {
+  const unit=String(uom||'').trim();
+  const n=Number(quantity);
+  if(!Number.isFinite(n))throw new Error('Invalid WS quantity.');
+  return INV_RAW_UOMS.includes(unit)?n:0;
+}
 const INV_SPIRITS_ID='1fll-r__z9DWWehswc-eaOyYMuO2zdFoWzksNqAtIZj8';
 function invSourceRows_(name,cols) {
   const s=SpreadsheetApp.openById(INV_SPIRITS_ID).getSheetByName(name);
@@ -56,7 +64,7 @@ function invCatalogPreview_() {
     const cls=category==='packaging'?'Packaging':'Raw Material';
     const id=String(row['Material ID']).trim();
     const detail=detailByWsId.get(id);
-    const uom=String(detail&&detail.UOM||'').trim();
+    const uom=String(detail&&detail.UOM||'').trim();\n    if(uom&&!INV_RAW_UOMS.includes(uom))\n      missing.push({source:'Materials',id,reason:'Unsupported material UOM: '+uom});
     // Do not invent UOM. Material Reference has no UOM and Materials may be empty.
     if(!uom) {
       const candidate=legacyUom.get(id);
@@ -98,8 +106,10 @@ function apiInventoryAdminCatalogPreview() {
   invRequireAdmin_();
   const preview=invCatalogPreview_();
   return {sourceRows:preview.sourceRows,uniqueItems:preview.items.length,
-    conflicts:preview.conflicts.slice(0,100),missing:preview.missing.slice(0,30),\n    diagnostic:preview.diagnostic,
-    missingCount:preview.missing.length,conflictCount:preview.conflicts.length,\n    importReady:preview.conflicts.length===0&&preview.missing.length===0};
+    conflicts:preview.conflicts.slice(0,100),missing:preview.missing.slice(0,30),
+    diagnostic:preview.diagnostic,
+    missingCount:preview.missing.length,conflictCount:preview.conflicts.length,
+    importReady:preview.conflicts.length===0&&preview.missing.length===0};
 }
 /** Explicit admin action. Rejects ALL ambiguous source mappings. */
 function apiInventoryAdminImportCatalog() {

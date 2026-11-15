@@ -106,3 +106,7 @@ User wants **Voice Entry in Phase 1**, allowing spoken location/product/pallet q
 ## Latest voice command: change location after saving
 
 Example `5 pallets Pickers Original 1lt 100 cases each 1 partial pallet 20 cases new location` => **6 child count rows**, five at 100 cases, one at 20 cases, total **520 cases** for current location. Both `new location` and `change location` signal next-entry behavior: **after confirmed successful save**, clear/unlock location so next count can select another. Do not alter current record's location; on failure preserve form and location. `keep location` retains location instead. Team unchanged. No code yet.
+
+## Latest voice recognition challenge: alias and attribute matching
+
+Official example `Borchetta Bourbon #473 2025 750mL/6pk`; spoken example `Borchetta Bourbon Racecar 2025 473 20 cases`. Resolve spoken product to **existing SPIRITS SKU ID** using normalized official name, approved voice aliases, and product attributes (release #473, year 2025, volume/pack where available), with `20 cases` as quantity, not product name. User wants this kind of tolerant recognition. Do not invent alias or assume unique SKU; require confirmation/disambiguation if needed. Proposed admin-approved product-ID-linked voice alias metadata; no implementation.

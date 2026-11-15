@@ -139,3 +139,7 @@ Dry Goods use Item ID. Recommended using existing stable SPIRITS Finished Goods 
 ### 2026-11-15 — Confirmed Finished Goods ProductID exists
 
 Read live SPIRITS `BMD V4 — Database`: `Products` column A = `ProductID` (UUIDs), with ProductName, SizeML, UnitsPerCase; `Releases` includes ReleaseID, WSMasterID, ProductID. Existing identifiers are available; need to determine product vs release granularity before final Inventory key selection. Read-only inspection, no implementation.
+
+### 2026-11-15 — Require WS Finished Goods identifier
+
+User confirms FG records must include WS Finished Goods ID in addition to SPIRITS internal ID. Candidate existing source is `Releases.WSMasterID`; verify equivalence/mapping before implementation. No new field or code yet.

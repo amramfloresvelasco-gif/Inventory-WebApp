@@ -79,3 +79,7 @@ User selected Google Workspace sign-in for `@bsb.com`, `@bigmachinedistillery.co
 ### 2026-11-15 — Team assignment clarified
 
 User confirmed admins grant app access only, **not** team assignment. Any authorized employee may choose Team A or Team B. Team choice stored per entry; personal blind visibility unchanged. Session-level team lock is an assistant proposal, not yet approved. No implementation.
+
+### 2026-11-15 — Phase 1 defined; team unlock approved
+
+User confirmed Phase 1 = accurate independent counts for Team A and Team B; WS reconciliation deferred to Phase 2. Employees may switch teams within an inventory event, but must explicitly **Unlock Team** to change selected team and relock it. Team and location locks are independent. Documentation only; no app code yet.

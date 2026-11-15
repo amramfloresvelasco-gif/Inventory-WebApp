@@ -93,3 +93,11 @@ Legacy risks to investigate rather than assert as fully diagnosed: repeated spre
 - Use `main` unless user requests otherwise; keep inventory separate from SPIRITS.
 - Record only verified GitHub commit SHAs, deployment IDs and actual benchmark results.
 - Do **not** start implementation until user finishes explaining and approves the screen layout.
+
+## 9. Confirmed data-source clarification (2026-11-15)
+
+The **Packaging** and **Finished Goods** product databases are the same existing databases used in SPIRITS. Do not build duplicate product master tables for Inventory. Use SPIRITS's existing Raw Materials/Packaging definitions and Finished Goods definitions; verify the exact physical schema and relationships before implementation. **Locations is a new Inventory-owned table and does not yet exist.** The active warehouse master also comes from SPIRITS.
+
+### Location table — draft, not approved schema
+
+Proposed fields: stable Location ID, SPIRITS Warehouse ID, Bay, Location label, scan barcode, Active/Inactive status. Warehouse → Bay → Location dependent selectors, or direct location scan. Confirm barcode uniqueness, location naming conventions, whether bay is its own table, and warehouse key fields before creating anything. Example values are illustrative only.

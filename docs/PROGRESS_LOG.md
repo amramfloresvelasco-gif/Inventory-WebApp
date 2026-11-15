@@ -127,3 +127,7 @@ User requires clicking a colored warehouse location to explain its color. For re
 ### 2026-11-15 — Dynamic red/yellow/green map semantics confirmed
 
 User: Team A counting five products alone => yellow. As soon as Team B starts in same location, mismatch => **red immediately**, even before B finishes. As B catches up, if all aggregate product/UOM totals match => **green**, otherwise red. All discrepancies red; no finish-location button. Recompute on every valid count change. No implementation.
+
+### 2026-11-15 — Separate admin reconciliation table required
+
+User confirms admin needs **both** interactive warehouse map **and** spreadsheet-like comparison module with filters by **location, item, and match status**. Table shows aggregate Team A/B quantities, not individual submissions. Keep map/table driven by same live comparison engine. No implementation.

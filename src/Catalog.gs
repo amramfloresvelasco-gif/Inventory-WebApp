@@ -31,12 +31,12 @@ function invCatalogPreview_() {
     .getSheetByName('WSFRM');
   const legacyRows=legacy&&legacy.getLastRow()>1 ?
     legacy.getRange(2,1,legacy.getLastRow()-1,18).getDisplayValues():[];
-  const legacyUom=new Map(), legacyConflicts=new Set();
+  const legacyUom=new Map(), legacyClass=new Map(), legacyConflicts=new Set();
   legacyRows.forEach(r=>{
     const id=String(r[1]||'').trim(),uom=String(r[8]||'').trim();
     if(!id||!uom)return;
     if(legacyUom.has(id)&&legacyUom.get(id)!==uom)legacyConflicts.add(id);
-    legacyUom.set(id,uom);
+    legacyUom.set(id,uom);\n    const cls=String(r[10]||'').trim();\n    if(cls)legacyClass.set(id,cls);
   });
   const diagnostic={legacyMatches:0,legacyMissing:0,legacyConflicts:0,
     missingByCategory:{},legacyUomExamples:[]};
@@ -80,7 +80,7 @@ function invCatalogPreview_() {
       missing.push({source:'Materials',id,reason:'Missing verified official UOM',
         candidateUOM:candidate||''});
     }
-    add(id,row['Material Name'],cls,uom,'','Material Reference');
+    if(String(legacyClass.get(id)||'').trim().toLowerCase()==='fermentation_support') {\n      diagnostic.fermentationExcluded=(diagnostic.fermentationExcluded||0)+1;\n      // Remove any missing-UOM issue for excluded fermentation records.\n      for(let i=missing.length-1;i>=0;i--)if(String(missing[i].id)===id)missing.splice(i,1);\n      continue;\n    }\n    add(id,row['Material Name'],cls,uom,'','Material Reference');
   }
   for(const row of productRows) {
     if(String(row.Status||'').trim().toLowerCase()!=='active')continue;

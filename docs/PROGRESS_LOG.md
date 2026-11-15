@@ -67,3 +67,7 @@ User wants employee-accessible editing/deletion instead of manual fixes. Options
 ### 2026-11-15 — Edit constraints confirmed
 
 User confirmed edit operations may correct only the existing child records in a submission. Five pallets remain five pallets; no adding bottles or more pallets via Edit. Additional stock requires New Entry. Updated design notes; no implementation.
+
+### 2026-11-15 — Blind inventory and own-entry permissions confirmed
+
+User confirmed employees may view/edit/delete **only their own submitted entries**; inventory is blind. No other employees' quantities or Blue/Green comparison data in employee UX. Supervisor-only progress map and discrepancies; server-side ownership checks mandatory. Documentation updated; no code yet.

@@ -127,3 +127,13 @@ User confirms **everything has a unique barcode**. This includes inventory produ
 ## 13. No Finish Location action — confirmed (2026-11-15)
 
 **User explicitly rejected a Finish Location button or formal completion status.** This is a small team; employees verbally report when they finish, and the supervisor then reviews the map for mismatches. Counts are submitted normally; map status derives automatically from currently recorded team counts. Neutral/uncolored: neither team has submitted; yellow: exactly one team has submitted; red: both have submitted and item/quantity totals differ; green: both have submitted and item/quantity totals match 100%. Red while work is ongoing is a **provisional live mismatch**, not necessarily a final discrepancy. Later submissions can change the map color. Do not implement or recommend a required Finish Location action unless user revisits the decision. No formal completion flag is required for Phase 1.
+
+## 14. Verified legacy spreadsheet sources and Location Management (2026-11-15)
+
+**Source spreadsheet:** https://docs.google.com/spreadsheets/d/13TdeoVaNFGD8E-eEREhuW1QBhzg1QtDFSWkeKQXs5rQ/edit
+
+Connector inspection verified these tabs and IDs: `Fixed Data` (207904072), `Lynnville Map` (1789587392), `Pulaski map` (1425487219). `Fixed Data!A1:C` headers are exactly `Location | Warehouse | Bay`; example `PRA-C1-L1 | Pulaski | Bay 1`. Both maps contain physical-layout cell labels and location/status listings in their right-hand columns. Example Pulaski map has `PRB-C6-L1`; Lynnville map has `LRA-C1-L1`. These are **verified existing source data**, not new Inventory tables. Do not modify the legacy source workbook during migration.
+
+**Confirmed new feature: Location Management module** within Inventory: create locations, edit locations, mark Active/Inactive. Link each location to active SPIRITS warehouse and bay; active locations appear in new count selections/map; inactive ones remain in historical counts. Support existing barcode as lookup key, and internal stable location ID. Use `Fixed Data!A:C` as import source and map tabs as layout references. The existing three columns do not by themselves prove that barcode values, stable IDs or Active flags are stored there; those require verification or new fields.
+
+**Design proposal, not yet approved:** list/filter by warehouse/bay, add/edit form with Location name, existing barcode, status, and audit fields; validate uniqueness; preserve history on deactivation; map positioning/coordinates in separate mapping configuration. Map and location master should not be coupled to spreadsheet cell coordinates as permanent identifiers. No import, new database or module code has been created yet.

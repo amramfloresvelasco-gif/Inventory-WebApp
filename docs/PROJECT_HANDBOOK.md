@@ -109,3 +109,17 @@ Physical locations already have an established naming convention and printed bar
 ## 11. Barcode uniqueness confirmed (2026-11-15)
 
 User confirms **everything has a unique barcode**. This includes inventory products and physical warehouse locations in the intended workflow. Preserve and look up existing unique barcode values; do not create new barcode conventions. Scanning a location should resolve its warehouse, bay and location; scanning an item should resolve its existing SPIRITS product. Maintain stable internal record IDs independently of printed barcode values to protect history if labels change. Support both currently used 2D and QR symbologies and potential migration to QR. Exact barcode payload examples and location import source still need verification.
+
+## 12. Warehouse Inventory Progress Map (2026-11-15)
+
+**New confirmed feature:** In addition to the new Locations master table, build a **visual warehouse inventory progress map** resembling the user's existing physical layout image of **PULASKI BAY 1** (lanes and individually named rack positions). Use existing physical position labels and location barcodes; do not reduce this to a generic table. Each mapped cell links to a location record. The map is operational, showing count progress.
+
+**User-defined map status legend:**
+- **Uncolored / neutral:** neither team has started inventory at the location.
+- **Yellow:** one team has started counting at the location.
+- **Red:** Team Blue vs Team Green counts for the location do not match.
+- **Green:** both teams' counts match **100%**.
+
+**Recommended, not yet approved:** show map-wide progress totals; click/tap a location to see item-level details and discrepancies; add a **Finish Location** confirmation so that comparisons occur only after each team has completed the location. Otherwise one team's partial submission could misleadingly appear mismatched. Compare quantities grouped by product and normalized unit (cases/bottles), not count of child pallet rows. Consider explicit treatment for Location Empty / Item Not Counted. The exact completion workflow, reconciliation algorithm, map storage format and rendering approach are pending design approval.
+
+**Image reference:** user provided a screenshot of a PULASKI BAY 1 plan with lane labels (e.g. PE–PX) and detailed rack locations (e.g. PRB-C6-L1). Image is a reference for physical arrangement, not a machine-readable map dataset. Need the underlying spreadsheet/drawing or location coordinates to reproduce it accurately.

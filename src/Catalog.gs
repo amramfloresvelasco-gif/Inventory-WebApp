@@ -17,6 +17,21 @@ function invCatalogPreview_() {
   const productRows=invSourceRows_('Products',12);
   const materialDetails=invSourceRows_('Materials',10);
   const detailByWsId=new Map(materialDetails.filter(r=>r.WSRawMaterialID).map(r=>[String(r.WSRawMaterialID).trim(),r]));
+  // Read-only legacy WS snapshot is diagnostic only, never an import authority.
+  // Its age has not been verified, so it must not silently supply official UOM.
+  const legacy=SpreadsheetApp.openById('13TdeoVaNFGD8E-eEREhuW1QBhzg1QtDFSWkeKQXs5rQ')
+    .getSheetByName('WSFRM');
+  const legacyRows=legacy&&legacy.getLastRow()>1 ?
+    legacy.getRange(2,1,legacy.getLastRow()-1,18).getDisplayValues():[];
+  const legacyUom=new Map(), legacyConflicts=new Set();
+  legacyRows.forEach(r=>{
+    const id=String(r[1]||'').trim(),uom=String(r[8]||'').trim();
+    if(!id||!uom)return;
+    if(legacyUom.has(id)&&legacyUom.get(id)!==uom)legacyConflicts.add(id);
+    legacyUom.set(id,uom);
+  });
+  const diagnostic={legacyMatches:0,legacyMissing:0,legacyConflicts:0,
+    missingByCategory:{},legacyUomExamples:[]};
   const countWarehouses=invSourceRows_('RawMaterialWarehouses',6)
     .filter(r=>String(r.Counts).toUpperCase()==='TRUE'&&String(r.Active).toUpperCase()==='TRUE');
   const catalog=new Map(), conflicts=[], missing=[];
@@ -43,7 +58,20 @@ function invCatalogPreview_() {
     const detail=detailByWsId.get(id);
     const uom=String(detail&&detail.UOM||'').trim();
     // Do not invent UOM. Material Reference has no UOM and Materials may be empty.
-    if(!uom)missing.push({source:'Materials',id,reason:'Missing verified raw material UOM'});
+    if(!uom) {
+      const candidate=legacyUom.get(id);
+      if(candidate&&!legacyConflicts.has(id)) {
+        diagnostic.legacyMatches++;
+        if(diagnostic.legacyUomExamples.length<8)
+          diagnostic.legacyUomExamples.push({id,candidateUOM:candidate});
+      } else {
+        diagnostic.legacyMissing++;
+        if(legacyConflicts.has(id))diagnostic.legacyConflicts++;
+        diagnostic.missingByCategory[category]=(diagnostic.missingByCategory[category]||0)+1;
+      }
+      missing.push({source:'Materials',id,reason:'Missing verified official UOM',
+        candidateUOM:candidate||''});
+    }
     add(id,row['Material Name'],cls,uom,'','Material Reference');
   }
   for(const row of productRows) {
@@ -55,7 +83,7 @@ function invCatalogPreview_() {
     add(row.WSFinishedGoodsID,row.WSFinishedGoodName||row.ProductName,
       'Finished Good','Case',units,'Products');
   }
-  return {items:[...catalog.values()],conflicts,missing,sourceRows:{
+  return {items:[...catalog.values()],conflicts,missing,diagnostic,sourceRows:{
     materialReference:materialRows.length,materialDetails:materialDetails.length,products:productRows.length,
     countingWarehouses:countWarehouses.map(r=>({id:r.WarehouseID,name:r.WarehouseName}))}};
 }
@@ -70,7 +98,7 @@ function apiInventoryAdminCatalogPreview() {
   invRequireAdmin_();
   const preview=invCatalogPreview_();
   return {sourceRows:preview.sourceRows,uniqueItems:preview.items.length,
-    conflicts:preview.conflicts.slice(0,100),missing:preview.missing.slice(0,100),
+    conflicts:preview.conflicts.slice(0,100),missing:preview.missing.slice(0,30),\n    diagnostic:preview.diagnostic,
     missingCount:preview.missing.length,conflictCount:preview.conflicts.length,\n    importReady:preview.conflicts.length===0&&preview.missing.length===0};
 }
 /** Explicit admin action. Rejects ALL ambiguous source mappings. */

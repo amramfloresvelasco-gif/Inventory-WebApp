@@ -151,3 +151,7 @@ User says WSFinishedGoodsID is missing; assistant had incorrectly implied `Relea
 ### 2026-11-15 — ReleaseID flagged as abandoned legacy design
 
 User says `ReleaseID` was originally discussed but later discarded and likely unused. Do not use it in Inventory App model absent proof of active use; audit dependencies before removing from SPIRITS. Keep ProductID plus verified WS FG ID as intended identifiers. No code changes.
+
+### 2026-11-15 — Confirmed WS-ID/name interchangeable lookup, internal IDs hidden
+
+Dry Goods: scan WSRawMaterialID or find material by name -> same item. Finished Goods: scan WSFinishedGoodsID or find by name -> same SKU. Internal SPIRITS MaterialID/ProductID never visible to employees. Resolve both input modes to one canonical identity; disambiguate similar names. WS FG ID mapping still to verify. No implementation.

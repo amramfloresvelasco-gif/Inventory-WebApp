@@ -21,7 +21,7 @@ small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
-<button id="save">Save count</button></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Users</h3><div id="users"></div></section></main>
+<button id="save">Save count</button></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Users</h3><div id="users"></div></section></main>
 <script>
 let data=null, busy=false, pendingId=null;
 const el=id=>document.getElementById(id);
@@ -74,6 +74,17 @@ el('createSession').addEventListener('click',()=>{
  adminMessage('Created session '+r.id);bootstrap();loadAdmin()}).withFailureHandler(e=>{
  el('createSession').disabled=false;adminMessage(e.message||String(e))
  }).apiInventoryAdminCreateSession({date:el('inventoryDate').value})
+});
+el('previewCatalog').addEventListener('click',()=>{
+ el('previewCatalog').disabled=true;
+ el('catalogStatus').textContent='Checking SPIRITS reference data…';
+ google.script.run.withSuccessHandler(r=>{
+ el('previewCatalog').disabled=false;
+ el('catalogStatus').textContent=JSON.stringify(r,null,2);
+ }).withFailureHandler(e=>{
+ el('previewCatalog').disabled=false;
+ el('catalogStatus').textContent=e.message||String(e);
+ }).apiInventoryAdminCatalogPreview();
 });
 bootstrap();
 </script></body></html>

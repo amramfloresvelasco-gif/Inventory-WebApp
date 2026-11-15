@@ -134,3 +134,7 @@ User is explaining how the existing **live formula-driven** Team A/B discrepancy
 ## Latest admin map requirement
 
 Click any colored warehouse map location to explain its status. **Red:** show Team A and Team B **aggregated counts side by side**, broken down by product/UOM; e.g. A=100, B=99 regardless of how many entries each employee/team made. Compare valid child-row totals, not entry counts. Identify discrepant products. Keep supervisor-only; employees cannot see other users' counts. Existing neutral/yellow/red/green semantics apply; exact treatment of a team omitting a product while counting the location needs further discussion. No code yet.
+
+## Latest confirmed live map state machine (supersedes prior pending interpretation)
+
+Neutral: no team counted. Yellow: only one team has counted location. **As soon as both teams have at least one valid count**, compare their full aggregated product/UOM count maps. Any discrepancy (including product counted by only one team) => **red immediately**, even while the second team is still counting. Exact match across all counted products => **green**. Recalculate continuously; green may become red after edits/new entries. No Finish Location button. Example: A counts five products => yellow; B starts with two => red; B eventually matches all five => green. This is explicitly confirmed by user; do not reintroduce waiting-for-completion status. No code yet.

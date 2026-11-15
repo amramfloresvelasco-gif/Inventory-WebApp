@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><base target="_top"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font:15px Arial,sans-serif;margin:0;background:#f5f7fb;color:#17243b}
+main{max-width:760px;margin:auto;padding:20px}h1{font-size:23px}
+.panel{background:white;border:1px solid #dbe1e9;border-radius:12px;padding:20px;margin:16px 0}
+label{display:block;font-weight:600;margin:12px 0 5px}
+input,select,textarea,button{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bac7d7;border-radius:8px;font:inherit}
+button{background:#1755a5;color:white;border:0;cursor:pointer;margin-top:15px}
+button:disabled{opacity:.55;cursor:wait}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a32626}
+</style></head><body><main><h1>BMD Inventory</h1><p class="muted">Physical counting · Phase 1</p>
+<div id="message" role="status">Loading your Inventory account…</div>
+<section id="app" hidden><div class="panel"><div id="identity" class="muted"></div>
+<label for="session">Inventory session</label><select id="session"></select>
+<div class="row"><div><label for="warehouse">Warehouse</label><select id="warehouse"></select></div>
+<div><label for="bay">Bay</label><select id="bay"></select></div></div>
+<label for="location">Location</label><select id="location"></select>
+<label for="barcode">Scan barcode or search product</label><input id="barcode" autocomplete="off" placeholder="Barcode, WS item ID, or name">
+<label for="product">Product</label><select id="product"></select>
+<div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
+<div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
+<label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
+<button id="save">Save count</button></div></section></main>
+<script>
+let data=null, busy=false, pendingId=null;
+const el=id=>document.getElementById(id);
+function options(id,items,fn){const s=el(id);s.replaceChildren();for(const item of items){const o=document.createElement('option');o.value=fn?fn(item):item;o.textContent=fn?fn(item):item;s.appendChild(o)}}
+function locations(){const warehouse=el('warehouse').value;
+ const bays=[...new Set(data.locations.filter(x=>x.Warehouse===warehouse).map(x=>x.Bay))];
+ options('bay',bays);updateLocations()}
+function updateLocations(){options('location',data.locations.filter(x=>x.Warehouse===el('warehouse').value&&x.Bay===el('bay').value).map(x=>x.LocationID))}
+function search(){const term=el('barcode').value.trim().toLowerCase();const matches=data.products.filter(p=>!term||p.barcode.toLowerCase()===term||p.id.toLowerCase()===term||p.name.toLowerCase().includes(term)).slice(0,60);
+ const s=el('product');s.replaceChildren();for(const p of matches){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.id+')';s.appendChild(o)}
+ selectUom()}
+function selectUom(){const p=data.products.find(p=>p.id===el('product').value);if(!p)return;
+ const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:p.className.toLowerCase()==='packaging'?['Each']:['Case'];
+ options('uom',units)}
+function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
+function bootstrap(){google.script.run.withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
+ options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;
+ message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
+ el('save').disabled=!r.sessions.length||!r.user.teamLocked;
+ }).withFailureHandler(e=>message(e.message||String(e),true)).apiInventoryBootstrap()}
+function save(){if(busy)return;busy=true;el('save').disabled=true;
+ if(!pendingId)pendingId='inv_'+crypto.randomUUID().replace(/-/g,'');
+ const request={entryId:pendingId,sessionId:el('session').value,locationId:el('location').value,
+ productId:el('product').value,uom:el('uom').value,quantity:Number(el('qty').value),
+ notes:el('notes').value,entryMethod:el('barcode').value?'Barcode':'Manual'};
+ google.script.run.withSuccessHandler(r=>{busy=false;pendingId=null;el('save').disabled=false;el('qty').value='1';el('notes').value='';
+ message(r.duplicate?'Submission already saved; no duplicate created.':'Count saved successfully ('+r.elapsedMs+' ms server).');
+ }).withFailureHandler(e=>{busy=false;el('save').disabled=false;message((e.message||String(e))+' — retry Save to use the same submission ID.',true)}).apiInventorySaveCount(request)}
+el('warehouse').addEventListener('change',locations);el('bay').addEventListener('change',updateLocations);
+el('barcode').addEventListener('input',search);el('product').addEventListener('change',selectUom);
+el('save').addEventListener('click',save);bootstrap();
+</script></body></html>

@@ -146,3 +146,7 @@ Admin needs **two complementary modules/views**: interactive color-coded map wit
 ## Latest question: FG identifiers
 
 User asked what identifier to use for Finished Goods when Dry Goods use Item ID. Assistant recommended existing stable **SPIRITS Finished Goods Product ID**, not names, for inventory/reconciliation; verify actual master schema and stable uniqueness before coding. This is a recommendation, not yet confirmed by user.
+
+## Latest verified source: Finished Goods IDs exist
+
+Read connected live `BMD V4 — Database` Google Sheet `1fll-r__z9DWWehswc-eaOyYMuO2zdFoWzksNqAtIZj8`. `Products!A` = **ProductID** (UUID-like); `Products!C` = ProductName; `Products!D/E` = SizeML/UnitsPerCase. `Releases` has `ReleaseID` col A, `WSMasterID` col D, `ProductID` col K, `ReleaseName` col L. Sample Pickers Blood Orange 1L/12pk ProductID `182df808-f768-4041-a1b4-5408ff68f821`. Therefore FG IDs do exist. Proposed Inventory FG key is ProductID, but inspect full product/release mapping to ensure distinct releases aren't collapsed; may need ReleaseID as counted SKU identity. Do not conflate with WS ID. No sheet changes.

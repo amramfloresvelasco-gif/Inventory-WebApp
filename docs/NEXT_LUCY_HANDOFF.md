@@ -84,3 +84,7 @@ When editing a submission, **do not permit adding new child records or changing 
 ## Latest auth decision
 
 Use **Google Workspace login**, including `@bsb.com`, `@bigmachinedistillery.com`, and other group domains. No custom username/password. Recommend configurable authorized domains and explicit authorized users/roles; do not grant blanket access based solely on domain without approval. **Test actual Apps Script deployment identity behavior** before coding blind inventory; `Session.getActiveUser().getEmail()` may be blank depending on deployment and cross-domain execution. Server-side per-user ownership remains mandatory. This is design documentation only.
+
+## Latest confirmed team access rule
+
+Admins **grant access to the app only**. Authorized employees choose **Team A or Team B** themselves; no permanent administrator team assignment. This supersedes prior admin-team assignment proposals and the earlier Blue/Green names (two independent counting teams). Keep team on each entry; employee can only see/edit/delete their own entries. Suggested team lock during a count session is pending user approval. No code written.

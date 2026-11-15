@@ -91,3 +91,7 @@ User wants speech recognition for location selection and complete entry: “Loca
 ### 2026-11-15 — Separate voice microphones agreed
 
 User refined Phase 1 voice UX: location mic accepts only location identifier; product mic accepts product/pallet breakdown and may include `keep location`. Example 3 full pallets x 100 cases + 1 partial x 20 cases = 4 child records, 320 cases, location retained. No implementation.
+
+### 2026-11-15 — Voice command for next location confirmed
+
+User example: 5 full pallets x 100 cases plus 1 partial pallet x 20 cases of Pickers Original 1L = **six child records**, 520 cases. Spoken `new location` or `change location` means submit at current location, then unlock/clear location **only after verified save**. Opposite of `keep location`. No implementation.

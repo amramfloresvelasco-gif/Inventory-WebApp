@@ -34,7 +34,7 @@ function search(){const term=el('barcode').value.trim().toLowerCase();const matc
  const s=el('product');s.replaceChildren();for(const p of matches){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.id+')';s.appendChild(o)}
  selectUom()}
 function selectUom(){const p=data.products.find(p=>p.id===el('product').value);if(!p)return;
- const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:p.className.toLowerCase()==='packaging'?['Each']:['Case'];
+ const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:(p.uom?[p.uom]:[]);
  options('uom',units)}
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
 function bootstrap(){google.script.run.withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');

@@ -150,3 +150,7 @@ User asked what identifier to use for Finished Goods when Dry Goods use Item ID.
 ## Latest verified source: Finished Goods IDs exist
 
 Read connected live `BMD V4 — Database` Google Sheet `1fll-r__z9DWWehswc-eaOyYMuO2zdFoWzksNqAtIZj8`. `Products!A` = **ProductID** (UUID-like); `Products!C` = ProductName; `Products!D/E` = SizeML/UnitsPerCase. `Releases` has `ReleaseID` col A, `WSMasterID` col D, `ProductID` col K, `ReleaseName` col L. Sample Pickers Blood Orange 1L/12pk ProductID `182df808-f768-4041-a1b4-5408ff68f821`. Therefore FG IDs do exist. Proposed Inventory FG key is ProductID, but inspect full product/release mapping to ensure distinct releases aren't collapsed; may need ReleaseID as counted SKU identity. Do not conflate with WS ID. No sheet changes.
+
+## Latest requirement: bring WS Finished Goods ID
+
+User says Finished Goods **must carry WSFinishedGoodsID too**. In existing SPIRITS `Releases`, `WSMasterID` is candidate external FG identifier; verify it maps to WS Finished Goods ID, rather than creating a redundant field. Keep internal ProductID/ReleaseID and external WSMasterID, as with Dry Goods MaterialID/WSRawMaterialID. No implementation yet.

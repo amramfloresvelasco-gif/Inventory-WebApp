@@ -63,3 +63,7 @@ User approved **one Submit button + Lock/Unlock Location** replacing legacy two-
 ### 2026-11-15 — Entry edit/delete audit design discussed
 
 User wants employee-accessible editing/deletion instead of manual fixes. Options: archive/move old rows, or retain old rows with `Valid` flag. Assistant recommended retain+invalidate+new replacement ID, plus append-only audit log, with individual-child vs whole-family edits. **Recommendation pending user approval; not implemented.**
+
+### 2026-11-15 — Edit constraints confirmed
+
+User confirmed edit operations may correct only the existing child records in a submission. Five pallets remain five pallets; no adding bottles or more pallets via Edit. Additional stock requires New Entry. Updated design notes; no implementation.

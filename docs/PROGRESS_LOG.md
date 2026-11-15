@@ -123,3 +123,7 @@ User clarified they are walking through **how discrepancies are handled**, and w
 ### 2026-11-15 — Clickable discrepancy map behavior confirmed
 
 User requires clicking a colored warehouse location to explain its color. For red, admin sees **Team A vs Team B aggregated product/UOM totals side by side**, e.g. 100 vs 99, **regardless of entry count**. Sum valid child records; do not show individual entry detail by default. Blind employee counts remain private. No implementation.
+
+### 2026-11-15 — Dynamic red/yellow/green map semantics confirmed
+
+User: Team A counting five products alone => yellow. As soon as Team B starts in same location, mismatch => **red immediately**, even before B finishes. As B catches up, if all aggregate product/UOM totals match => **green**, otherwise red. All discrepancies red; no finish-location button. Recompute on every valid count change. No implementation.

@@ -105,3 +105,7 @@ Proposed fields: stable Location ID, SPIRITS Warehouse ID, Bay, Location label, 
 ## 10. Existing barcode infrastructure (confirmed 2026-11-15)
 
 Physical locations already have an established naming convention and printed barcodes. Preserve existing labels and identifiers; do not generate replacement location codes by default. Current scanning conventions: **Dry Goods/Packaging use 2D barcodes; Finished Goods use QR codes**. The user may migrate all scanning to QR in the future. The Inventory scanning and lookup design must accept both formats, store decoded identifier values independently of symbology, and allow a future QR transition without rekeying products or locations. Clarify whether the stated formats refer to product labels, location labels, or both, and inspect sample codes before finalizing scanner and schema. No table has been created yet.
+
+## 11. Barcode uniqueness confirmed (2026-11-15)
+
+User confirms **everything has a unique barcode**. This includes inventory products and physical warehouse locations in the intended workflow. Preserve and look up existing unique barcode values; do not create new barcode conventions. Scanning a location should resolve its warehouse, bay and location; scanning an item should resolve its existing SPIRITS product. Maintain stable internal record IDs independently of printed barcode values to protect history if labels change. Support both currently used 2D and QR symbologies and potential migration to QR. Exact barcode payload examples and location import source still need verification.

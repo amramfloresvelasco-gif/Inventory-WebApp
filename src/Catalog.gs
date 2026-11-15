@@ -30,7 +30,7 @@ function invCatalogPreview_() {
   }
   for(const row of materialRows) {
     const category=String(row.Category||'').trim().toLowerCase();
-    const cls=category==='packaging'?'Packaging':category==='blending'?'Blending Ingredient':'Raw Material';
+    // Blending ingredients are Report 2-only; do not import them as countable products.\n    if(category==='blending'||category==='blending ingredient'||category==='blending ingredients')continue;\n    const cls=category==='packaging'?'Packaging':'Raw Material';
     add(row['Material ID'],row['Material Name'],cls,'Each','', 'Material Reference');
   }
   for(const row of productRows) {

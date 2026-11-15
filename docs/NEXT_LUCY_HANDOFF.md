@@ -98,3 +98,7 @@ Authorized users may switch teams **within the same inventory event**, but the c
 ## Latest requested feature: voice recognition
 
 User wants **Voice Entry in Phase 1**, allowing spoken location/product/pallet quantity, e.g. `Location PRA-L1-C4 5 pallets Pickers 1lt with 100 cases each`. Intended five separate 100-case child rows under one submission. Proposed mic tap-to-speak, speech-to-text to structured form, master-data validation and explicit confirmation, same save/ownership logic as manual entry. Support location-only or count-only phrases; respect locked team/location. Test browser support, warehouse noise, ambiguous barcodes/products, microphone permissions. No code implemented. The example location is not verified as a valid existing code.
+
+## Voice Entry refinement: separate context-specific controls
+
+**Location mic**: accepts only location code; resolve against location master. **Product mic**: accepts product/quantity/pallet details for current location, including spoken `keep location`. User example `3 pallets Pickers Original 1lt 100 cases each 1 partial pallet 20 cases keep location` -> 3 child records of 100 cases and one child of 20, total 320 cases, same selected location. Explicit preview/confirmation, no silent guessing, no code yet. Preserve independent team/location locks. This supersedes a generic all-fields voice command as the primary UX.

@@ -83,3 +83,7 @@ User confirmed admins grant app access only, **not** team assignment. Any author
 ### 2026-11-15 — Phase 1 defined; team unlock approved
 
 User confirmed Phase 1 = accurate independent counts for Team A and Team B; WS reconciliation deferred to Phase 2. Employees may switch teams within an inventory event, but must explicitly **Unlock Team** to change selected team and relock it. Team and location locks are independent. Documentation only; no app code yet.
+
+### 2026-11-15 — Voice Entry feature requested
+
+User wants speech recognition for location selection and complete entry: “Location PRA-L1-C4 5 pallets Pickers 1lt with 100 cases each.” Proposed Phase 1 tap-to-speak form autofill, exact master validation and confirmation before saving; generate five 100-case child rows. Test mobile browser/microphone compatibility and warehouse noise. No voice implementation yet.

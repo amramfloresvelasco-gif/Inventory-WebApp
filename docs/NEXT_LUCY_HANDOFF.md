@@ -154,3 +154,7 @@ Read connected live `BMD V4 — Database` Google Sheet `1fll-r__z9DWWehswc-eaOyY
 ## Latest requirement: bring WS Finished Goods ID
 
 User says Finished Goods **must carry WSFinishedGoodsID too**. In existing SPIRITS `Releases`, `WSMasterID` is candidate external FG identifier; verify it maps to WS Finished Goods ID, rather than creating a redundant field. Keep internal ProductID/ReleaseID and external WSMasterID, as with Dry Goods MaterialID/WSRawMaterialID. No implementation yet.
+
+## Latest correction: do not conflate WSMasterID with WSFinishedGoodsID
+
+User specifically says they do **not believe WSFinishedGoodsID exists** and want it brought into FG records. Existing SPIRITS `Releases.WSMasterID` is **only a candidate**, not verified equivalent. Inspect actual Whiskey Systems FG data/identifier; if equivalent reuse mapping, if not add distinct mapped WS Finished Goods ID. Do not claim this is already done. No data edits yet.

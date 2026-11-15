@@ -95,3 +95,7 @@ User refined Phase 1 voice UX: location mic accepts only location identifier; pr
 ### 2026-11-15 — Voice command for next location confirmed
 
 User example: 5 full pallets x 100 cases plus 1 partial pallet x 20 cases of Pickers Original 1L = **six child records**, 520 cases. Spoken `new location` or `change location` means submit at current location, then unlock/clear location **only after verified save**. Opposite of `keep location`. No implementation.
+
+### 2026-11-15 — Voice product alias challenge
+
+User example: official `Borchetta Bourbon #473 2025 750mL/6pk` versus spoken `Borchetta Bourbon Racecar 2025 473 20 cases`. Need voice-to-catalog matching tolerant of nicknames/reordering/omitted pack, while extracting 20-case quantity and avoiding wrong-SKU saves. Proposed approved aliases and attribute matching with explicit confirmation. No code.

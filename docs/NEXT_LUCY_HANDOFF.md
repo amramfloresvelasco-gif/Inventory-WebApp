@@ -110,3 +110,7 @@ Example `5 pallets Pickers Original 1lt 100 cases each 1 partial pallet 20 cases
 ## Latest voice recognition challenge: alias and attribute matching
 
 Official example `Borchetta Bourbon #473 2025 750mL/6pk`; spoken example `Borchetta Bourbon Racecar 2025 473 20 cases`. Resolve spoken product to **existing SPIRITS SKU ID** using normalized official name, approved voice aliases, and product attributes (release #473, year 2025, volume/pack where available), with `20 cases` as quantity, not product name. User wants this kind of tolerant recognition. Do not invent alias or assume unique SKU; require confirmation/disambiguation if needed. Proposed admin-approved product-ID-linked voice alias metadata; no implementation.
+
+## Mandatory voice review (confirmed)
+
+After voice input, **display the recognized spoken text and interpreted entry on screen**. Employee must explicitly press **Save** or **Cancel** before any database write. No automatic submission or speech-only bypass. Save validates/commits, Cancel discards; if `new location` was spoken, clear/unlock only after verified successful Save. This is a hard requirement. No code yet.

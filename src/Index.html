@@ -157,6 +157,16 @@ function save(){if(busy)return;
  if(!el('session').value||!el('location').value||!el('product').value){message('Select a session, location and product.',true);return;}
  const qtyText=el('qty').value;
  if(!/^[0-9]+$/.test(qtyText)||!Number.isSafeInteger(Number(qtyText))){message('Enter a whole-number quantity.',true);return;}
+ const chosen=data.products.find(p=>p.id===el('product').value);
+ if(chosen&&chosen.className.toLowerCase()==='finished good'){
+   const palletCount=Number(el('palletCount').value);
+   const partial=Number(el('partialCases').value);
+   const bottles=Number(el('looseBottles').value);
+   if(palletCount!==1||partial!==0||bottles!==0){
+     message('Multi-pallet and loose-bottle saving is not enabled yet. Reset pallet preview to 1 full pallet, 0 partial cases, and 0 loose bottles before saving a single count.',true);
+     return;
+   }
+ }
  busy=true;el('save').disabled=true;
  if(!pendingId)pendingId='inv_'+crypto.randomUUID().replace(/-/g,'');
  const request={entryId:pendingId,sessionId:el('session').value,locationId:el('location').value,

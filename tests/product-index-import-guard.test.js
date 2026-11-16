@@ -1,0 +1,20 @@
+const assert=require('assert'),fs=require('fs'),vm=require('vm');
+const ctx=vm.createContext({});
+for(const file of ['src/ProductIndexPreview.gs','src/ProductIndexImportGuard.gs'])
+  vm.runInContext(fs.readFileSync(file,'utf8'),ctx);
+const raw=[{RawMaterialId:'100',MaterialName:'Flavor',ClassOfMaterial:'Blending_Ingredient',UnitOfMeasure:'FluidOunces'}];
+const fg=[{'Master Id':'200','Master Name':'Finished SKU'}];
+const preview=ctx.invPreviewProductIndex_(raw,fg,[{WSItemID:'200',UnitsPerCase:6}]);
+let result=ctx.invPrepareInitialProductIndex_(preview,[],'IMPORT_INITIAL_PRODUCT_INDEX');
+assert.strictEqual(result.ready,true);
+assert.strictEqual(result.addCount,2);
+assert.strictEqual(result.products[0].DefaultUOM,'FluidOunces');
+assert.strictEqual(result.products[1].UnitsPerCase,6);
+assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,result.products).ok,true);
+assert.strictEqual(ctx.invPrepareInitialProductIndex_(preview,[],null).ready,false);
+assert.strictEqual(ctx.invPrepareInitialProductIndex_(preview,preview.products,'IMPORT_INITIAL_PRODUCT_INDEX').ready,false);
+assert.strictEqual(ctx.invPrepareInitialProductIndex_({...preview,ready:false},[],'IMPORT_INITIAL_PRODUCT_INDEX').ready,false);
+assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,result.products.slice(0,1)).ok,false);
+assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,[{...result.products[0],DefaultUOM:'Each'},result.products[1]]).ok,false);
+assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,[result.products[0],result.products[0]]).ok,false);
+console.log('Initial ProductIndex guard tests PASS');

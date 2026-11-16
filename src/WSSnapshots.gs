@@ -127,3 +127,13 @@ function apiInventoryAdminExtendedLegacyUomWatchlist(input) {
   return {snapshotId,sourceTimestamp:String(snapshots[0].SourceTimestamp||''),
     items:watch.items,nonzero:watch.nonzero,nonzeroCount:watch.nonzeroCount};
 }
+
+/** Admin-only snapshot selector for the Extended Report 2 legacy-UOM section. */
+function apiInventoryAdminExtendedSnapshotList() {
+  invRequireAdmin_();
+  return invRows_('WSSnapshots').map(r=>({
+    snapshotId:String(r.SnapshotID||''),
+    sourceTimestamp:String(r.SourceTimestamp||''),
+    snapshotType:String(r.SnapshotType||'')
+  })).filter(r=>r.snapshotId);
+}

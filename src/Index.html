@@ -136,14 +136,19 @@ function bootstrap(){invRun().withSuccessHandler(r=>{data=r;el('identity').textC
  message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
  updateTeamControls();
  }).withFailureHandler(e=>message(e.message||String(e),true)).apiInventoryBootstrap()}
-function save(){if(busy)return;busy=true;el('save').disabled=true;
+function save(){if(busy)return;
+ if(!data||!data.user.teamLocked){message('Lock your team before counting.',true);return;}
+ if(!el('session').value||!el('location').value||!el('product').value){message('Select a session, location and product.',true);return;}
+ const qtyText=el('qty').value;
+ if(!/^[0-9]+$/.test(qtyText)||!Number.isSafeInteger(Number(qtyText))){message('Enter a whole-number quantity.',true);return;}
+ busy=true;el('save').disabled=true;
  if(!pendingId)pendingId='inv_'+crypto.randomUUID().replace(/-/g,'');
  const request={entryId:pendingId,sessionId:el('session').value,locationId:el('location').value,
- productId:el('product').value,uom:el('uom').value,quantity:Number(el('qty').value),
+ productId:el('product').value,uom:el('uom').value,quantity:Number(qtyText),
  notes:el('notes').value,entryMethod:el('barcode').value?'Barcode':'Manual'};
- invRun().withSuccessHandler(r=>{busy=false;pendingId=null;el('save').disabled=false;el('qty').value='1';el('notes').value='';
+ invRun().withSuccessHandler(r=>{busy=false;pendingId=null;updateTeamControls();el('qty').value='1';el('notes').value='';
  message(r.duplicate?'Submission already saved; no duplicate created.':'Count saved successfully ('+r.elapsedMs+' ms server).');
- }).withFailureHandler(e=>{busy=false;el('save').disabled=false;message((e.message||String(e))+' — retry Save to use the same submission ID.',true)}).apiInventorySaveCount(request)}
+ }).withFailureHandler(e=>{busy=false;updateTeamControls();message((e.message||String(e))+' — retry Save to use the same submission ID.',true)}).apiInventorySaveCount(request)}
 el('warehouse').addEventListener('change',locations);el('bay').addEventListener('change',updateLocations);
 el('barcode').addEventListener('input',search);el('product').addEventListener('change',selectUom);
 el('save').addEventListener('click',save);
@@ -177,16 +182,17 @@ el('location').addEventListener('change',()=>el('entryList').replaceChildren());
 el('session').addEventListener('change',()=>el('entryList').replaceChildren());
 el('markEmpty').addEventListener('click',()=>{
  if(busy)return;
+ if(!data||!data.user.teamLocked){message('Lock your team before marking EMPTY.',true);return;}
  const sessionId=el('session').value,locationId=el('location').value;
  if(!sessionId||!locationId){message('Select an open session and location.',true);return;}
  if(!confirm('Mark location '+locationId+' EMPTY for your team?'))return;
  if(!pendingEmptyId)pendingEmptyId='empty_'+crypto.randomUUID().replace(/-/g,'');
  busy=true;el('markEmpty').disabled=true;el('save').disabled=true;
  invRun().withSuccessHandler(r=>{
-  busy=false;pendingEmptyId=null;el('markEmpty').disabled=false;el('save').disabled=false;
+  busy=false;pendingEmptyId=null;updateTeamControls();
   message(r.alreadyEmpty?'Your team already marked this location EMPTY.':'Location marked EMPTY for your team.');
  }).withFailureHandler(e=>{
-  busy=false;el('markEmpty').disabled=false;el('save').disabled=false;
+  busy=false;updateTeamControls();
   message((e.message||String(e))+' — retry EMPTY with the same submission ID.',true);
  }).apiInventoryMarkEmpty({entryId:pendingEmptyId,sessionId,locationId});
 });

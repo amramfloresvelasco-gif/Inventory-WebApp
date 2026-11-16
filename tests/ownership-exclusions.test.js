@@ -27,3 +27,34 @@ assert.notStrictEqual(rev,ctx.invOwnershipRevision_([{...base[0]},{...base[1],Up
 assert.notStrictEqual(rev,ctx.invOwnershipRevision_([base[0]]));
 assert.strictEqual(typeof configured.revision,'string');
 assert.strictEqual(configured.rows.length,2);
+
+let cells=[],sheetExists=false,lockReleased=0;
+const sheet={
+ getLastRow:()=>cells.length,
+ getRange:(row,col,height,width)=>({
+  getDisplayValues:()=>row===1?[['Token','Active','UpdatedAt','UpdatedBy']]:cells.slice(row-1,row-1+height),
+  getValues:()=>cells.slice(row-1,row-1+height),
+  setValues:values=>{values.forEach((v,i)=>{cells[row-1+i]=v;});},
+  clearContent:()=>{for(let i=row-1;i<row-1+height;i++)cells[i]=['','','',''];}
+ })
+};
+const db={getSheetByName:()=>sheetExists?sheet:null,insertSheet:()=>{sheetExists=true;return sheet;}};
+ctx.SpreadsheetApp={openById:()=>db};
+ctx.LockService={getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{lockReleased++}})};
+ctx.invRequireAdmin_=()=>({email:'admin@example.com'});
+assert.throws(()=>ctx.apiInventoryAdminInitializeOwnershipExclusions({confirm:'NO'}),/confirmation/);
+assert.strictEqual(sheetExists,false);
+const created=ctx.apiInventoryAdminInitializeOwnershipExclusions({confirm:'CREATE_OWNERSHIP_EXCLUSIONS'});
+assert.strictEqual(created.rows,4);
+assert.strictEqual(cells.length,5);
+assert.throws(()=>ctx.apiInventoryAdminInitializeOwnershipExclusions({confirm:'CREATE_OWNERSHIP_EXCLUSIONS'}),/already exists/);
+const original=ctx.apiInventoryAdminOwnershipExclusions();
+assert.strictEqual(original.tokens.length,4);
+assert.throws(()=>ctx.apiInventoryAdminSaveOwnershipExclusions({rows:[{Token:'NEW',Active:true}],expectedRevision:'stale'}),/changed/);
+assert.strictEqual(cells.length,5);
+const saved=ctx.apiInventoryAdminSaveOwnershipExclusions({rows:[{Token:'JYP',Active:true},{Token:'NEW',Active:false}],expectedRevision:original.revision});
+assert.strictEqual(saved.ok,true);
+assert.strictEqual(ctx.apiInventoryAdminOwnershipExclusions().tokens.join(','),'JYP');
+assert.strictEqual(cells[3][0],'');
+assert(lockReleased>=4);
+console.log('Mocked admin setup/save/stale-edit checks passed');

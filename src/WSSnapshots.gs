@@ -89,10 +89,6 @@ function invExtendedOwnershipExcluded_(name, tokens) {
   const set=new Set(words);
   return (tokens||[]).some(token=>set.has(String(token||'').trim().toUpperCase()));
 }
-function invExtendedLegacyUomWatchlist_(rows) {');
-    return new RegExp('(^|[^A-Z0-9])'+escaped+'(?=$|[^A-Z0-9])').test(value);
-  });
-}
 function invExtendedLegacyUomWatchlist_(rows, exclusionTokens) {
   if(!Array.isArray(rows))throw new Error('Invalid source rows.');
   const grouped=new Map();

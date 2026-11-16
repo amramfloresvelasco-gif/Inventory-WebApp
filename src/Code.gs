@@ -112,9 +112,11 @@ function apiInventorySaveCount(request) {
   try {
     invSession_(sessionId);
     const ref=invReference_();
-    const loc=ref.locations.find(x=>String(x.LocationID)===locationId);
-    const product=ref.products.find(x=>String(x.WSItemID)===productId);
-    if(!loc || !product) throw new Error('Invalid location or product.');
+    const locations=ref.locations.filter(x=>String(x.LocationID)===locationId);
+    const products=ref.products.filter(x=>String(x.WSItemID)===productId);
+    if(locations.length!==1 || products.length!==1)
+      throw new Error('Location or product missing or duplicated in active reference data.');
+    const product=products[0];
     const cls=String(product.ClassOfMaterial).toLowerCase();
     if(cls==='finished good') {
       if(!['Case','Bottle'].includes(uom)) throw new Error('Finished goods use Case or Bottle.');
@@ -166,8 +168,8 @@ function apiInventoryMarkEmpty(request) {
   if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
   try {
     invSession_(sessionId);
-    if(!invReference_().locations.some(x=>String(x.LocationID)===locationId))
-      throw new Error('Invalid location.');
+    if(invReference_().locations.filter(x=>String(x.LocationID)===locationId).length!==1)
+      throw new Error('Location missing or duplicated in active reference data.');
     const entries=invRows_('CountEntries');
     const existing=entries.find(x=>String(x.EntryID)===entryId);
     if(existing) {

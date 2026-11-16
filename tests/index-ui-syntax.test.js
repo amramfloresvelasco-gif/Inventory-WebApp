@@ -28,3 +28,6 @@ for(const id of ['palletCount','partialCases','looseBottles','palletPreview'])
  assert(html.includes('id="'+id+'"'),'Missing pallet preview control: '+id);
 assert(html.includes('Multi-pallet saving is not enabled yet.'),'Pallet preview must not imply live batch persistence');
 console.log('Pallet preview UI controls passed');
+
+assert(script[1].includes("if(palletCount!==1||partial!==0||bottles!==0)"),'Single-row Save must reject multi-child pallet preview');
+console.log('Unsupported pallet batch Save guard passed');

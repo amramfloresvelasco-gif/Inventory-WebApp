@@ -22,7 +22,8 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
   }
   for(const r of rawRows) {
     const cls=String(r.ClassOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
-    if(!['PACKAGING','BLENDINGINGREDIENT'].includes(cls))continue;
+    // Blending ingredients are report-only; fermentation materials are excluded.
+    if(cls!=='PACKAGING')continue;
     const id=String(r.RawMaterialId||'').trim();
     const rawUom=String(r.UnitOfMeasure||'').trim();
     if(!['Each','Pounds','Gallons'].includes(rawUom))

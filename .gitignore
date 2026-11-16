@@ -1,0 +1,5 @@
+# Local clasp connection and generated deployment stamp
+.clasp.json
+src/BuildInfo.gs
+# clasp pull creates JavaScript copies of tracked .gs files
+src/*.js

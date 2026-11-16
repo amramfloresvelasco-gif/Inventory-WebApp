@@ -148,3 +148,17 @@ assert.throws(()=>driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin'
 assert.throws(()=>driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin','test-import-002',
  {headers:stage.headers,rows:stage.rows}),/must be empty/);
 console.log('ProductIndex Drive evidence mock tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexAuditChain.gs','utf8'),ctx);
+const chain=[];
+for(const phase of ['PREPARED','BACKUP_VERIFIED','WRITE_STARTED','FAILED','RECOVERY_REQUIRED','RECOVERED'])
+ chain.push(ctx.invProductIndexNextAuditEvent_(chain,'import-1','admin','event-'+(chain.length+1),phase,{}));
+assert.strictEqual(ctx.invValidateProductIndexAuditChain_(chain,'import-1','admin').valid,true);
+assert.strictEqual(ctx.invValidateProductIndexAuditChain_(chain.slice(0,3),'import-1','admin').valid,true);
+const broken=chain.map(e=>({...e}));broken[2].previousEventId='wrong';
+assert.strictEqual(ctx.invValidateProductIndexAuditChain_(broken,'import-1','admin').valid,false);
+const reordered=chain.map(e=>({...e}));[reordered[1],reordered[2]]=[reordered[2],reordered[1]];
+assert.strictEqual(ctx.invValidateProductIndexAuditChain_(reordered,'import-1','admin').valid,false);
+assert.throws(()=>ctx.invProductIndexNextAuditEvent_(chain,'import-1','admin','event-7','WRITE_STARTED',{}));
+assert.throws(()=>ctx.invProductIndexNextAuditEvent_(chain,'import-1','admin','event-6','PREPARED',{}));
+console.log('ProductIndex append-only audit chain tests PASS');

@@ -15,6 +15,7 @@ on:
       - 'src/LocationComparisonTests.gs'
       - 'src/LocationComparisonFixtureTests.gs'
       - 'src/PalletChildPlanner.gs'
+      - 'src/PalletFamilyRecovery.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
   pull_request:
@@ -47,6 +48,8 @@ jobs:
           node-version: '22'
       - name: Pallet child expansion and parent traceability
         run: node tests/pallet-child-planner.test.js
+      - name: Pallet family partial-write recovery classification
+        run: node tests/pallet-family-recovery.test.js
       - name: Counting, EMPTY and deletion workflow
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures

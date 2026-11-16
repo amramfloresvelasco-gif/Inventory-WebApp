@@ -59,3 +59,7 @@ assert.strictEqual(ctx.apiInventoryAdminOwnershipExclusions().tokens.join(','),'
 assert.strictEqual(cells.length,3);
 assert(lockReleased>=4);
 console.log('Mocked admin setup/save/stale-edit checks passed');
+
+const wire=ctx.invOwnershipWireRows_([{Token:'JYP',Active:true,UpdatedAt:new Date('2026-11-15T00:00:00.000Z'),UpdatedBy:'admin@example.com'}]);
+assert.strictEqual(wire[0].UpdatedAt,'2026-11-15T00:00:00.000Z');
+assert.strictEqual(typeof wire[0].UpdatedAt,'string');

@@ -55,7 +55,7 @@ function invLocationComparison_(sessionId) {
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,
       mismatchCount:differences.length,differences};
   });
-  const allGreen=result.length>0&&result.every(x=>x.color==='green');
+  const allGreen=invalid.length===0&&result.length>0&&result.every(x=>x.color==='green');
   return {sessionId,locations:result,invalid,
     allGreen,freezeAllowed:false,
     note:'EMPTY entries participate in mismatch detection; EMPTY submission endpoint and freeze validation pending.'};

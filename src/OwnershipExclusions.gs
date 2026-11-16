@@ -82,7 +82,7 @@ function apiInventoryAdminSaveOwnershipExclusions(input) {
       throw new Error('Ownership exclusions changed; refresh before saving.');
     if(rows.length)sheet.getRange(2,1,rows.length,4).setValues(
       rows.map(r=>[r.Token,r.Active,new Date(),admin.email]));
-    if(existing>rows.length)sheet.getRange(rows.length+2,1,existing-rows.length,4).clearContent();
+    if(existing>rows.length)sheet.deleteRows(rows.length+2,existing-rows.length);
     return {ok:true,configured:true,tokens:invOwnershipTokensFromRows_(rows)};
   } finally {lock.releaseLock();}
 }

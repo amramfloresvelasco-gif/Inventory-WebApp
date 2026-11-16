@@ -22,7 +22,8 @@ function invLocationComparison_(sessionId) {
 /** Pure builder for fixture tests; endpoint always validates session and reads live sheets. */
 function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRows) {
   const locations=locationRows.filter(x=>String(x.Active).toLowerCase()==='true');
-  const products=new Map(productRows.map(x=>[String(x.WSItemID),x]));
+  const products=new Map(productRows.filter(x=>String(x.Active).toLowerCase()==='true')
+    .map(x=>[String(x.WSItemID),x]));
   const grouped=new Map(), invalid=[];
   const validLocationIds=new Set(locations.map(x=>String(x.LocationID)));
   const emptyByLocation=new Map(), invalidCounts=new Map();

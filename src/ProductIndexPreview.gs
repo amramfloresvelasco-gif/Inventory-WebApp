@@ -133,7 +133,7 @@ function invPlanProductIndexSync_(preview, existingRows) {
   const current=Array.isArray(existingRows)?existingRows:[];
   const byId=new Map(), seen=new Set(), adds=[], updates=[], unchanged=[];
   if(!preview||preview.ready!==true||issues.length)
-    return {ready:false,issues:issues.length?issues:[{reason:'Source preview is not ready'}],adds,updates,unchanged};
+    return {ready:false,issues:issues.length?issues:[{reason:'Source preview is not ready'}],adds,updates,unchanged,missing:[]};
   for(const row of current) {
     const id=String(row.WSItemID||'').trim();
     if(!id||byId.has(id))issues.push({id,reason:'Existing ProductIndex has missing or duplicate WS item ID'});

@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
-let rows=[],writes=0,releases=0,failWrite=false,lockAvailable=true;
+let rows=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
  invUser_:()=>({email:'counter@example.com',role:'counter',team:'A',teamLocked:true}),
@@ -15,7 +15,7 @@ const context=vm.createContext({
    getRange:(start,col,height,width)=>({setValues:values=>{
      assert.equal(width,14);assert.equal(height,values.length);
      writes++;if(failWrite)throw Error('Simulated write failure');
-     values.forEach((v,i)=>{rows[start-2+i]=Object.fromEntries(keys.map((k,j)=>[k,v[j]]));});
+     (partialWrite?values.slice(0,2):values).forEach((v,i)=>{rows[start-2+i]=Object.fromEntries(keys.map((k,j)=>[k,v[j]]));});
    }})
  };},
  LockService:{getScriptLock:()=>({tryLock:()=>lockAvailable,releaseLock:()=>{releases++;}})}
@@ -54,4 +54,11 @@ lockAvailable=true;
 assert.equal(save(request).childCount,7);
 assert.equal(writes,3);
 assert.equal(releases,8);
+rows=[];partialWrite=true;
+assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/could not be verified \\(PARTIAL\\)/);
+assert.equal(rows.length,2);
+partialWrite=false;
+assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/PARTIAL/);
+assert.equal(rows.length,2);
+assert.equal(releases,10);
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

@@ -86,3 +86,21 @@ check('integer string quantity accepted',()=>assert.equal(save(count('COUNT-0000
 assert.equal(entries.length,4);
 assert.equal(audit.length,3);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');
+
+const teamRows=[{Email:'a@example.com',Role:'Counter',Status:'Active',AssignedTeam:'',TeamLocked:false}];
+const teamChanges=[];
+context.invRows_=name=>name==='AppUsers'?teamRows:name==='CountEntries'?entries:name==='CountEntryAudit'?audit:[];
+context.invSheet_=name=>name==='AppUsers'?{
+ getRange:(row,col)=>({setValue:v=>{teamRows[row-2].TeamLocked=v;teamChanges.push('unlock');},
+ setValues:values=>{teamRows[row-2].AssignedTeam=values[0][0];teamRows[row-2].TeamLocked=values[0][1];teamChanges.push('lock');}})
+}:mocks.invSheet_(name);
+context.invUser_=()=>({email:'a@example.com',role:'counter',team:teamRows[0].AssignedTeam,teamLocked:teamRows[0].TeamLocked});
+const chooseTeam=vm.runInContext('apiInventorySelectTeam',context);
+check('counter self-locks team A',()=>assert.equal(chooseTeam({team:'A'}).teamLocked,true));
+reject('cannot switch locked team',()=>chooseTeam({team:'B'}));
+check('counter unlocks team',()=>assert.equal(chooseTeam({unlock:true}).teamLocked,false));
+check('counter switches to B',()=>assert.equal(chooseTeam({team:'B'}).team,'B'));
+reject('cannot unlock with team payload',()=>chooseTeam({unlock:true,team:'A'}));
+reject('cannot lock invalid team',()=>chooseTeam({team:'C'}));
+check('team history is unchanged',()=>assert.equal(entries[0].Team,'A'));
+console.log('PASS self-service team selection tests; mock sheets only.');

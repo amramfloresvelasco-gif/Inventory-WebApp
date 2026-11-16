@@ -109,7 +109,8 @@ function apiInventorySaveCount(request) {
     } else {
       const configured=String(product.DefaultUOM||'').trim();
       if(!configured) throw new Error('Material UOM has not been verified.');
-      if(!['Each','Pounds','Gallons'].includes(configured)) throw new Error('Unsupported raw-material UOM.');\n      if(uom!==configured) throw new Error('Material must be counted in its configured UOM: '+configured);
+      if(!['Each','Pounds','Gallons'].includes(configured)) throw new Error('Unsupported raw-material UOM.');
+      if(uom!==configured) throw new Error('Material must be counted in its configured UOM: '+configured);
     }
     const sheet=invSheet_('CountEntries'), last=sheet.getLastRow();
     // Phase 1 correctness-first duplicate check; replace with indexed ID store after benchmark.

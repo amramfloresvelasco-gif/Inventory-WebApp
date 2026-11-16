@@ -8,6 +8,7 @@ const path=require('node:path');
 const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const entries=[],audit=[];
+const reference={locations:[{LocationID:'L1'}],products:[{WSItemID:'P1',ClassOfMaterial:'Raw Material',DefaultUOM:'Each'}]};
 let user={email:'a@example.com',role:'counter',team:'A',teamLocked:true};
 const countKeys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
 const auditKeys=['AuditID','EntryID','SessionID','Action','OldValue','NewValue','Reason','ChangedBy','ChangedAt'];
@@ -17,7 +18,7 @@ const context=vm.createContext({
   invUser_:()=>user,
   invTeam_:u=>u.team,
   invSession_:id=>{if(id!=='S1')throw Error('Session missing');},
-  invReference_:()=>({locations:[{LocationID:'L1'}],products:[{WSItemID:'P1',ClassOfMaterial:'Raw Material',DefaultUOM:'Each'}]}),
+  invReference_:()=>reference,
   invRows_:name=>name==='CountEntries'?entries:name==='CountEntryAudit'?audit:(()=>{throw Error('Unexpected table '+name)})(),
   invSheet_:name=>{
     const rows=name==='CountEntries'?entries:audit;
@@ -68,6 +69,13 @@ reject('negative quantity',()=>save(count('COUNT-000005',-1)));
 reject('fractional quantity',()=>save(count('COUNT-000005',1.5)));
 reject('invalid product',()=>save({...count('COUNT-000005'),productId:'MISSING'}));
 reject('invalid location',()=>save({...count('COUNT-000005'),locationId:'MISSING'}));
+reference.locations.push({...reference.locations[0]});
+reject('duplicate active location blocks count',()=>save(count('COUNT-000007')));
+reject('duplicate active location blocks EMPTY',()=>markEmpty({sessionId:'S1',locationId:'L1',entryId:'EMPTY-000007'}));
+reference.locations.pop();
+reference.products.push({...reference.products[0]});
+reject('duplicate active product blocks count',()=>save(count('COUNT-000007')));
+reference.products.pop();
 check('admin can remove counter entry',()=>{user={...user,email:'admin@example.com',role:'administrator'};assert.equal(remove({sessionId:'S1',entryId:'COUNT-000004'}).ok,true);});
 check('admin deletion is audited',()=>assert.equal(audit[audit.length-1].ChangedBy,'admin@example.com'));
 check('deleted entry no longer visible to owner',()=>{user={...user,email:'a@example.com',role:'counter'};assert.equal(vm.runInContext('apiInventoryMyEntries',context)({sessionId:'S1',locationId:'L1'}).length,0);});

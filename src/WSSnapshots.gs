@@ -137,3 +137,42 @@ function apiInventoryAdminExtendedSnapshotList() {
     snapshotType:String(r.SnapshotType||'')
   })).filter(r=>r.snapshotId);
 }
+
+/** Read-only standard-UOM blending ingredient section for Extended Report 2. */
+function invExtendedStandardBlending_(rows, exclusionTokens) {
+  if(!Array.isArray(rows))throw new Error('Invalid source rows.');
+  const grouped=new Map(), allowed=new Set(['Each','Pounds','Gallons']);
+  for(const r of rows) {
+    const cls=String(r.ClassOfMaterial||r.classOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
+    if(cls!=='BLENDINGINGREDIENT')continue;
+    const name=String(r.MaterialName||r.ItemName||r.itemName||'');
+    if(invExtendedOwnershipExcluded_(name,exclusionTokens))continue;
+    const uom=String(r.UnitOfMeasure||r.UOM||r.uom||'').trim();
+    if(!allowed.has(uom))continue;
+    const id=String(r.RawMaterialId||r.WSItemID||r.id||'').trim();
+    const warehouse=String(r.WarehouseId||r.Warehouse||r.warehouse||'').trim();
+    const value=r.Units!==undefined?r.Units:(r.originalQuantity!==undefined?r.originalQuantity:r.Quantity);
+    const quantity=Number(value);
+    if(!id||!uom||value==null||String(value).trim()===''||!Number.isFinite(quantity)||quantity<0)
+      throw new Error('Invalid standard blending source record.');
+    const key=JSON.stringify([id,uom,warehouse]);
+    if(!grouped.has(key))grouped.set(key,{WSItemID:id,ItemName:name,Warehouse:warehouse,UOM:uom,SourceQuantity:0,EffectiveQuantity:0,Rows:0});
+    const item=grouped.get(key);
+    item.SourceQuantity+=quantity;item.EffectiveQuantity+=quantity;item.Rows++;
+  }
+  return [...grouped.values()];
+}
+/** Admin-only: returns stored snapshot sections, never mutates source or count records. */
+function apiInventoryAdminExtendedBlendingReport(input) {
+  invRequireAdmin_();
+  const snapshotId=String(input&&input.snapshotId||'').trim();
+  if(!snapshotId)throw new Error('Snapshot ID required.');
+  const snapshots=invRows_('WSSnapshots').filter(r=>String(r.SnapshotID)===snapshotId);
+  if(snapshots.length!==1)throw new Error('Snapshot not found or duplicated.');
+  const rows=invRows_('WSRows').filter(r=>String(r.SnapshotID)===snapshotId);
+  const tokens=invOwnershipConfig_().tokens;
+  const standard=invExtendedStandardBlending_(rows,tokens);
+  const legacy=invExtendedLegacyUomWatchlist_(rows,tokens);
+  return {snapshotId,sourceTimestamp:String(snapshots[0].SourceTimestamp||''),
+    standard,legacy:legacy.items,legacyNonzeroCount:legacy.nonzeroCount};
+}

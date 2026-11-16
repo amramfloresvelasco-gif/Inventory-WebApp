@@ -28,3 +28,52 @@ function apiInventoryAdminOwnershipExclusions() {
   invRequireAdmin_();
   return invOwnershipConfig_();
 }
+
+/** Explicit admin setup only; never creates a table during ordinary report reads. */
+function apiInventoryAdminInitializeOwnershipExclusions(input) {
+  const admin=invRequireAdmin_();
+  if(!input||input.confirm!=='CREATE_OWNERSHIP_EXCLUSIONS')
+    throw new Error('Explicit setup confirmation required.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
+  try {
+    const db=SpreadsheetApp.openById(INV_DB_ID);
+    if(db.getSheetByName('OwnershipExclusions'))
+      throw new Error('OwnershipExclusions already exists; setup will not overwrite it.');
+    const sheet=db.insertSheet('OwnershipExclusions');
+    sheet.getRange(1,1,1,4).setValues([INV_OWNERSHIP_HEADERS]);
+    sheet.getRange(2,1,INV_OWNERSHIP_DEFAULT_TOKENS.length,4).setValues(
+      INV_OWNERSHIP_DEFAULT_TOKENS.map(token=>[token,true,new Date(),admin.email]));
+    return {ok:true,created:true,rows:INV_OWNERSHIP_DEFAULT_TOKENS.length};
+  } finally {lock.releaseLock();}
+}
+/** Atomic configuration replacement; existing table required. No silent migration. */
+function apiInventoryAdminSaveOwnershipExclusions(input) {
+  const admin=invRequireAdmin_();
+  if(!input||!Array.isArray(input.rows)||input.rows.length>100)
+    throw new Error('Provide up to 100 ownership exclusion rows.');
+  const rows=input.rows.map(r=>({
+    Token:String(r.Token||'').trim().toUpperCase(),
+    Active:r.Active===true||String(r.Active).toLowerCase()==='true'
+  }));
+  invOwnershipTokensFromRows_(rows);
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
+  try {
+    const db=SpreadsheetApp.openById(INV_DB_ID);
+    const sheet=db.getSheetByName('OwnershipExclusions');
+    if(!sheet)throw new Error('Initialize OwnershipExclusions first.');
+    const headers=sheet.getRange(1,1,1,4).getDisplayValues()[0];
+    if(headers.join('|')!==INV_OWNERSHIP_HEADERS.join('|'))
+      throw new Error('Unexpected OwnershipExclusions schema.');
+    const existing=sheet.getLastRow()-1;
+    // Require caller to confirm the current token set, preventing stale overwrites.
+    const current=invOwnershipConfig_().tokens.join('|');
+    if(String(input.expectedActiveTokens||'')!==current)
+      throw new Error('Ownership exclusions changed; refresh before saving.');
+    if(rows.length)sheet.getRange(2,1,rows.length,4).setValues(
+      rows.map(r=>[r.Token,r.Active,new Date(),admin.email]));
+    if(existing>rows.length)sheet.getRange(rows.length+2,1,existing-rows.length,4).clearContent();
+    return {ok:true,configured:true,tokens:invOwnershipTokensFromRows_(rows)};
+  } finally {lock.releaseLock();}
+}

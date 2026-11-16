@@ -162,3 +162,26 @@ assert.strictEqual(ctx.invValidateProductIndexAuditChain_(reordered,'import-1','
 assert.throws(()=>ctx.invProductIndexNextAuditEvent_(chain,'import-1','admin','event-7','WRITE_STARTED',{}));
 assert.throws(()=>ctx.invProductIndexNextAuditEvent_(chain,'import-1','admin','event-6','PREPARED',{}));
 console.log('ProductIndex append-only audit chain tests PASS');
+
+driveFolder.getFiles=()=>{const items=[...driveFiles.values()];let i=0;return {hasNext:()=>i<items.length,next:()=>items[i++]};};
+driveCtx.invProductIndexEvidenceFileName_=driveCtx.invProductIndexEvidenceFileName_;
+driveCtx.invProductIndexEvidenceReadById_=driveCtx.invProductIndexEvidenceReadById_;
+driveCtx.invProductIndexEvidenceWriteOnce_=driveCtx.invProductIndexEvidenceWriteOnce_;
+driveCtx.invProductIndexNextAuditEvent_=ctx.invProductIndexNextAuditEvent_;
+driveCtx.invValidateProductIndexAuditChain_=ctx.invValidateProductIndexAuditChain_;
+vm.runInContext(fs.readFileSync('src/ProductIndexAuditDrive.gs','utf8'),driveCtx);
+let eventResult=driveCtx.invProductIndexAppendAuditEventDisabled_(
+ driveFolder,'audit-test-001','admin','evt-1','PREPARED',{count:2});
+assert.strictEqual(eventResult.count,1);
+eventResult=driveCtx.invProductIndexAppendAuditEventDisabled_(
+ driveFolder,'audit-test-001','admin','evt-2','BACKUP_VERIFIED',{});
+assert.strictEqual(eventResult.count,2);
+assert.strictEqual(driveCtx.invProductIndexReadAuditEventsDisabled_(driveFolder,'audit-test-001','admin').length,2);
+assert.throws(()=>driveCtx.invProductIndexAppendAuditEventDisabled_(
+ driveFolder,'audit-test-001','admin','evt-3','PREPARED',{}),/transition/);
+assert.throws(()=>driveCtx.invProductIndexAppendAuditEventDisabled_(
+ driveFolder,'audit-test-001','admin','evt-2','WRITE_STARTED',{}),/Duplicate/);
+const fakeName='product-index-audit-test-001-event-004.json';
+driveFolder.createFile(fakeName,JSON.stringify({phase:'FAILED'}));
+assert.throws(()=>driveCtx.invProductIndexReadAuditEventsDisabled_(driveFolder,'audit-test-001','admin'),/Missing, duplicate or unexpected/);
+console.log('ProductIndex per-event Drive audit mock tests PASS');

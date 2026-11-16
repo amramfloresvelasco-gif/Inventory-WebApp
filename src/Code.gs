@@ -111,8 +111,10 @@ function apiInventorySaveCount(request) {
     const cls=String(product.ClassOfMaterial).toLowerCase();
     if(cls==='finished good') {
       if(!['Case','Bottle'].includes(uom)) throw new Error('Finished goods use Case or Bottle.');
-      if(uom==='Bottle' && !(Number(product.UnitsPerCase)>0))
-        throw new Error('Missing units-per-case conversion.');
+      const perCase=Number(product.UnitsPerCase);
+      if(product.UnitsPerCase===''||product.UnitsPerCase===null||
+         !Number.isSafeInteger(perCase)||perCase<=0)
+        throw new Error('Missing or invalid units-per-case conversion.');
     } else {
       const configured=String(product.DefaultUOM||'').trim();
       if(!configured) throw new Error('Material UOM has not been verified.');

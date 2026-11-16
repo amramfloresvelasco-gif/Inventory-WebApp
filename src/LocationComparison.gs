@@ -20,11 +20,15 @@ function invLocationComparison_(sessionId) {
   const locations=invRows_('Locations').filter(x=>String(x.Active).toLowerCase()==='true');
   const products=new Map(invRows_('ProductIndex').map(x=>[String(x.WSItemID),x]));
   const grouped=new Map(), invalid=[];
+  const validLocationIds=new Set(locations.map(x=>String(x.LocationID)));
   const emptyByLocation=new Map();
   for(const r of invRows_('CountEntries')) {
     if(String(r.SessionID)!==sessionId||String(r.Status).toUpperCase()!=='ACTIVE')continue;
     const team=String(r.Team).toUpperCase(),loc=String(r.LocationID),id=String(r.WSItemID);
     const p=products.get(id),n=Number(r.Quantity),uom=String(r.UOM);
+    if(!validLocationIds.has(loc)){
+      invalid.push({entryId:String(r.EntryID),reason:'Unknown or inactive location'});continue;
+    }
     if(String(r.EntryMethod).trim().toUpperCase()==='EMPTY') {
       if(!['A','B'].includes(team)){invalid.push({entryId:String(r.EntryID),reason:'Invalid EMPTY team'});continue;}
       if(!emptyByLocation.has(loc))emptyByLocation.set(loc,new Set());
@@ -49,14 +53,11 @@ function invLocationComparison_(sessionId) {
     g[team].set(key,(g[team].get(key)||0)+amount);
     g['count'+team]++;
   }
-  const statuses=invRows_('LocationStatus').filter(x=>String(x.SessionID)===sessionId);
-  const byLoc=new Map(statuses.map(x=>[String(x.LocationID),x]));
   const result=locations.map(l=>{
     const id=String(l.LocationID),g=grouped.get(id)||{A:new Map(),B:new Map(),countA:0,countB:0};
-    const record=byLoc.get(id);
     const empty=emptyByLocation.get(id)||new Set();
-    const startedA=g.countA>0||empty.has('A')||!!(record&&String(record.TeamAStarted).toLowerCase()==='true');
-    const startedB=g.countB>0||empty.has('B')||!!(record&&String(record.TeamBStarted).toLowerCase()==='true');
+    const startedA=g.countA>0||empty.has('A');
+    const startedB=g.countB>0||empty.has('B');
     const differences=invLocationDifferences_(g.A,g.B,empty.has('A'),empty.has('B'),g.countA,g.countB);
     // No Finish Location action: status follows submitted counts automatically.
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.

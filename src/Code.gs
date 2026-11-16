@@ -115,16 +115,23 @@ function apiInventorySaveCount(request) {
       if(uom!==configured) throw new Error('Material must be counted in its configured UOM: '+configured);
     }
     const sheet=invSheet_('CountEntries'), last=sheet.getLastRow();
-    if(invRows_('CountEntries').some(x=>String(x.SessionID)===sessionId&&
+    const existingEntries=invRows_('CountEntries');
+    const existingId=existingEntries.find(x=>String(x.EntryID)===entryId);
+    if(existingId){
+      if(String(existingId.SessionID)!==sessionId||String(existingId.LocationID)!==locationId||
+         String(existingId.Team).toUpperCase()!==team||
+         String(existingId.WSItemID)!==productId||String(existingId.UOM)!==uom||
+         Number(existingId.Quantity)!==quantity||
+         String(existingId.EnteredBy).trim().toLowerCase()!==user.email||
+         String(existingId.EntryMethod).toUpperCase()==='EMPTY')
+        throw new Error('Submission ID already used for another count.');
+      return {ok:true,entryId,duplicate:true};
+    }
+    if(existingEntries.some(x=>String(x.SessionID)===sessionId&&
       String(x.LocationID)===locationId&&String(x.Team).toUpperCase()===team&&
       String(x.Status).toUpperCase()==='ACTIVE'&&
       String(x.EntryMethod).toUpperCase()==='EMPTY'))
       throw new Error('Location marked EMPTY by your team; remove EMPTY before counting items.');
-    // Phase 1 correctness-first duplicate check; replace with indexed ID store after benchmark.
-    if(last>1) {
-      const ids=sheet.getRange(2,1,last-1,1).getDisplayValues();
-      if(ids.some(row=>row[0]===entryId)) return {ok:true,entryId,duplicate:true};
-    }
     const row=[entryId,sessionId,team,locationId,productId,uom,quantity,'',1,
       user.email,new Date(),String(request.entryMethod||'Manual').slice(0,32),
       String(request.notes||'').slice(0,500),'ACTIVE'];

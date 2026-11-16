@@ -8,7 +8,7 @@ label{display:block;font-weight:600;margin:12px 0 5px}
 input,select,textarea,button{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bac7d7;border-radius:8px;font:inherit}
 button{background:#1755a5;color:white;border:0;cursor:pointer;margin-top:15px}
 button:disabled{opacity:.55;cursor:wait}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a32626}
+small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px;margin-top:12px}.map-cell{padding:12px 8px;border:1px solid #aab4c2;border-radius:8px;text-align:left;color:#17243b;margin:0;min-height:76px}.map-cell.neutral{background:#eef1f5}.map-cell.yellow{background:#fff0ac}.map-cell.red{background:#ffcece}.map-cell.green{background:#bceac9}.map-cell:focus-visible{outline:3px solid #1755a5}.map-summary{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}.map-detail{padding:12px;background:#f5f7fb;border-radius:8px;margin-top:12px;white-space:pre-wrap}#message{white-space:pre-wrap}#message.error{color:#a32626}
 </style></head><body><main><h1>BMD Inventory</h1><p class="muted">Physical counting · Phase 1</p>
 <div id="message" role="status">Loading your Inventory account…</div>
 <section id="app" hidden><div class="panel"><div id="identity" class="muted"></div>
@@ -21,7 +21,7 @@ small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
-<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Users</h3><div id="users"></div></section></main>
+<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Location comparison</h3><p class="muted">Read-only supervisor view. Select a session, then refresh to see Team A/B status by location.</p><button id="refreshMap" type="button">Refresh location map</button><div id="mapSummary" class="map-summary" role="status"></div><div id="locationMap" class="map-grid"></div><div id="mapDetail" class="map-detail" hidden></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Users</h3><div id="users"></div></section></main>
 <script>
 let data=null, busy=false, pendingId=null, pendingEmptyId=null;
 const el=id=>document.getElementById(id);
@@ -97,6 +97,37 @@ el('markEmpty').addEventListener('click',()=>{
   message((e.message||String(e))+' — retry EMPTY with the same submission ID.',true);
  }).apiInventoryMarkEmpty({entryId:pendingEmptyId,sessionId,locationId});
 });
+function refreshLocationMap(){
+ const sessionId=el('session').value;
+ if(!sessionId){el('mapSummary').textContent='No open session.';el('locationMap').replaceChildren();return;}
+ const btn=el('refreshMap');btn.disabled=true;el('mapSummary').textContent='Loading locations…';
+ google.script.run.withSuccessHandler(r=>{
+  btn.disabled=false;
+  const counts={neutral:0,yellow:0,red:0,green:0};
+  r.locations.forEach(x=>counts[x.color]++);
+  el('mapSummary').textContent='Neutral '+counts.neutral+' · Yellow '+counts.yellow+
+   ' · Red '+counts.red+' · Green '+counts.green+(r.invalid.length?' · Invalid entries '+r.invalid.length:'');
+  const grid=el('locationMap');grid.replaceChildren();el('mapDetail').hidden=true;
+  for(const x of r.locations){
+   const cell=document.createElement('button');cell.type='button';
+   cell.className='map-cell '+x.color;
+   cell.textContent=x.bay+' · '+x.locationId+' · '+x.color.toUpperCase();
+   cell.title=x.warehouse+' / '+x.bay+' / '+x.locationId;
+   cell.addEventListener('click',()=>{
+    const d=el('mapDetail');d.hidden=false;
+    d.textContent=x.warehouse+' / '+x.bay+' / '+x.locationId+
+     '\\nStatus: '+x.color.toUpperCase()+
+     '\\nTeam A: '+(x.emptyA?'EMPTY':x.entryCountA+' entries')+
+     '\\nTeam B: '+(x.emptyB?'EMPTY':x.entryCountB+' entries')+
+     '\\nMismatches: '+x.mismatchCount+
+     (x.differences.length?'\\n'+x.differences.join('\\n'):'');
+   });
+   grid.appendChild(cell);
+  }
+ }).withFailureHandler(e=>{btn.disabled=false;el('mapSummary').textContent=e.message||String(e)})
+ .apiInventoryAdminLocationComparison({sessionId});
+}
+el('refreshMap').addEventListener('click',refreshLocationMap);
 function adminMessage(t){el('adminStatus').textContent=t}
 function loadAdmin(){google.script.run.withSuccessHandler(r=>{
  el('users').replaceChildren(...r.users.map(u=>{const p=document.createElement('p');

@@ -11,4 +11,6 @@ const format=new Function('v','return '+csv[1]);
 assert.strictEqual(format('=SUM(1,1)'),'"\t=SUM(1,1)"');
 assert.strictEqual(format('a"b'),'"a""b"');
 assert(script[1].includes("lines.join('\\r\\n')"),'CSV must use CRLF row delimiters');
+assert(script[1].includes("el('extendedSnapshot').addEventListener('change'"),'Snapshot change must invalidate export');
+assert(script[1].includes('extendedRows=null;extendedMeta=null'),'Report cache must clear before reloading');
 console.log('Inventory UI syntax and CSV safety checks passed');

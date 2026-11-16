@@ -22,7 +22,7 @@ small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(a
 <div class="row"><div><label for="myTeam">My counting team</label><select id="myTeam"><option value="A">Team A</option><option value="B">Team B</option></select></div><div><label for="teamAction">Team selection</label><button id="teamAction" type="button">Lock team</button></div></div><div id="teamStatus" class="muted" role="status"></div><label for="session">Inventory session</label><select id="session"></select>
 <div class="row"><div><label for="warehouse">Warehouse</label><select id="warehouse"></select></div>
 <div><label for="bay">Bay</label><select id="bay"></select></div></div>
-<label for="location">Location</label><select id="location"></select>
+<label for="location">Location</label><select id="location"></select><button id="locationAction" type="button">Lock location</button><div id="locationStatus" class="muted" role="status"></div>
 <label for="barcode">Scan barcode or search product</label><input id="barcode" autocomplete="off" placeholder="Barcode, WS item ID, or name">
 <label for="product">Product</label><select id="product"></select>
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
@@ -113,7 +113,7 @@ invRun().withSuccessHandler(info=>{
  invPerfLog('Build version unavailable: '+String(e&&e.message||e));
 }).apiInventoryBuildInfo();
 
-let data=null, busy=false, pendingId=null, pendingEmptyId=null;
+let data=null, busy=false, pendingId=null, pendingEmptyId=null, locationLocked=false;
 const el=id=>document.getElementById(id);
 function options(id,items,fn){const s=el(id);s.replaceChildren();for(const item of items){const o=document.createElement('option');o.value=fn?fn(item):item;o.textContent=fn?fn(item):item;s.appendChild(o)}}
 function locations(){const warehouse=el('warehouse').value;
@@ -126,11 +126,13 @@ function search(){const term=el('barcode').value.trim().toLowerCase();const matc
 function selectUom(){const p=data.products.find(p=>p.id===el('product').value);if(!p)return;
  const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:(p.uom?[p.uom]:[]);
  options('uom',units)}
+function updateLocationLock(){for(const id of ['warehouse','bay','location'])el(id).disabled=locationLocked;el('locationAction').textContent=locationLocked?'Unlock location':'Lock location';el('locationStatus').textContent=locationLocked?'Counting at '+el('location').value:'Location unlocked; select the next location.';}
+el('locationAction').addEventListener('click',()=>{if(busy)return;if(!locationLocked&&!el('location').value){message('Select a location first.',true);return;}locationLocked=!locationLocked;updateLocationLock();});
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
 function updateTeamControls(){if(!data)return;const locked=data.user.teamLocked;el('myTeam').disabled=locked;el('myTeam').value=data.user.team||'A';el('teamAction').textContent=locked?'Unlock team':'Lock selected team';el('teamStatus').textContent=locked?'Team '+data.user.team+' locked for new entries.':'Select a team and lock it before counting.';el('save').disabled=!data.sessions.length||!locked;el('markEmpty').disabled=!data.sessions.length||!locked;}
 el('teamAction').addEventListener('click',()=>{if(busy)return;const locked=data.user.teamLocked;const input=locked?{unlock:true}:{team:el('myTeam').value};el('teamAction').disabled=true;invRun().withSuccessHandler(r=>{data.user.team=r.team;data.user.teamLocked=r.teamLocked;el('teamAction').disabled=false;updateTeamControls();el('identity').textContent='Role: '+data.user.role+' · Team: '+(r.team||'not selected');message(r.teamLocked?'Team '+r.team+' locked.':'Team unlocked. Select a team to continue.');}).withFailureHandler(e=>{el('teamAction').disabled=false;message(e.message||String(e),true);}).apiInventorySelectTeam(input);});
 function bootstrap(){invRun().withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
- options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
+ options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();updateLocationLock();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
  message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
  updateTeamControls();
  }).withFailureHandler(e=>message(e.message||String(e),true)).apiInventoryBootstrap()}

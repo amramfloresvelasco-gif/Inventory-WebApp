@@ -299,3 +299,26 @@ assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(
 assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,modifiedStage,trusted).matches,false);
 assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,null).matches,false);
 console.log('Trusted ProductIndex preflight comparison tests PASS');
+
+const verifyCalls=[];
+const verifyCtx=vm.createContext({
+ invRequireAdmin_:()=>({email:'admin@example.test'}),
+ LockService:{getScriptLock:()=>({tryLock:()=>{verifyCalls.push('lock');return true;},
+   releaseLock:()=>verifyCalls.push('unlock')})},
+ invProductIndexFreshPlan_:()=>{verifyCalls.push('fresh');return {
+   ready:true,issues:[],preview,existing:[],sourceSnapshots};},
+ invStageInitialProductIndex_:ctx.invStageInitialProductIndex_,
+ invProductIndexCompareTrustedPreflight_:driveCtx.invProductIndexCompareTrustedPreflight_,
+ invProductIndexSourceFingerprints_:driveCtx.invProductIndexSourceFingerprints_,
+ invProductIndexVerifyStageFingerprint_:driveCtx.invProductIndexVerifyStageFingerprint_
+});
+vm.runInContext(fs.readFileSync('src/ProductIndexVerifyPreflight.gs','utf8'),verifyCtx);
+const verified=verifyCtx.apiInventoryAdminProductIndexVerifyPreflight(trusted);
+assert.strictEqual(verified.matches,true);
+assert.strictEqual(verified.importEnabled,false);
+assert.deepStrictEqual(verifyCalls,['lock','fresh','unlock']);
+assert.strictEqual(verifyCtx.apiInventoryAdminProductIndexVerifyPreflight(null).matches,false);
+assert.strictEqual(verifyCtx.apiInventoryAdminProductIndexVerifyPreflight({
+ ...trusted,stageFingerprint:{...fingerprint,sha256:'0'.repeat(64)}}).matches,false);
+assert.deepStrictEqual(verifyCalls,['lock','fresh','unlock','lock','fresh','unlock']);
+console.log('Lock-held read-only preflight verification tests PASS');

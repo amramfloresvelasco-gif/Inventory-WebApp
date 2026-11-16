@@ -667,3 +667,8 @@ User confirmed the deployed Inventory Web App now displays the Git commit after 
 ## 2026-11-16 — First deployed INV_PERF ProductIndex timing
 
 User supplied deployed browser logs: apiInventoryBuildInfo 763ms OK; apiInventoryBootstrap 2586ms OK; apiInventoryAdminOverview 1873ms OK; apiInventoryAdminProductIndexPreview **11951ms OK**. The preview RPC succeeded but **its validation counts/ready/issues have not yet been supplied**; never infer a successful 748-item validation from RPC status alone. Next request user to share the visible ProductIndex preview summary (counts, ready, issues, adds). Performance follow-up: instrument server read/resolve/preview/diff phases without changing source eligibility or data; benchmark multiple runs before optimization. No live import/write authorized.
+
+
+## 2026-11-16 — LIVE ProductIndex preview READY FOR REVIEW
+
+User ran deployed administrator `Validate ProductIndex sources`: **READY FOR REVIEW**, 748 products (520 raw, 228 finished goods), 228 verified case packs, 748 adds, 0 updates, 0 unchanged, 0 missing, **0 issues**, server elapsed **9502ms**. Browser INV_PERF RPC duration **11951ms** (includes transport/queue). **No import performed.** Legacy SPIRITS-only catalog diagnostic is not authoritative for ProductIndex and its missing-UOM warnings must not block this validated preview. Next: develop/test guarded initial import with fresh revalidation, locking, staging/rollback, readback, and failure injection; require explicit user approval before live ProductIndex writes. Optimize source reads separately after phase timings; don't weaken validation.

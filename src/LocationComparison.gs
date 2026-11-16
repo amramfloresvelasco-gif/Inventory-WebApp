@@ -17,12 +17,16 @@ function invLocationDifferences_(a,b,emptyA,emptyB,countA,countB) {
 /** Location comparison is session-scoped and read-only. Never infer EMPTY from missing entries. */
 function invLocationComparison_(sessionId) {
   invSession_(sessionId);
-  const locations=invRows_('Locations').filter(x=>String(x.Active).toLowerCase()==='true');
-  const products=new Map(invRows_('ProductIndex').map(x=>[String(x.WSItemID),x]));
+  return invBuildLocationComparison_(sessionId,invRows_('Locations'),invRows_('ProductIndex'),invRows_('CountEntries'));
+}
+/** Pure builder for fixture tests; endpoint always validates session and reads live sheets. */
+function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRows) {
+  const locations=locationRows.filter(x=>String(x.Active).toLowerCase()==='true');
+  const products=new Map(productRows.map(x=>[String(x.WSItemID),x]));
   const grouped=new Map(), invalid=[];
   const validLocationIds=new Set(locations.map(x=>String(x.LocationID)));
   const emptyByLocation=new Map();
-  for(const r of invRows_('CountEntries')) {
+  for(const r of entryRows) {
     if(String(r.SessionID)!==sessionId||String(r.Status).toUpperCase()!=='ACTIVE')continue;
     const team=String(r.Team).toUpperCase(),loc=String(r.LocationID),id=String(r.WSItemID);
     const p=products.get(id),n=Number(r.Quantity),uom=String(r.UOM);

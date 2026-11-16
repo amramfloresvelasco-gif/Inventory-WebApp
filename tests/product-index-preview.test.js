@@ -69,3 +69,7 @@ assert.strictEqual(diff.ready,false);
 diff=plan(preview(raw,[{'Master Id':'91','Master Name':'Different FG'}],[{WSItemID:'91',UnitsPerCase:12}]),[]);
 assert.strictEqual(diff.ready,false);
 console.log('ProductIndex sync diff: 11 assertions PASS');
+
+r=preview([{RawMaterialId:'300',MaterialName:'Flavor',ClassOfMaterial:'Blending_Ingredient',UnitOfMeasure:'FluidOunces'}],[],[]);
+assert.strictEqual(r.ready,false);
+assert(r.issues.some(x=>x.reason.includes('Unsupported raw-material UOM')));

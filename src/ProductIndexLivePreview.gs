@@ -18,25 +18,37 @@ function invProductPreviewRows_(id,tab,required,maxRows) {
 function apiInventoryAdminProductIndexPreview() {
   invRequireAdmin_();
   const started=Date.now();
+  const phases=[];
+  let phaseStart=Date.now();
+  function markPhase(name){const now=Date.now();phases.push({name,elapsedMs:now-phaseStart});phaseStart=now;}
   const raw=invProductPreviewRows_(INV_PRODUCT_PREVIEW_RAW_ID,'LiveData',
     ['RawMaterialId','MaterialName','ClassOfMaterial','UnitOfMeasure'],20000);
+  markPhase('Read WS raw materials');
   const fg=invProductPreviewRows_(INV_PRODUCT_PREVIEW_FG_ID,'LiveData',
     ['Master Id','Master Name'],20000);
+  markPhase('Read WS finished goods');
   const products=invProductPreviewRows_(INV_SPIRITS_ID,'Products',
     ['ProductID','WSFinishedGoodsID','BrandID','SubtypeID','UnitsPerCase'],10000);
+  markPhase('Read SPIRITS products');
   const releases=invProductPreviewRows_(INV_SPIRITS_ID,'Releases',
     ['ProductID','ReleaseType'],10000);
+  markPhase('Read SPIRITS releases');
   const subtypes=invProductPreviewRows_(INV_SPIRITS_ID,'BrandReleaseTypes',
     ['BrandReleaseTypeID','BrandID','ReleaseTypeName','UnitsPerCase'],10000);
+  markPhase('Read SPIRITS subtypes');
   const packs=invResolveSpiritsCasePacks_(products,releases,subtypes);
+  markPhase('Resolve case packs');
   const preview=invPreviewProductIndex_(raw,fg,packs.rows);
+  markPhase('Validate ProductIndex sources');
   const sheet=invSheet_('ProductIndex');
   const expected=INV_HEADERS.ProductIndex;
   const actual=sheet.getRange(1,1,1,expected.length).getDisplayValues()[0];
   if(actual.join('|')!==expected.join('|'))
     throw new Error('ProductIndex header mismatch; preview aborted.');
   const existing=invRows_('ProductIndex');
+  markPhase('Read existing ProductIndex');
   const plan=invPlanProductIndexSync_(preview,existing);
+  markPhase('Calculate ProductIndex diff');
   const issues=[...packs.issues,...preview.issues,...plan.issues];
   const ready=packs.ready&&preview.ready&&plan.ready&&issues.length===0;
   return {
@@ -46,7 +58,7 @@ function apiInventoryAdminProductIndexPreview() {
     diff:{adds:plan.adds.length,updates:plan.updates.length,
       unchanged:plan.unchanged.length,missing:plan.missing.length},
     issueCount:issues.length,issues:issues.slice(0,50),
-    elapsedMs:Date.now()-started,
+    elapsedMs:Date.now()-started,phases,
     note:'Read-only preview. No ProductIndex import is exposed by this action.'
   };
 }

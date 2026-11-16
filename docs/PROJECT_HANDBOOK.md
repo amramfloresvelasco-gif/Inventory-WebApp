@@ -570,3 +570,8 @@ Commit `3cc26c475669207e7eb0802911a1bf988cc31e67` rejects quantity coercions (wh
 ### 2026-11-15 — Fail closed on duplicate active reference IDs
 
 Commit `60cf9ac9d915c2e0626a213b2a5c47bd27e4d71c` changes count and EMPTY endpoints to require exactly one active location match, and counts to require exactly one active product match; duplicate identifiers now block writes rather than selecting first row. Commit `919f55af325dbebd61cd799468eb387289977918` adds three mocked integration checks for duplicate location count, duplicate location EMPTY, and duplicate product count. Planned suite: **30 mocked workflow checks + 42 comparison assertions = 72**. CI and full Node execution still unverified; Apps Script runtime not tested; no live database changes/deployment. Freeze remains disabled. Next: execute tests, verify CI and perform isolated Apps Script integration, then validate ProductIndex/Locations imports before production use.
+
+
+### 2026-11-15 — Test harness isolation correction
+
+Commit `f5089331ee6d086b5b982aadafea07944200b644` saves the counting test's mock invUser_/invTeam_/invSession_/invReference_/invRows_/invSheet_ functions and restores them to the Node VM context after loading production `Code.gs`, whose real helper declarations would otherwise override them. This is a test-only change; no app deployment or database writes. Attempted direct GitHub clone for local Node execution, but container DNS could not resolve github.com; a simplified JS simulation was not equivalent to Node VM and did not establish a test result. **Do not claim full 72-check suite passed.** Next: verify GitHub Actions logs or execute Node tests in an environment with repo access; fix any actual failures. Inventory freeze disabled.

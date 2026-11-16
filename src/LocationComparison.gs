@@ -35,16 +35,18 @@ function invLocationComparison_(sessionId) {
     const startedB=g.countB>0||!!(record&&String(record.TeamBStarted).toLowerCase()==='true');
     const keys=new Set([...g.A.keys(),...g.B.keys()]);
     const differences=[...keys].filter(k=>Math.abs((g.A.get(k)||0)-(g.B.get(k)||0))>1e-8);
-    // Both teams explicitly finishing a location is NOT yet supported.
-    // Yellow indicates work in progress even when quantities happen to agree.
-    const color=differences.length?'red':(startedA||startedB?'yellow':'neutral');
+    // No Finish Location action: status follows submitted counts automatically.
+    // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
+    const color=startedA&&startedB?(differences.length?'red':'green'):
+      (startedA||startedB?'yellow':'neutral');
     return {locationId:id,warehouse:String(l.Warehouse),bay:String(l.Bay),
       color,startedA,startedB,entryCountA:g.countA,entryCountB:g.countB,
       mismatchCount:differences.length,differences};
   });
+  const allGreen=result.length>0&&result.every(x=>x.color==='green');
   return {sessionId,locations:result,invalid,
-    allGreen:false,freezeAllowed:false,
-    note:'Explicit team completion/EMPTY verification required before green; never freeze from this preview.'};
+    allGreen,freezeAllowed:false,
+    note:'Colors update automatically from counts; EMPTY/NO COUNT and freeze validation are pending.'};
 }
 function apiInventoryAdminLocationComparison(input) {
   invRequireAdmin_();

@@ -614,3 +614,7 @@ Added admin-panel controls to `src/Index.html` (`7eab515`): load exclusions, pre
 ## 2026-11-15 — Mock workflow tests and row deletion fix
 
 Added mock-Sheets tests for admin initialization, confirmation rejection, duplicate setup rejection, stale revision rejection, save, and row removal (`febeb4c`, `de2ddd1`). Discovered that clearing removed token cells leaves blank rows inside `getLastRow()` and causes strict token validation to fail; changed save to `sheet.deleteRows` (`ad4f6e3`). **Tests committed but execution/CI not verified** (attempted ad hoc JS harness was incompatible with Node assert). Need run actual Node suite, test save workflow end-to-end, and consider partial-write recovery. No live DB writes/deployment. Extended Report 2 UI/export still pending.
+
+## 2026-11-15 — Ownership web serialization and executable mock verification
+
+Fixed Apps Script web-client compatibility by serializing `OwnershipExclusions.UpdatedAt` Date values to ISO strings in read responses (`2c634f5`), retaining full revision calculation from original sheet values. Added date regression (`9f6b533`, corrected VM realm setup `a7211fb`). Executed current ownership test source in an ad hoc JS harness with mocked fs/vm/assert: **PASS**, covering setup/save/stale edit/row deletion/date serialization. This is **not** actual Node CI or Apps Script browser verification. No live database writes or deployment. Next: run real Node CI; finish Extended Report 2 UI/export and production write-failure safeguards.

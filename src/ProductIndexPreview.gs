@@ -7,7 +7,7 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
     if(!id||!name||!barcode){issues.push({source,id,reason:'Missing product ID, name or barcode'});return;}
     const existing=byId.get(id);
     if(existing) {
-      if(existing.ItemName!==name||existing.Barcode!==barcode||existing.ClassOfMaterial!==row.ClassOfMaterial)
+      if(existing.ItemName!==name||existing.Barcode!==barcode||existing.ClassOfMaterial!==row.ClassOfMaterial||String(existing.UnitsPerCase)!==String(row.UnitsPerCase))
         issues.push({source,id,reason:'Conflicting records for the same WS item ID'});
       return;
     }
@@ -55,7 +55,7 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
  * Never filter on any planner Status field. Flag ambiguous/missing joins.
  */
 function invResolveSpiritsCasePacks_(products, releases, subtypes) {
-  const issues=[],rows=[],byProduct=new Map(),bySubtype=new Map(),byBrandName=new Map();
+  const issues=[],rows=[],byProduct=new Map(),bySubtype=new Map(),byBrandName=new Map(),byWsId=new Map();
   const norm=v=>String(v==null?'':v).trim().replace(/\\s+/g,' ').toUpperCase();
   for(const t of subtypes) {
     const id=String(t.BrandReleaseTypeID||'').trim();
@@ -66,7 +66,10 @@ function invResolveSpiritsCasePacks_(products, releases, subtypes) {
   }
   for(const p of products) {
     const id=String(p.ProductID||'').trim();
+    if(id&&byProduct.has(id))issues.push({product:p.ProductName,reason:'Duplicate SPIRITS ProductID'});
     if(id)byProduct.set(id,p);
+    const wsid=String(p.WSFinishedGoodsID||'').trim();
+    if(wsid){if(byWsId.has(wsid))issues.push({id:wsid,product:p.ProductName,reason:'Duplicate WS finished-good ID in SPIRITS'});else byWsId.set(wsid,p);}
   }
   const releaseByProduct=new Map();
   for(const r of releases) {
@@ -78,12 +81,20 @@ function invResolveSpiritsCasePacks_(products, releases, subtypes) {
     const wsid=String(p.WSFinishedGoodsID||'').trim();
     if(!wsid){issues.push({product:p.ProductName,reason:'Missing WS finished-good ID'});continue;}
     let t=bySubtype.get(String(p.SubtypeID||'').trim());
+    const linkedReleases=releaseByProduct.get(String(p.ProductID||'').trim())||[];
+    const releaseMatches=new Map();
+    for(const r of linkedReleases){
+      for(const candidate of byBrandName.get(String(p.BrandID||'').trim()+'|'+norm(r.ReleaseType))||[])
+        releaseMatches.set(String(candidate.BrandReleaseTypeID),candidate);
+    }
+    if(t&&releaseMatches.size&&(!releaseMatches.has(String(t.BrandReleaseTypeID))||releaseMatches.size!==1)){
+      issues.push({id:wsid,product:p.ProductName,reason:'Product SubtypeID conflicts with Releases.ReleaseType'});continue;
+    }
+    if(t&&linkedReleases.some(r=>String(r.ReleaseType||'').trim())&&!releaseMatches.size){
+      issues.push({id:wsid,product:p.ProductName,reason:'Release subtype name cannot be resolved'});continue;
+    }
     if(!t) {
-      const found=new Map();
-      for(const r of releaseByProduct.get(String(p.ProductID||'').trim())||[]) {
-        for(const candidate of byBrandName.get(String(p.BrandID||'').trim()+'|'+norm(r.ReleaseType))||[])
-          found.set(String(candidate.BrandReleaseTypeID),candidate);
-      }
+      const found=releaseMatches;
       if(found.size===1)t=[...found.values()][0];
       else {issues.push({id:wsid,product:p.ProductName,reason:found.size?'Ambiguous subtype via release':'Missing subtype relationship'});continue;}
     }

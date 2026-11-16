@@ -17,6 +17,7 @@ on:
       - 'src/PalletChildPlanner.gs'
       - 'src/PalletFamilyRecovery.gs'
       - 'src/PalletFamilyPersistence.gs'
+      - 'src/PalletFamilyDiagnostics.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
   pull_request:
@@ -53,6 +54,8 @@ jobs:
         run: node tests/pallet-family-recovery.test.js
       - name: Private pallet family batch persistence
         run: node tests/pallet-family-persistence.test.js
+      - name: Admin pallet family diagnostics
+        run: node tests/pallet-family-diagnostics.test.js
       - name: Counting, EMPTY and deletion workflow
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures

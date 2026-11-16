@@ -32,6 +32,10 @@ function testInventoryLocationComparisonFixtures() {
   check('both deleted',[{...a,Status:'DELETED'},{...b,Status:'DELETED'}],'neutral',0,0);
   check('both EMPTY',[empty('EA','A'),empty('EB','B')],'green',0,0);
   check('one EMPTY',[empty('EA','A')],'yellow',0,0);
+  check('EMPTY with product ID rejected',[{...empty('EA','A'),WSItemID:'FG'},empty('EB','B')],'red',1,0);
+  check('EMPTY with nonzero quantity rejected',[{...empty('EA','A'),Quantity:1},empty('EB','B')],'red',1,0);
+  check('EMPTY with UOM rejected',[{...empty('EA','A'),UOM:'Each'},empty('EB','B')],'red',1,0);
+  check('EMPTY with blank quantity rejected',[{...empty('EA','A'),Quantity:''},empty('EB','B')],'red',1,0);
   check('EMPTY versus items',[empty('EA','A'),b],'red',0,2);
   check('blank quantity invalid',[item('A2','A','RAW','','Each')],'red',1,0);
   check('unknown location invalid',[{...a,LocationID:'UNKNOWN'}],'neutral',1,0);

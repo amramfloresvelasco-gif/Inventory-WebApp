@@ -7,6 +7,7 @@ on:
       - 'src/Code.gs'
       - 'src/ProductIndexPreview.gs'
       - 'src/WSSnapshots.gs'
+      - 'src/OwnershipExclusions.gs'
       - 'src/LocationComparison.gs'
       - 'src/LocationComparisonTests.gs'
       - 'src/LocationComparisonFixtureTests.gs'
@@ -17,6 +18,7 @@ on:
       - 'src/Code.gs'
       - 'src/ProductIndexPreview.gs'
       - 'src/WSSnapshots.gs'
+      - 'src/OwnershipExclusions.gs'
       - 'src/LocationComparison.gs'
       - 'src/LocationComparisonTests.gs'
       - 'src/LocationComparisonFixtureTests.gs'
@@ -44,3 +46,5 @@ jobs:
         run: node tests/product-index-preview.test.js
       - name: Extended legacy report ownership and quantity
         run: node tests/ws-extended-report.test.js
+      - name: Ownership exclusion configuration
+        run: node tests/ownership-exclusions.test.js

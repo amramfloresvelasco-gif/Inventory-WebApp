@@ -17,4 +17,15 @@ assert.strictEqual(ctx.invPrepareInitialProductIndex_({...preview,ready:false},[
 assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,result.products.slice(0,1)).ok,false);
 assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,[{...result.products[0],DefaultUOM:'Each'},result.products[1]]).ok,false);
 assert.strictEqual(ctx.invVerifyInitialProductIndex_(result.products,[result.products[0],result.products[0]]).ok,false);
-console.log('Initial ProductIndex guard tests PASS');
+const stage=ctx.invStageInitialProductIndex_(preview,[],'IMPORT_INITIAL_PRODUCT_INDEX');
+assert.strictEqual(stage.ready,true);
+assert.strictEqual(stage.count,2);
+assert.strictEqual(stage.rows[0][5],'FluidOunces');
+assert.strictEqual(ctx.invVerifyStagedProductIndex_(stage,stage.headers,stage.rows).ok,true);
+assert.strictEqual(ctx.invVerifyStagedProductIndex_(stage,stage.headers,stage.rows.slice(0,1)).ok,false);
+assert.strictEqual(ctx.invVerifyStagedProductIndex_(stage,['Bad',...stage.headers.slice(1)],stage.rows).ok,false);
+const tampered=stage.rows.map(r=>r.slice());tampered[1][4]=999;
+assert.strictEqual(ctx.invVerifyStagedProductIndex_(stage,stage.headers,tampered).ok,false);
+assert.strictEqual(ctx.invStageInitialProductIndex_(preview,[],null).ready,false);
+assert.strictEqual(ctx.invStageInitialProductIndex_(preview,preview.products,'IMPORT_INITIAL_PRODUCT_INDEX').ready,false);
+console.log('Initial ProductIndex guard and staging tests PASS');

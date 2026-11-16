@@ -98,17 +98,22 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
     const invalidCount=invalidCounts.get(id)||0;
     const duplicateLocation=locationIdCounts.get(id)>1;
-    const color=duplicateLocation||invalidCount>0?'red':invLocationColor_(startedA,startedB,differences.length);
+    const blankLocation=!id.trim();
+    const color=duplicateLocation||blankLocation||invalidCount>0?'red':invLocationColor_(startedA,startedB,differences.length);
     return {locationId:id,warehouse:String(l.Warehouse),bay:String(l.Bay),
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,
-      mismatchCount:differences.length,differences,invalidCount,duplicateLocation};
+      mismatchCount:differences.length,differences,invalidCount,duplicateLocation,blankLocation};
   });
   // Duplicate catalog IDs are unsafe even before a count references them.
   const duplicateProductIds=[...productIdCounts].filter(([id,count])=>count>1).map(([id])=>id);
   const duplicateLocationIds=[...locationIdCounts].filter(([id,count])=>count>1).map(([id])=>id);
+  const blankProductIds=activeProducts.filter(p=>!String(p.WSItemID||'').trim()).length;
+  const blankLocationIds=locations.filter(l=>!String(l.LocationID||'').trim()).length;
   const allGreen=invalid.length===0&&duplicateProductIds.length===0&&
-    duplicateLocationIds.length===0&&result.length>0&&result.every(x=>x.color==='green');
+    duplicateLocationIds.length===0&&blankProductIds===0&&blankLocationIds===0&&
+    result.length>0&&result.every(x=>x.color==='green');
   return {sessionId,locations:result,invalid,duplicateProductIds,duplicateLocationIds,
+    blankProductIds,blankLocationIds,
     allGreen,freezeAllowed:false,
     note:'EMPTY entries participate in mismatch detection; freeze validation pending.'};
 }

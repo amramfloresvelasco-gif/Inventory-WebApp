@@ -21,6 +21,9 @@ function invOwnershipRevision_(rows) {
     String(r.UpdatedBy||'').trim().toLowerCase()
   ]));
 }
+function invOwnershipWireRows_(rows) {
+  return rows.map(r=>({Token:String(r.Token||''),Active:r.Active===true||String(r.Active).toLowerCase()==='true',UpdatedAt:r.UpdatedAt instanceof Date?r.UpdatedAt.toISOString():String(r.UpdatedAt||''),UpdatedBy:String(r.UpdatedBy||'')}));
+}
 function invOwnershipConfig_() {
   const sheet=SpreadsheetApp.openById(INV_DB_ID).getSheetByName('OwnershipExclusions');
   if(!sheet)return {configured:false,tokens:INV_OWNERSHIP_DEFAULT_TOKENS.slice(),rows:[],revision:null};
@@ -29,7 +32,7 @@ function invOwnershipConfig_() {
     throw new Error('Unexpected OwnershipExclusions schema.');
   const count=sheet.getLastRow()-1;
   const rows=count>0?sheet.getRange(2,1,count,4).getValues().map(x=>({Token:x[0],Active:x[1],UpdatedAt:x[2],UpdatedBy:x[3]})):[];
-  return {configured:true,tokens:invOwnershipTokensFromRows_(rows),rows,revision:invOwnershipRevision_(rows)};
+  return {configured:true,tokens:invOwnershipTokensFromRows_(rows),rows:invOwnershipWireRows_(rows),revision:invOwnershipRevision_(rows)};
 }
 /** Read-only preview; admin may review table before a separate controlled migration. */
 function apiInventoryAdminOwnershipExclusions() {

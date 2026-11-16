@@ -3,13 +3,20 @@
 <style>
 body{font:15px Arial,sans-serif;margin:0;background:#f5f7fb;color:#17243b}
 main{max-width:760px;margin:auto;padding:20px}h1{font-size:23px}
+.inv-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.inv-build{font-size:11px;color:#52657e;white-space:nowrap;padding-top:6px}
+.inv-perf-button{position:fixed;bottom:12px;left:12px;width:auto;margin:0;padding:8px 12px;background:#17243b;font-size:12px;z-index:1000}
+.inv-perf-panel{position:fixed;bottom:52px;left:12px;width:min(420px,calc(100vw - 24px));max-height:55vh;overflow:auto;background:white;border:1px solid #bac7d7;border-radius:10px;box-shadow:0 4px 24px #0003;padding:12px;z-index:1001}
+.inv-perf-panel textarea{width:100%;height:180px;min-height:120px;font:11px monospace;resize:vertical}
+.inv-perf-actions{display:flex;gap:8px}.inv-perf-actions button{width:auto;font-size:12px;padding:7px 10px}
+
 .panel{background:white;border:1px solid #dbe1e9;border-radius:12px;padding:20px;margin:16px 0}
 label{display:block;font-weight:600;margin:12px 0 5px}
 input,select,textarea,button{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bac7d7;border-radius:8px;font:inherit}
 button{background:#1755a5;color:white;border:0;cursor:pointer;margin-top:15px}
 button:disabled{opacity:.55;cursor:wait}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:8px;margin-top:12px}.map-cell{padding:12px 8px;border:1px solid #aab4c2;border-radius:8px;text-align:left;color:#17243b;margin:0;min-height:76px}.map-cell.neutral{background:#eef1f5}.map-cell.yellow{background:#fff0ac}.map-cell.red{background:#ffcece}.map-cell.green{background:#bceac9}.map-cell:focus-visible{outline:3px solid #1755a5}.map-summary{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0}.map-detail{padding:12px;background:#f5f7fb;border-radius:8px;margin-top:12px;white-space:pre-wrap}#message{white-space:pre-wrap}#message.error{color:#a32626}
-</style></head><body><main><h1>BMD Inventory</h1><p class="muted">Physical counting · Phase 1</p>
+</style></head><body><main><div class="inv-top"><div><h1>BMD Inventory</h1><p class="muted">Physical counting · Phase 1</p></div><div id="invBuild" class="inv-build" title="GitHub commit deployed">Version: checking…</div></div>
 <div id="message" role="status">Loading your Inventory account…</div>
 <section id="app" hidden><div class="panel"><div id="identity" class="muted"></div>
 <label for="session">Inventory session</label><select id="session"></select>
@@ -22,7 +29,68 @@ small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(a
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
 <button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Location comparison</h3><p class="muted">Read-only supervisor view. Select a session, then refresh to see Team A/B status by location.</p><button id="refreshMap" type="button">Refresh location map</button><div id="mapSummary" class="map-summary" role="status"></div><div id="locationMap" class="map-grid"></div><div id="mapDetail" class="map-detail" hidden></div><h3>ProductIndex validation</h3><p class="muted">Fresh WS + SPIRITS validation. Read-only; does not import products.</p><button id="previewProductIndex" type="button">Validate ProductIndex sources</button><pre id="productIndexStatus" style="white-space:pre-wrap;overflow-wrap:anywhere" role="status"></pre><h3>Legacy catalog diagnostic</h3><p class="muted">Older SPIRITS-only diagnostic; its missing-UOM warnings do not represent the ProductIndex import validation.</p><button id="previewCatalog" type="button">Run legacy diagnostic</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Extended Report 2 ownership exclusions</h3><p class="muted">Only additional report sections are filtered. Physical counts and Report 1 are unaffected.</p><button id="loadOwnership" type="button">Load exclusions</button><div id="ownershipStatus" role="status"></div><div id="ownershipRows"></div><button id="addOwnership" type="button" disabled>Add token</button><button id="saveOwnership" type="button" disabled>Save exclusions</button><button id="initOwnership" type="button" hidden>Initialize exclusion table</button><h3>Extended Report 2 · Legacy UOM</h3><p class="muted">Read-only blending ingredients and barrels. Barrel quantities retain source UOM and are not converted to countable quantities.</p><button id="loadExtendedSnapshots" type="button">Load snapshots</button><label for="extendedSnapshot">WS snapshot</label><select id="extendedSnapshot"></select><button id="viewExtended" type="button">View extended source report</button><button id="exportExtended" type="button" disabled>Export extended source CSV</button><div id="extendedStatus" role="status"></div><div id="extendedResults" style="overflow-x:auto"></div><h3>Users</h3><div id="users"></div></section></main>
+<button id="invPerfToggle" class="inv-perf-button" type="button" aria-expanded="false">Stats for Nerds</button>
+<section id="invPerfPanel" class="inv-perf-panel" hidden aria-label="Performance monitor">
+<strong>Inventory Performance Monitor</strong>
+<p class="muted">RPC durations include network and Apps Script execution. Times are browser-observed.</p>
+<textarea id="invPerfLog" readonly aria-label="Performance events"></textarea>
+<div class="inv-perf-actions"><button id="invPerfCopy" type="button">Copy Results</button><button id="invPerfClear" type="button">Clear</button><button id="invPerfClose" type="button">Close</button></div>
+</section>
 <script>
+const invPerfEvents=[];
+const invPerfStart=performance.now();
+function invPerfLog(message){
+ const elapsed=Math.round(performance.now()-invPerfStart);
+ const entry=new Date().toLocaleTimeString()+' INV_PERF +'+elapsed+'ms '+message;
+ invPerfEvents.push(entry);if(invPerfEvents.length>500)invPerfEvents.shift();
+ const output=document.getElementById('invPerfLog');
+ if(output){output.value=invPerfEvents.join('\\n');output.scrollTop=output.scrollHeight;}
+}
+function invRun(){
+ let success=null,failure=null;
+ const chain=new Proxy({}, {get(_target,property){
+  if(property==='withSuccessHandler')return fn=>{success=fn;return chain;};
+  if(property==='withFailureHandler')return fn=>{failure=fn;return chain;};
+  if(typeof property!=='string'||!/^apiInventory[A-Za-z0-9_]+$/.test(property))
+   return undefined;
+  return (...args)=>{
+   const started=performance.now();invPerfLog('RPC start '+property);
+   google.script.run.withSuccessHandler(result=>{
+    invPerfLog('RPC end '+property+' elapsedMs='+Math.round(performance.now()-started)+' status=OK');
+    if(success)success(result);
+   }).withFailureHandler(error=>{
+    invPerfLog('RPC end '+property+' elapsedMs='+Math.round(performance.now()-started)+' status=ERROR '+String(error&&error.message||error).slice(0,180));
+    if(failure)failure(error);
+   })[property](...args);
+  };
+ }});
+ return chain;
+}
+document.addEventListener('click',event=>{
+ const target=event.target.closest('button');
+ if(target&&target.id&&!target.id.startsWith('invPerf'))
+  invPerfLog('ACTION click '+target.id);
+},true);
+document.getElementById('invPerfToggle').addEventListener('click',()=>{
+ const panel=document.getElementById('invPerfPanel');panel.hidden=!panel.hidden;
+ document.getElementById('invPerfToggle').setAttribute('aria-expanded',String(!panel.hidden));
+});
+document.getElementById('invPerfClose').addEventListener('click',()=>document.getElementById('invPerfToggle').click());
+document.getElementById('invPerfClear').addEventListener('click',()=>{invPerfEvents.length=0;document.getElementById('invPerfLog').value='';});
+document.getElementById('invPerfCopy').addEventListener('click',()=>{
+ const value=invPerfEvents.join('\\n');
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(value)
+  .catch(()=>{document.getElementById('invPerfLog').select();document.execCommand('copy');});
+ else{document.getElementById('invPerfLog').select();document.execCommand('copy');}
+});
+invRun().withSuccessHandler(info=>{
+ document.getElementById('invBuild').textContent='Version '+info.commit;
+ document.getElementById('invBuild').title='GitHub commit '+info.commit+' · '+info.builtAt;
+}).withFailureHandler(e=>{
+ document.getElementById('invBuild').textContent='Version unavailable';
+ invPerfLog('Build version unavailable: '+String(e&&e.message||e));
+}).apiInventoryBuildInfo();
+
 let data=null, busy=false, pendingId=null, pendingEmptyId=null;
 const el=id=>document.getElementById(id);
 function options(id,items,fn){const s=el(id);s.replaceChildren();for(const item of items){const o=document.createElement('option');o.value=fn?fn(item):item;o.textContent=fn?fn(item):item;s.appendChild(o)}}
@@ -37,7 +105,7 @@ function selectUom(){const p=data.products.find(p=>p.id===el('product').value);i
  const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:(p.uom?[p.uom]:[]);
  options('uom',units)}
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
-function bootstrap(){google.script.run.withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
+function bootstrap(){invRun().withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
  options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
  message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
  el('save').disabled=!r.sessions.length||!r.user.teamLocked;
@@ -48,7 +116,7 @@ function save(){if(busy)return;busy=true;el('save').disabled=true;
  const request={entryId:pendingId,sessionId:el('session').value,locationId:el('location').value,
  productId:el('product').value,uom:el('uom').value,quantity:Number(el('qty').value),
  notes:el('notes').value,entryMethod:el('barcode').value?'Barcode':'Manual'};
- google.script.run.withSuccessHandler(r=>{busy=false;pendingId=null;el('save').disabled=false;el('qty').value='1';el('notes').value='';
+ invRun().withSuccessHandler(r=>{busy=false;pendingId=null;el('save').disabled=false;el('qty').value='1';el('notes').value='';
  message(r.duplicate?'Submission already saved; no duplicate created.':'Count saved successfully ('+r.elapsedMs+' ms server).');
  }).withFailureHandler(e=>{busy=false;el('save').disabled=false;message((e.message||String(e))+' — retry Save to use the same submission ID.',true)}).apiInventorySaveCount(request)}
 el('warehouse').addEventListener('change',locations);el('bay').addEventListener('change',updateLocations);
@@ -57,7 +125,7 @@ el('save').addEventListener('click',save);
 function loadEntries(){
  const sessionId=el('session').value,locationId=el('location').value;
  if(!sessionId||!locationId){message('Select a session and location.',true);return;}
- google.script.run.withSuccessHandler(rows=>{
+ invRun().withSuccessHandler(rows=>{
   const list=el('entryList');list.replaceChildren();
   if(!rows.length){list.textContent='No active entries for this location.';return;}
   for(const r of rows){
@@ -70,7 +138,7 @@ function loadEntries(){
    remove.addEventListener('click',()=>{
     if(!confirm('Remove this entry? The change will be audited.'))return;
     remove.disabled=true;
-    google.script.run.withSuccessHandler(()=>{message('Entry removed.');loadEntries()})
+    invRun().withSuccessHandler(()=>{message('Entry removed.');loadEntries()})
       .withFailureHandler(e=>{remove.disabled=false;message(e.message||String(e),true)})
       .apiInventoryDeleteEntry({sessionId,entryId:r.entryId,reason:'Counter correction'});
    });
@@ -89,7 +157,7 @@ el('markEmpty').addEventListener('click',()=>{
  if(!confirm('Mark location '+locationId+' EMPTY for your team?'))return;
  if(!pendingEmptyId)pendingEmptyId='empty_'+crypto.randomUUID().replace(/-/g,'');
  busy=true;el('markEmpty').disabled=true;el('save').disabled=true;
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
   busy=false;pendingEmptyId=null;el('markEmpty').disabled=false;el('save').disabled=false;
   message(r.alreadyEmpty?'Your team already marked this location EMPTY.':'Location marked EMPTY for your team.');
  }).withFailureHandler(e=>{
@@ -101,7 +169,7 @@ function refreshLocationMap(){
  const sessionId=el('session').value;
  if(!sessionId){el('mapSummary').textContent='No open session.';el('locationMap').replaceChildren();return;}
  const btn=el('refreshMap');btn.disabled=true;el('mapSummary').textContent='Loading locations…';
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
   btn.disabled=false;
   const counts={neutral:0,yellow:0,red:0,green:0};
   r.locations.forEach(x=>counts[x.color]++);
@@ -129,7 +197,7 @@ function refreshLocationMap(){
 }
 el('refreshMap').addEventListener('click',refreshLocationMap);
 function adminMessage(t){el('adminStatus').textContent=t}
-function loadAdmin(){google.script.run.withSuccessHandler(r=>{
+function loadAdmin(){invRun().withSuccessHandler(r=>{
  el('users').replaceChildren(...r.users.map(u=>{const p=document.createElement('p');
  p.textContent=u.email+' — '+u.role+' — '+u.status+(u.team?' — Team '+u.team:'');
  return p}));}).withFailureHandler(e=>adminMessage(e.message||String(e))).apiInventoryAdminOverview()}
@@ -138,14 +206,14 @@ el('saveUser').addEventListener('click',()=>{
  status:el('userStatus').value,team:el('userTeam').value,
  teamLocked:el('userLocked').value==='true'};
  el('saveUser').disabled=true;
- google.script.run.withSuccessHandler(r=>{el('saveUser').disabled=false;
+ invRun().withSuccessHandler(r=>{el('saveUser').disabled=false;
  adminMessage('Saved '+r.email);loadAdmin()}).withFailureHandler(e=>{
  el('saveUser').disabled=false;adminMessage(e.message||String(e))
  }).apiInventoryAdminUpsertUser(request)
 });
 el('createSession').addEventListener('click',()=>{
  el('createSession').disabled=true;
- google.script.run.withSuccessHandler(r=>{el('createSession').disabled=false;
+ invRun().withSuccessHandler(r=>{el('createSession').disabled=false;
  adminMessage('Created session '+r.id);bootstrap();loadAdmin()}).withFailureHandler(e=>{
  el('createSession').disabled=false;adminMessage(e.message||String(e))
  }).apiInventoryAdminCreateSession({date:el('inventoryDate').value})
@@ -153,7 +221,7 @@ el('createSession').addEventListener('click',()=>{
 el('previewProductIndex').addEventListener('click',()=>{
  const button=el('previewProductIndex'),status=el('productIndexStatus');
  button.disabled=true;status.textContent='Validating fresh WS and SPIRITS sources…';
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
   button.disabled=false;
   status.textContent='ProductIndex '+(r.ready?'READY FOR REVIEW':'NOT READY')+
    '\\nProducts: '+r.counts.products+' (raw '+r.counts.raw+', finished goods '+r.counts.finishedGoods+')'+
@@ -169,7 +237,7 @@ el('previewProductIndex').addEventListener('click',()=>{
 el('previewCatalog').addEventListener('click',()=>{
  el('previewCatalog').disabled=true;
  el('catalogStatus').textContent='Checking SPIRITS reference data…';
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
  el('previewCatalog').disabled=false;
  el('catalogStatus').textContent=JSON.stringify(r,null,2);
  }).withFailureHandler(e=>{
@@ -188,7 +256,7 @@ function ownershipRow(token='',active=true){
 }
 function loadOwnership(){
  el('loadOwnership').disabled=true;ownershipStatus('Loading exclusions…');
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
   el('loadOwnership').disabled=false;el('ownershipRows').replaceChildren();
   ownershipRevision=r.revision;
   el('initOwnership').hidden=r.configured;
@@ -202,7 +270,7 @@ el('addOwnership').addEventListener('click',()=>ownershipRow());
 el('initOwnership').addEventListener('click',()=>{
  if(!confirm('Create the OwnershipExclusions database table with four default tokens?'))return;
  el('initOwnership').disabled=true;
- google.script.run.withSuccessHandler(()=>{el('initOwnership').disabled=false;loadOwnership()})
+ invRun().withSuccessHandler(()=>{el('initOwnership').disabled=false;loadOwnership()})
  .withFailureHandler(e=>{el('initOwnership').disabled=false;ownershipStatus(e.message||String(e))})
  .apiInventoryAdminInitializeOwnershipExclusions({confirm:'CREATE_OWNERSHIP_EXCLUSIONS'});
 });
@@ -210,7 +278,7 @@ el('saveOwnership').addEventListener('click',()=>{
  const rows=[...el('ownershipRows').children].map(line=>({Token:line.querySelector('input[type=text],input:not([type])').value.trim(),Active:line.querySelector('input[type=checkbox]').checked}));
  if(!confirm('Save '+rows.length+' ownership exclusion tokens for Extended Report 2?'))return;
  el('saveOwnership').disabled=true;
- google.script.run.withSuccessHandler(()=>{ownershipStatus('Saved.');loadOwnership()})
+ invRun().withSuccessHandler(()=>{ownershipStatus('Saved.');loadOwnership()})
  .withFailureHandler(e=>{el('saveOwnership').disabled=false;ownershipStatus(e.message||String(e))})
  .apiInventoryAdminSaveOwnershipExclusions({rows,expectedRevision:ownershipRevision});
 });
@@ -219,7 +287,7 @@ let extendedRows=null,extendedMeta=null;
 function extendedStatus(t){el('extendedStatus').textContent=t}
 el('loadExtendedSnapshots').addEventListener('click',()=>{
  el('loadExtendedSnapshots').disabled=true;extendedRows=null;extendedMeta=null;el('exportExtended').disabled=true;el('extendedResults').replaceChildren();extendedStatus('Loading snapshots…');
- google.script.run.withSuccessHandler(rows=>{
+ invRun().withSuccessHandler(rows=>{
   el('loadExtendedSnapshots').disabled=false;
   const select=el('extendedSnapshot');select.replaceChildren();
   rows.forEach(r=>{const option=document.createElement('option');option.value=r.snapshotId;option.textContent=r.snapshotId+' · '+r.snapshotType+' · '+r.sourceTimestamp;select.append(option)});
@@ -230,7 +298,7 @@ el('loadExtendedSnapshots').addEventListener('click',()=>{
 el('viewExtended').addEventListener('click',()=>{
  const snapshotId=el('extendedSnapshot').value;extendedRows=null;extendedMeta=null;el('extendedResults').replaceChildren();if(!snapshotId){el('exportExtended').disabled=true;extendedStatus('Select a snapshot first.');return;}
  el('viewExtended').disabled=true;el('exportExtended').disabled=true;extendedStatus('Loading blending ingredient rows…');
- google.script.run.withSuccessHandler(r=>{
+ invRun().withSuccessHandler(r=>{
   el('viewExtended').disabled=false;extendedRows=[...r.standard.map(x=>({...x,Section:'Standard blending'})),...r.legacy.map(x=>({...x,Section:'Legacy UOM'})),...r.barrels.map(x=>({...x,Section:'Barrels'}))];extendedMeta=r;
   const container=el('extendedResults');container.replaceChildren();
   const table=document.createElement('table');table.style.width='100%';table.style.marginTop='12px';

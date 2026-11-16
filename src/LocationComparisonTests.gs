@@ -31,6 +31,33 @@ function testInventoryLocationComparisonRules() {
     if(actual!==expected)throw new Error(name+': expected '+expected+' differences got '+actual);
     checked++;
   }
+  // Transition checks: statuses are derived from current active submissions, not latched.
+  const transitions=[
+    ['A starts',true,false,new Map([['P1|Case',10]]),new Map(),'yellow'],
+    ['B partially counts',true,true,new Map([['P1|Case',10],['P2|Case',4]]),new Map([['P1|Case',10]]),'red'],
+    ['B catches up',true,true,new Map([['P1|Case',10],['P2|Case',4]]),new Map([['P1|Case',10],['P2|Case',4]]),'green'],
+    ['A corrects quantity',true,true,new Map([['P1|Case',11]]),new Map([['P1|Case',10]]),'red'],
+    ['A removes last entry',false,true,new Map(),new Map([['P1|Case',10]]),'yellow'],
+    ['both entries removed',false,false,new Map(),new Map(),'neutral']
+  ];
+  for(const [name,startedA,startedB,ma,mb,expected] of transitions){
+    const mismatch=invLocationDifferences_(ma,mb,false,false,ma.size,mb.size).length;
+    const actual=invLocationColor_(startedA,startedB,mismatch);
+    if(actual!==expected)throw new Error(name+': expected '+expected+' got '+actual);
+    checked++;
+  }
+  const edgeCases=[
+    ['EMPTY A with same-team items',new Map([['P1|Case',2]]),new Map(),true,false,1,0,1],
+    ['EMPTY B with same-team items',new Map(),new Map([['P1|Case',2]]),false,true,0,1,1],
+    ['EMPTY A and B with A items',new Map([['P1|Case',2]]),new Map(),true,true,1,0,2],
+    ['same product different UOM',new Map([['P1|Case',1]]),new Map([['P1|Bottle',1]]),false,false,1,1,2],
+    ['fractional equivalent match',new Map([['P1|Case',0.5]]),new Map([['P1|Case',0.5]]),false,false,1,1,0]
+  ];
+  for(const [name,ma,mb,ea,eb,ca,cb,expected] of edgeCases){
+    const actual=invLocationDifferences_(ma,mb,ea,eb,ca,cb).length;
+    if(actual!==expected)throw new Error(name+': expected '+expected+' got '+actual);
+    checked++;
+  }
   Logger.log('PASS '+checked+' pure location comparison assertions; no database accessed.');
   return {ok:true,assertions:checked};
 }

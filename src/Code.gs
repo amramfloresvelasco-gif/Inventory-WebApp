@@ -11,7 +11,8 @@ const INV_HEADERS = {
   CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'],
   WSSnapshots: ['SnapshotID','SessionID','SnapshotType','UploadedAt','UploadedBy','SourceTimestamp','Version','Status','Notes'],
   WSRows: ['SnapshotID','WSItemID','Warehouse','UOM','Quantity','ItemName','ClassOfMaterial'],
-  LocationStatus: ['SessionID','LocationID','TeamAStarted','TeamBStarted','Status','MismatchCount','LastUpdatedAt']
+  LocationStatus: ['SessionID','LocationID','TeamAStarted','TeamBStarted','Status','MismatchCount','LastUpdatedAt'],
+  CountEntryAudit: ['AuditID','EntryID','SessionID','Action','OldValue','NewValue','Reason','ChangedBy','ChangedAt']
 };
 function invSheet_(name) {
   const s = SpreadsheetApp.openById(INV_DB_ID).getSheetByName(name);
@@ -166,6 +167,50 @@ function apiInventoryMarkEmpty(request) {
       'EMPTY','','ACTIVE'
     ]]);
     return {ok:true,entryId,elapsedMs:Date.now()-started};
+  }finally{lock.releaseLock();}
+}
+/** Read own entries only; administrators may review every entry. */
+function apiInventoryMyEntries(request) {
+  const user=invUser_(),sessionId=String(request&&request.sessionId||'').trim();
+  const locationId=String(request&&request.locationId||'').trim();
+  if(!sessionId||!locationId)throw new Error('Session and location required.');
+  invSession_(sessionId);
+  const rows=invRows_('CountEntries').filter(r=>
+    String(r.SessionID)===sessionId&&String(r.LocationID)===locationId&&
+    String(r.Status).toUpperCase()==='ACTIVE'&&
+    (user.role==='administrator'||String(r.EnteredBy).trim().toLowerCase()===user.email));
+  return rows.map(r=>({entryId:String(r.EntryID),team:String(r.Team),
+    itemId:String(r.WSItemID),uom:String(r.UOM),quantity:Number(r.Quantity),
+    method:String(r.EntryMethod),enteredBy:String(r.EnteredBy)}));
+}
+/** Soft delete an entry with audit, never another counter's entry. */
+function apiInventoryDeleteEntry(request) {
+  const user=invUser_(),sessionId=String(request&&request.sessionId||'').trim();
+  const entryId=String(request&&request.entryId||'').trim();
+  const reason=String(request&&request.reason||'Correction').trim().slice(0,200);
+  if(!sessionId||!entryId)throw new Error('Session and entry required.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
+  try {
+    invSession_(sessionId);
+    const rows=invRows_('CountEntries');
+    const hits=rows.map((r,i)=>({r,i})).filter(x=>String(x.r.EntryID)===entryId);
+    if(hits.length!==1||String(hits[0].r.SessionID)!==sessionId)
+      throw new Error('Entry not found.');
+    const hit=hits[0],r=hit.r;
+    if(user.role!=='administrator'&&String(r.EnteredBy).trim().toLowerCase()!==user.email)
+      throw new Error('You can only remove your own entries.');
+    if(String(r.Status).toUpperCase()==='DELETED')return {ok:true,alreadyDeleted:true};
+    if(String(r.Status).toUpperCase()!=='ACTIVE')throw new Error('Entry is not active.');
+    const audit=invSheet_('CountEntryAudit');
+    audit.getRange(audit.getLastRow()+1,1,9).setValues([[
+      'AUD-'+Utilities.getUuid(),entryId,sessionId,'DELETE',
+      JSON.stringify({status:'ACTIVE',itemId:String(r.WSItemID),quantity:r.Quantity,
+        locationId:String(r.LocationID),team:String(r.Team),method:String(r.EntryMethod)}),
+      JSON.stringify({status:'DELETED'}),reason,user.email,new Date()
+    ]]);
+    invSheet_('CountEntries').getRange(hit.i+2,14).setValue('DELETED');
+    return {ok:true,entryId};
   }finally{lock.releaseLock();}
 }
 /** Administrator operations: all permissions checked server-side. */

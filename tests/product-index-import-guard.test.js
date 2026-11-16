@@ -71,3 +71,39 @@ assert.strictEqual(assess(stage.rows.slice(0,1),{importId:'id',backupId:'backup'
 assert.strictEqual(ctx.invInitialProductIndexAuditEvent_('id','PREPARED','admin',{}).phase,'PREPARED');
 assert.throws(()=>ctx.invInitialProductIndexAuditEvent_('id','DELETE_ALL','admin',{}));
 console.log('ProductIndex recovery and audit guard tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexTransactionSimulator.gs','utf8'),ctx);
+function mockAdapter(options={}){
+ const state={headers:stage.headers.slice(),rows:[],events:[],backup:null};
+ const adapter={
+  snapshot:()=>({headers:state.headers.slice(),rows:state.rows.map(r=>r.slice())}),
+  persistBackup:snapshot=>{if(options.backupFailure)throw Error('backup failed');state.backup=snapshot;return 'backup-1';},
+  appendAudit:event=>{if(options.auditFailure&&event.phase===options.auditFailure)throw Error('audit failed');state.events.push(event.phase);},
+  writeRows:rows=>{state.rows=rows.map(r=>r.slice());if(options.partialWrite){state.rows.pop();throw Error('injected partial write');}},
+  readback:()=>({headers:state.headers.slice(),rows:state.rows.map(r=>r.slice())})
+ };
+ return {state,adapter};
+}
+let m=mockAdapter();
+let outcome=ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx1');
+assert.strictEqual(outcome.ok,true);
+assert.strictEqual(m.state.rows.length,2);
+assert.deepStrictEqual(m.state.events,['PREPARED','BACKUP_VERIFIED','WRITE_STARTED','WRITE_VERIFIED']);
+m=mockAdapter({partialWrite:true});
+outcome=ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx2');
+assert.strictEqual(outcome.ok,false);
+assert.strictEqual(outcome.recoveryRequired,true);
+assert.strictEqual(m.state.rows.length,1);
+assert.deepStrictEqual(m.state.events.slice(-2),['FAILED','RECOVERY_REQUIRED']);
+assert.strictEqual(m.state.backup.rows.length,0);
+m=mockAdapter({backupFailure:true});
+assert.throws(()=>ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx3'),/backup failed/);
+assert.strictEqual(m.state.rows.length,0);
+m=mockAdapter({auditFailure:'WRITE_STARTED'});
+outcome=ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx4');
+assert.strictEqual(outcome.ok,false);
+assert.strictEqual(m.state.rows.length,0);
+m=mockAdapter();
+m.state.rows.push(stage.rows[0].slice());
+assert.throws(()=>ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx5'),/empty target/);
+console.log('ProductIndex mock transaction and failure injection tests PASS');

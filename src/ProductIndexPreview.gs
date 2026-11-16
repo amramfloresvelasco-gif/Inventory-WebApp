@@ -117,3 +117,43 @@ function invResolveSpiritsCasePacks_(products, releases, subtypes) {
   }
   return {rows,issues,ready:issues.length===0};
 }
+
+/**
+ * Read-only reconciliation of a validated preview against existing ProductIndex.
+ * Never deletes, disables or writes products. Rejects ambiguous existing IDs.
+ */
+function invPlanProductIndexSync_(preview, existingRows) {
+  const issues=(preview&&Array.isArray(preview.issues)?preview.issues:[]).slice();
+  const incoming=preview&&Array.isArray(preview.products)?preview.products:[];
+  const current=Array.isArray(existingRows)?existingRows:[];
+  const byId=new Map(), seen=new Set(), adds=[], updates=[], unchanged=[];
+  if(!preview||preview.ready!==true||issues.length)
+    return {ready:false,issues:issues.length?issues:[{reason:'Source preview is not ready'}],adds,updates,unchanged};
+  for(const row of current) {
+    const id=String(row.WSItemID||'').trim();
+    if(!id||byId.has(id))issues.push({id,reason:'Existing ProductIndex has missing or duplicate WS item ID'});
+    else byId.set(id,row);
+  }
+  const fields=['ItemName','ClassOfMaterial','Barcode','UnitsPerCase','DefaultUOM','Source'];
+  for(const row of incoming) {
+    const id=String(row.WSItemID||'').trim();
+    if(!id||seen.has(id)) {
+      issues.push({id,reason:'Incoming ProductIndex has missing or duplicate WS item ID'});
+      continue;
+    }
+    seen.add(id);
+    const old=byId.get(id);
+    if(!old){adds.push(row);continue;}
+    if(String(old.Source||'')!==String(row.Source||'')) {
+      issues.push({id,reason:'Product source changed for existing WS item ID'});
+      continue;
+    }
+    const changed=fields.filter(key=>String(old[key]??'')!==String(row[key]??''));
+    if(changed.length)updates.push({id,changed,row});
+    else unchanged.push(id);
+  }
+  const missing=current.filter(row=>!seen.has(String(row.WSItemID||'').trim()))
+    .map(row=>({id:String(row.WSItemID||''),name:String(row.ItemName||'')}));
+  // Missing source products require explicit review; never auto-delete or deactivate.
+  return {ready:issues.length===0,issues,adds,updates,unchanged,missing};
+}

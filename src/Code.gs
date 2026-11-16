@@ -10,7 +10,8 @@ const INV_HEADERS = {
   ProductIndex: ['WSItemID','ItemName','ClassOfMaterial','Barcode','UnitsPerCase','DefaultUOM','Source','SourceUpdatedAt','Active'],
   CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'],
   WSSnapshots: ['SnapshotID','SessionID','SnapshotType','UploadedAt','UploadedBy','SourceTimestamp','Version','Status','Notes'],
-  WSRows: ['SnapshotID','WSItemID','Warehouse','UOM','Quantity','ItemName','ClassOfMaterial']
+  WSRows: ['SnapshotID','WSItemID','Warehouse','UOM','Quantity','ItemName','ClassOfMaterial'],
+  LocationStatus: ['SessionID','LocationID','TeamAStarted','TeamBStarted','Status','MismatchCount','LastUpdatedAt']
 };
 function invSheet_(name) {
   const s = SpreadsheetApp.openById(INV_DB_ID).getSheetByName(name);

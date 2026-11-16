@@ -317,7 +317,8 @@ const verifyCtx=vm.createContext({
  invStageInitialProductIndex_:ctx.invStageInitialProductIndex_,
  invProductIndexCompareTrustedPreflight_:driveCtx.invProductIndexCompareTrustedPreflight_,
  invProductIndexSourceFingerprints_:driveCtx.invProductIndexSourceFingerprints_,
- invProductIndexVerifyStageFingerprint_:driveCtx.invProductIndexVerifyStageFingerprint_
+ invProductIndexVerifyStageFingerprint_:driveCtx.invProductIndexVerifyStageFingerprint_,
+ invProductIndexValidateSourceFingerprint_:driveCtx.invProductIndexValidateSourceFingerprint_
 });
 vm.runInContext(fs.readFileSync('src/ProductIndexVerifyPreflight.gs','utf8'),verifyCtx);
 const verified=verifyCtx.apiInventoryAdminProductIndexVerifyPreflight(trusted);
@@ -329,3 +330,32 @@ assert.strictEqual(verifyCtx.apiInventoryAdminProductIndexVerifyPreflight({
  ...trusted,stageFingerprint:{...fingerprint,sha256:'0'.repeat(64)}}).matches,false);
 assert.deepStrictEqual(verifyCalls,['lock','fresh','unlock','lock','fresh','unlock']);
 console.log('Lock-held read-only preflight verification tests PASS');
+
+const beforeInvalid=verifyCalls.length;
+assert.strictEqual(verifyCtx.apiInventoryAdminProductIndexVerifyPreflight({
+ ...trusted,sourceFingerprints:{format:'bad'}}).matches,false);
+assert.strictEqual(verifyCtx.apiInventoryAdminProductIndexVerifyPreflight({
+ ...trusted,stageFingerprint:{...fingerprint,count:-1}}).matches,false);
+assert.strictEqual(verifyCalls.length,beforeInvalid);
+const contention=[];
+const contentionCtx=vm.createContext({
+ invRequireAdmin_:()=>({email:'admin@example.test'}),
+ invProductIndexValidateSourceFingerprint_:driveCtx.invProductIndexValidateSourceFingerprint_,
+ LockService:{getScriptLock:()=>({tryLock:()=>{contention.push('lock');return false;},
+ releaseLock:()=>contention.push('unlock')})}
+});
+vm.runInContext(fs.readFileSync('src/ProductIndexVerifyPreflight.gs','utf8'),contentionCtx);
+assert.throws(()=>contentionCtx.apiInventoryAdminProductIndexVerifyPreflight(trusted),/busy/);
+assert.deepStrictEqual(contention,['lock']);
+const failureCalls=[];
+const failureCtx=vm.createContext({
+ invRequireAdmin_:()=>({email:'admin@example.test'}),
+ invProductIndexValidateSourceFingerprint_:driveCtx.invProductIndexValidateSourceFingerprint_,
+ LockService:{getScriptLock:()=>({tryLock:()=>{failureCalls.push('lock');return true;},
+ releaseLock:()=>failureCalls.push('unlock')})},
+ invProductIndexFreshPlan_:()=>{failureCalls.push('fresh');throw Error('source unavailable');}
+});
+vm.runInContext(fs.readFileSync('src/ProductIndexVerifyPreflight.gs','utf8'),failureCtx);
+assert.throws(()=>failureCtx.apiInventoryAdminProductIndexVerifyPreflight(trusted),/source unavailable/);
+assert.deepStrictEqual(failureCalls,['lock','fresh','unlock']);
+console.log('ProductIndex malformed input, lock contention and exception tests PASS');

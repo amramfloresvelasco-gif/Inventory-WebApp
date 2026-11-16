@@ -582,3 +582,7 @@ User confirmed five FluidOunces blending ingredients must stay on the Inventory 
 ## 2026-11-15 — Read-only Extended Report 2 data endpoint
 
 Added `apiInventoryAdminExtendedLegacyUomWatchlist({snapshotId})` to `src/WSSnapshots.gs` (`c349f728`): administrator-only, validates snapshot identity, reads stored `WSRows` (original source quantities), returns timestamp, grouped legacy blending ingredient items and nonzero watchlist. Targeted direct JS invocation with stubbed sheet reads passed; no live Apps Script test. This is a report **data endpoint**, not a finished Extended Report 2 UI/export. **Outstanding:** implement Extended Report 2 renderer/export, apply ownership exclusions to extra sections only, and validate that report uses snapshot source balances rather than effective zero for anomaly detection. No live writes or deployment.
+
+## 2026-11-15 — Extended-only ownership exclusion wired
+
+Updated `src/WSSnapshots.gs` (`bb315773`) to apply whole-token, case-insensitive `JYP`, `OTS`, `Dios`, `SCG` exclusions **only** inside the admin Extended Report 2 legacy blending watchlist endpoint. Physical counting, ProductIndex, WS reconciliation and Report 1 are unchanged. Direct JS checks: `JYP OTS Explorer`, `Dios Azul`, `SCG` excluded; `Pickers Original` and `LOTS of flavor` retained. These are currently default tokens in endpoint; **editable OwnershipExclusions table remains unimplemented**. Full Extended Report 2 UI/export and runtime/CI tests remain outstanding. No live writes or deployment.

@@ -221,3 +221,20 @@ driveFolder.createFile=(name,body)=>{
 assert.throws(()=>driveCtx.invProductIndexEvidenceWriteOnce_(driveFolder,raceName,{test:true}),/collision/);
 driveFolder.createFile=originalCreate;
 console.log('ProductIndex folder policy and concurrent filename collision tests PASS');
+
+const inspectCtx=vm.createContext({
+ PropertiesService:{getScriptProperties:()=>({getProperty:()=> 'folder-1'})},
+ invProductIndexEvidenceAccessCheck_:ctx.invProductIndexEvidenceAccessCheck_
+});
+vm.runInContext(fs.readFileSync('src/ProductIndexEvidencePermissionInspection.gs','utf8'),inspectCtx);
+assert.strictEqual(inspectCtx.invInspectProductIndexEvidenceFolderDisabled_().ready,false);
+inspectCtx.Drive={Permissions:{list:()=>({permissions:[{type:'user',role:'owner',emailAddress:'admin@example.test'}]})}};
+const inspected=inspectCtx.invInspectProductIndexEvidenceFolderDisabled_();
+assert.strictEqual(inspected.inspectionComplete,true);
+assert.strictEqual(inspected.policyReady,true);
+assert.strictEqual(inspected.ready,false); // inherited access still requires review
+inspectCtx.Drive={Permissions:{list:()=>({permissions:[{type:'anyone',role:'reader'}]})}};
+assert.strictEqual(inspectCtx.invInspectProductIndexEvidenceFolderDisabled_().policyReady,false);
+inspectCtx.Drive={Permissions:{list:()=>{throw Error('forbidden');}}};
+assert.strictEqual(inspectCtx.invInspectProductIndexEvidenceFolderDisabled_().inspectionComplete,false);
+console.log('Read-only Drive permissions inspection fail-closed tests PASS');

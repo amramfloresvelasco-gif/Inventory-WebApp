@@ -230,8 +230,7 @@ el('viewExtended').addEventListener('click',()=>{
 el('exportExtended').addEventListener('click',()=>{
  if(!extendedRows||!extendedMeta)return;
  const columns=['WSItemID','ItemName','Warehouse','UOM','SourceQuantity','EffectiveQuantity','Rows'];
- const csvCell=v=>'"'+String(v??'').replace(/^[=+@-]/,'\\tbootstrap();
-</script>').replace(/"/g,'""')+'"';
+ const csvCell=v=>'"'+String(v??'').replace(/^[=+@-]/,m=>'\\t'+m).replace(/"/g,'""')+'"';
  const lines=[columns.join(','),...extendedRows.map(r=>columns.map(k=>csvCell(r[k])).join(','))];
  const blob=new Blob([lines.join('\\r\\n')],{type:'text/csv;charset=utf-8'});
  const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='extended-legacy-uom-'+extendedMeta.snapshotId.replace(/[^a-zA-Z0-9_-]/g,'_')+'.csv';document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);

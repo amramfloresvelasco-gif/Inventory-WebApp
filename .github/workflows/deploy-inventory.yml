@@ -2,6 +2,12 @@ name: Deploy Inventory Web App
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/deploy-inventory.yml'
 
 permissions:
   contents: read

@@ -122,8 +122,8 @@ function apiInventoryAdminExtendedLegacyUomWatchlist(input) {
   const snapshots=invRows_('WSSnapshots').filter(r=>String(r.SnapshotID)===snapshotId);
   if(snapshots.length!==1)throw new Error('Snapshot not found or duplicated.');
   const rows=invRows_('WSRows').filter(r=>String(r.SnapshotID)===snapshotId);
-  // Default tokens are report-only; editable table remains a separate task.
-  const watch=invExtendedLegacyUomWatchlist_(rows,['JYP','OTS','Dios','SCG']);
+  // Configurable tokens apply only to this extended-report section.
+  const watch=invExtendedLegacyUomWatchlist_(rows,invOwnershipConfig_().tokens);
   return {snapshotId,sourceTimestamp:String(snapshots[0].SourceTimestamp||''),
     items:watch.items,nonzero:watch.nonzero,nonzeroCount:watch.nonzeroCount};
 }

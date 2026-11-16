@@ -1,0 +1,14 @@
+const fs=require('fs'),assert=require('assert');
+const html=fs.readFileSync('src/Index.html','utf8');
+const script=html.match(/<script>([\s\S]*?)<\/script>/);
+assert(script,'Inline script missing');
+new Function(script[1]);
+for(const id of ['loadExtendedSnapshots','extendedSnapshot','viewExtended','exportExtended','extendedResults','ownershipRows'])
+ assert(html.includes('id="'+id+'"'),'Missing UI control: '+id);
+const csv=script[1].match(/const csvCell=v=>([^;]+);/);
+assert(csv,'CSV formatter missing');
+const format=new Function('v','return '+csv[1]);
+assert.strictEqual(format('=SUM(1,1)'),'"\t=SUM(1,1)"');
+assert.strictEqual(format('a"b'),'"a""b"');
+assert(script[1].includes("lines.join('\\r\\n')"),'CSV must use CRLF row delimiters');
+console.log('Inventory UI syntax and CSV safety checks passed');

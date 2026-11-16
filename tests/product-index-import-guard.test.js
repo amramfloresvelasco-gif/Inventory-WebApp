@@ -131,13 +131,16 @@ const driveFiles=new Map(), driveFolder={
   const file={getId:()=>id,getName:()=>name,getBlob:()=>({getDataAsString:()=>body})};
   driveFiles.set(id,file);return file;}
 };
+const crypto=require('crypto');
 const driveCtx=vm.createContext({
+ Utilities:{DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},computeDigest:(_alg,value)=>Array.from(crypto.createHash('sha256').update(value,'utf8').digest()).map(n=>n>127?n-256:n)},
  PropertiesService:{getScriptProperties:()=>({getProperty:()=> 'folder-1'})},
  DriveApp:{getFolderById:()=>driveFolder,getFileById:id=>driveFiles.get(id)},
  invInitialProductIndexAuditEvent_:ctx.invInitialProductIndexAuditEvent_,
  invVerifyProductIndexEvidenceReadback_:ctx.invVerifyProductIndexEvidenceReadback_,
  invValidateProductIndexEvidence_:ctx.invValidateProductIndexEvidence_
 });
+vm.runInContext(fs.readFileSync('src/ProductIndexEvidenceIntegrity.gs','utf8'),driveCtx);
 vm.runInContext(fs.readFileSync('src/ProductIndexEvidenceDrive.gs','utf8'),driveCtx);
 const saved=driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin','test-import-001',
  {headers:stage.headers,rows:[]});
@@ -185,3 +188,17 @@ const fakeName='product-index-audit-test-001-event-004.json';
 driveFolder.createFile(fakeName,JSON.stringify({phase:'FAILED'}));
 assert.throws(()=>driveCtx.invProductIndexReadAuditEventsDisabled_(driveFolder,'audit-test-001','admin'),/Missing, duplicate or unexpected/);
 console.log('ProductIndex per-event Drive audit mock tests PASS');
+
+const digestPayload={test:'integrity'};
+const envelope=driveCtx.invProductIndexEvidenceEnvelope_(digestPayload);
+assert.strictEqual(driveCtx.invProductIndexVerifyEvidenceEnvelope_(envelope).test,'integrity');
+assert.throws(()=>driveCtx.invProductIndexVerifyEvidenceEnvelope_(
+ {...envelope,payload:{test:'tampered'}}),/digest mismatch/);
+const fileForTamper=driveFiles.get(saved.backupFileId);
+const originalBlob=fileForTamper.getBlob;
+fileForTamper.getBlob=()=>({getDataAsString:()=>JSON.stringify({
+ ...JSON.parse(originalBlob().getDataAsString()),payload:{altered:true}
+})});
+assert.throws(()=>driveCtx.invProductIndexEvidenceReadById_(driveFolder,
+ saved.backupFileId,'product-index-test-import-001-backup.json'),/digest mismatch/);
+console.log('ProductIndex SHA-256 integrity tampering tests PASS');

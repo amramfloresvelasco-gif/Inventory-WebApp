@@ -19,5 +19,5 @@ const fixtures=vm.runInContext('testInventoryLocationComparisonFixtures()',conte
 assert.equal(rules.ok,true);
 assert.equal(rules.assertions,26);
 assert.equal(fixtures.ok,true);
-assert.equal(fixtures.assertions,18);
-console.log('PASS 44/44 pure location comparison checks.');
+assert.equal(fixtures.assertions,22);
+console.log('PASS 48/48 pure location comparison checks.');

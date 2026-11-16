@@ -288,3 +288,14 @@ assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(
  {...sourceSnapshots,subtypes:null},sourceHashes).ok,false);
 assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(sourceSnapshots,null).ok,false);
 console.log('ProductIndex five-source fingerprint tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexTrustedPreflightCompare.gs','utf8'),driveCtx);
+const trusted={sourceFingerprints:sourceHashes,stageFingerprint:fingerprint};
+const freshPlan={ready:true,sourceSnapshots};
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,trusted).matches,true);
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,trusted).importEnabled,false);
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(
+ {...freshPlan,sourceSnapshots:{...sourceSnapshots,raw:[{id:'changed'}]}},stage,trusted).matches,false);
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,modifiedStage,trusted).matches,false);
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,null).matches,false);
+console.log('Trusted ProductIndex preflight comparison tests PASS');

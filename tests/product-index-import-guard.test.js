@@ -272,3 +272,16 @@ if(stage.rows.length>1)assert.strictEqual(driveCtx.invProductIndexVerifyStageFin
 assert.strictEqual(driveCtx.invProductIndexVerifyStageFingerprint_(stage,null).ok,false);
 assert.throws(()=>driveCtx.invProductIndexStageFingerprint_({...stage,count:-1}),/Valid complete/);
 console.log('ProductIndex staged fingerprint tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexSourceFingerprint.gs','utf8'),driveCtx);
+const sourceSnapshots={raw:[{id:'1',name:'a'}],finishedGoods:[{id:'2'}],
+ spiritsProducts:[{id:'3'}],releases:[],subtypes:[]};
+const sourceHashes=driveCtx.invProductIndexSourceFingerprints_(sourceSnapshots);
+assert.strictEqual(Object.keys(sourceHashes.tables).length,5);
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(sourceSnapshots,sourceHashes).ok,true);
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(
+ {...sourceSnapshots,raw:[{id:'1',name:'changed'}]},sourceHashes).ok,false);
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(
+ {...sourceSnapshots,subtypes:null},sourceHashes).ok,false);
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(sourceSnapshots,null).ok,false);
+console.log('ProductIndex five-source fingerprint tests PASS');

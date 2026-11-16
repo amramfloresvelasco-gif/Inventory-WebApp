@@ -47,3 +47,58 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
     counts:{products:products.length,raw:products.filter(p=>p.Source==='WS Raw Materials').length,
       finishedGoods:products.filter(p=>p.Source==='WS Finished Goods').length}};
 }
+
+/**
+ * Build verified FG case-pack rows from the SPIRITS catalog.
+ * Prefer the direct subtype ID; for legacy products with blank SubtypeID,
+ * resolve the saved release's ReleaseType within the product's brand.
+ * Never filter on any planner Status field. Flag ambiguous/missing joins.
+ */
+function invResolveSpiritsCasePacks_(products, releases, subtypes) {
+  const issues=[],rows=[],byProduct=new Map(),bySubtype=new Map(),byBrandName=new Map();
+  const norm=v=>String(v==null?'':v).trim().replace(/\\s+/g,' ').toUpperCase();
+  for(const t of subtypes) {
+    const id=String(t.BrandReleaseTypeID||'').trim();
+    if(id)bySubtype.set(id,t);
+    const key=String(t.BrandID||'').trim()+'|'+norm(t.ReleaseTypeName);
+    if(!byBrandName.has(key))byBrandName.set(key,[]);
+    byBrandName.get(key).push(t);
+  }
+  for(const p of products) {
+    const id=String(p.ProductID||'').trim();
+    if(id)byProduct.set(id,p);
+  }
+  const releaseByProduct=new Map();
+  for(const r of releases) {
+    const id=String(r.ProductID||'').trim();
+    if(!releaseByProduct.has(id))releaseByProduct.set(id,[]);
+    releaseByProduct.get(id).push(r);
+  }
+  for(const p of products) {
+    const wsid=String(p.WSFinishedGoodsID||'').trim();
+    if(!wsid){issues.push({product:p.ProductName,reason:'Missing WS finished-good ID'});continue;}
+    let t=bySubtype.get(String(p.SubtypeID||'').trim());
+    if(!t) {
+      const found=new Map();
+      for(const r of releaseByProduct.get(String(p.ProductID||'').trim())||[]) {
+        for(const candidate of byBrandName.get(String(p.BrandID||'').trim()+'|'+norm(r.ReleaseType))||[])
+          found.set(String(candidate.BrandReleaseTypeID),candidate);
+      }
+      if(found.size===1)t=[...found.values()][0];
+      else {issues.push({id:wsid,product:p.ProductName,reason:found.size?'Ambiguous subtype via release':'Missing subtype relationship'});continue;}
+    }
+    if(String(t.BrandID)!==String(p.BrandID)){
+      issues.push({id:wsid,product:p.ProductName,reason:'Subtype belongs to another brand'});continue;
+    }
+    const pack=Number(t.UnitsPerCase);
+    if(t.UnitsPerCase===''||t.UnitsPerCase==null||!Number.isSafeInteger(pack)||pack<=0){
+      issues.push({id:wsid,product:p.ProductName,reason:'Missing/invalid subtype bottles per case'});continue;
+    }
+    const productPack=Number(p.UnitsPerCase);
+    if(p.UnitsPerCase!==''&&p.UnitsPerCase!=null&&Number.isSafeInteger(productPack)&&productPack>0&&productPack!==pack){
+      issues.push({id:wsid,product:p.ProductName,reason:'Product/subtype case-pack conflict',productPack,subtypePack:pack});continue;
+    }
+    rows.push({WSItemID:wsid,UnitsPerCase:pack,SubtypeID:String(t.BrandReleaseTypeID)});
+  }
+  return {rows,issues,ready:issues.length===0};
+}

@@ -802,3 +802,8 @@ Moved from ProductIndex security-only stages to Phase 1 functional development. 
 ## 2026-11-16 — Stage 21 Phase 1 team permissions and location UX
 
 Confirmed Stage 20 `3eaad068` CI and deployment succeeded. Removed obsolete administrator Assigned Team/Team Locked controls from `src/Index.html` (`c06a2ee4`); admin user upsert in `src/Code.gs` (`cdec4f9e`) now preserves existing team/lock state instead of overriding self-selected teams, including when a legacy request includes team fields. Added temporary client-side location Lock/Unlock (`bb54a2d5`): disables Warehouse/Bay/Location selectors while locked, allows consecutive submissions, no server-side location lock and no Finish Location action. Added mocked admin preservation test (`e18dae56`), verify CI/deploy. No live database changes. Remaining: pallet child submissions, editing constraints, warehouse device testing, UI performance, and ProductIndex import authorization. Note: location lock is deliberately UI-only; other browser tabs can select different locations. Check user-facing team unlock and unsaved form handling before release.
+
+
+## Stage 21 follow-up CI fixes
+
+Added regression test for admin user updates preserving counter-owned team and lock state (`e18dae56`). CI revealed pre-existing invalid email regex in `apiInventoryAdminUpsertUser`, fixed in `7001526a`. Subsequent CI revealed test mock incorrectly modeled AppUsers seven-column writes, fixed in `2509273b`. Await final CI/deployment result. Do not claim warehouse validation. No live data mutation performed.

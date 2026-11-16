@@ -55,3 +55,36 @@ function invVerifyInitialProductIndex_(expected, actual) {
   }
   return {ok:true,count:actual.length};
 }
+
+/**
+ * Deterministic staging payload for a future protected initial import.
+ * Does not access SpreadsheetApp or write anything. The future writer must
+ * acquire LockService, re-read live sources and the target under that lock,
+ * and require a separate explicit operator approval before using this plan.
+ */
+function invStageInitialProductIndex_(preview, existingRows, approval) {
+  const prepared=invPrepareInitialProductIndex_(preview,existingRows,approval);
+  if(!prepared.ready)return {ready:false,issues:prepared.issues,headers:[],rows:[],count:0};
+  const headers=['WSItemID','ItemName','ClassOfMaterial','Barcode','UnitsPerCase',
+    'DefaultUOM','Source','SourceUpdatedAt','Active'];
+  const rows=prepared.products.map(p=>headers.map(h=>p[h]===undefined?'':p[h]));
+  return {ready:true,issues:[],headers,rows,count:rows.length};
+}
+
+/** Compare staged cells with a complete readback; fail closed on any mismatch. */
+function invVerifyStagedProductIndex_(stage, actualHeaders, actualRows) {
+  if(!stage||!stage.ready||!Array.isArray(stage.headers)||!Array.isArray(stage.rows))
+    return {ok:false,reason:'Valid staging plan required'};
+  if(!Array.isArray(actualHeaders)||actualHeaders.length!==stage.headers.length||
+      actualHeaders.some((h,i)=>h!==stage.headers[i]))
+    return {ok:false,reason:'ProductIndex headers changed'};
+  if(!Array.isArray(actualRows)||actualRows.length!==stage.rows.length)
+    return {ok:false,reason:'Staged row count differs'};
+  for(let i=0;i<stage.rows.length;i++){
+    const actual=actualRows[i],expected=stage.rows[i];
+    if(!Array.isArray(actual)||actual.length!==expected.length||
+        actual.some((v,j)=>String(v??'')!==String(expected[j]??'')))
+      return {ok:false,reason:'Staged readback mismatch at row '+(i+2)};
+  }
+  return {ok:true,count:actualRows.length};
+}

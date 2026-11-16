@@ -80,7 +80,7 @@ function apiInventorySelectTeam(input) {
 }
 function invTeam_(user) {
   if (!['A','B'].includes(user.team)) throw new Error('Team assignment is required.');
-  if (!user.teamLocked) throw new Error('Team must be locked by an administrator before counting.');
+  if (!user.teamLocked) throw new Error('Lock your selected team before counting.');
   return user.team;
 }
 function invSession_(sessionId) {

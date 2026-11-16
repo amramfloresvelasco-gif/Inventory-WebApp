@@ -540,3 +540,9 @@ Live SPIRITS audit after repairs: 228 Products; zero duplicate nonblank WSFinish
 Inventory import preview now rejects duplicate WS finished-good IDs, duplicate ProductIDs, conflicting repeated item case-pack values, stale Products.SubtypeID versus Releases.ReleaseType, and unresolvable named release subtypes. When SubtypeID is blank, legacy fallback via a uniquely matching release remains available, but must not silently override a contradictory nonblank ID. Changes on main: `9b246ffd` guard implementation; `1d68998b` regression cases. **Tests were added but not executed in this connector-only session; do not claim CI pass.** No Apps Script deployment or live Inventory import performed.
 
 Next: run GitHub Actions/Node test suite and verify live preview against full source snapshots before enabling writes; investigate whether empty WS ID products should be blocked or handled as explicitly out-of-scope. Preserve user-approved blind-count permissions and map semantics.
+
+## 2026-11-15 — Follow-up integrity implementation
+
+Fixed preview identity collision: WS IDs are scoped by source (`raw` vs `FG`) so a raw material and finished good may share a numeric ID without being deduplicated. Scan barcode collisions still block preview. Corrected subtype-name normalization to use real whitespace regex (`/\s+/g`). Added regression cases for source ID collision, ambiguous scan payload, and trimmed subtype names. Commits: `102afe98`, `7fd1251a`, `f809f508`.
+
+Executed seven targeted checks directly against the GitHub-fetched latest source in a JavaScript runtime: valid mapping, stale subtype, duplicate WS, unresolved release, blank-ID fallback, cross-source numeric ID, and ambiguous barcode: **7/7 passed**. Full Node suite/GitHub Actions not verified; container could not reach GitHub raw URL. No live import or deployment. Next: full suite in CI and full source-snapshot read-only preview, then fix reported data issues before writing ProductIndex.

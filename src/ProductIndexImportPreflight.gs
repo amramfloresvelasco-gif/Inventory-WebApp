@@ -17,7 +17,9 @@ function apiInventoryAdminProductIndexImportPreflight() {
       'IMPORT_INITIAL_PRODUCT_INDEX');
     const issues=[...fresh.issues,...stage.issues];
     const ready=fresh.ready&&stage.ready&&issues.length===0;
+    const stageFingerprint=ready?invProductIndexStageFingerprint_(stage):null;
     return {readOnly:true,ready,importEnabled:false,operator:admin.email,
+      sourceFingerprints:fresh.sourceFingerprints,stageFingerprint,
       counts:fresh.preview.counts,existingRows:fresh.existing.length,
       stagedRows:ready?stage.count:0,issueCount:issues.length,
       issues:issues.slice(0,50),phases,elapsedMs:Date.now()-started,

@@ -258,3 +258,17 @@ assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_({...approvalBas
  explicitApprovalRecorded:false}).readyForHumanReview,false);
 assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_(null).importEnabled,false);
 console.log('ProductIndex authorization review fail-closed tests PASS');
+
+driveCtx.invProductIndexSha256_=driveCtx.invProductIndexSha256_;
+vm.runInContext(fs.readFileSync('src/ProductIndexStageFingerprint.gs','utf8'),driveCtx);
+const fingerprint=driveCtx.invProductIndexStageFingerprint_(stage);
+assert.strictEqual(fingerprint.count,stage.rows.length);
+assert.strictEqual(driveCtx.invProductIndexVerifyStageFingerprint_(stage,fingerprint).ok,true);
+const modifiedStage={...stage,rows:stage.rows.map(row=>[...row])};
+modifiedStage.rows[0][1]=String(modifiedStage.rows[0][1])+' changed';
+assert.strictEqual(driveCtx.invProductIndexVerifyStageFingerprint_(modifiedStage,fingerprint).ok,false);
+const reorderedStage={...stage,rows:[...stage.rows].reverse()};
+if(stage.rows.length>1)assert.strictEqual(driveCtx.invProductIndexVerifyStageFingerprint_(reorderedStage,fingerprint).ok,false);
+assert.strictEqual(driveCtx.invProductIndexVerifyStageFingerprint_(stage,null).ok,false);
+assert.throws(()=>driveCtx.invProductIndexStageFingerprint_({...stage,count:-1}),/Valid complete/);
+console.log('ProductIndex staged fingerprint tests PASS');

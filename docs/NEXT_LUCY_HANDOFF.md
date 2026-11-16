@@ -594,3 +594,7 @@ On continuing, inspected latest `src/WSSnapshots.gs` and found malformed JavaScr
 ## 2026-11-15 — Permanent Extended Report 2 regression coverage
 
 Created `tests/ws-extended-report.test.js` (`5f844b0`) covering full `WSSnapshots.gs` JavaScript parse, whole-token ownership filtering, blending-only scope, original source quantity aggregation, effective zero, zero-balance behavior, and invalid source quantity. Updated `.github/workflows/inventory-tests.yml` (`beda5369`) to run it and trigger on `src/WSSnapshots.gs` changes. **CI run status not yet verified**, and no Apps Script deployment/live writes. Next: implement editable `OwnershipExclusions` table with safe schema migration, then Extended Report 2 UI/export.
+
+## 2026-11-15 — OwnershipExclusions configuration read path
+
+Added `src/OwnershipExclusions.gs` (`a3b98bc`) with a strict proposed sheet schema `Token,Active,UpdatedAt,UpdatedBy`, duplicate/token validation, safe fallback to JYP/OTS/Dios/SCG when the sheet is absent, and admin-only read endpoint. Extended legacy watchlist now reads these configured tokens (`02696ed`). Added `tests/ownership-exclusions.test.js` (`4463466`) and CI invocation (`6ec4a59`). **No table has been created or populated in the live Inventory DB, and no admin edit UI/write endpoint exists yet**. The fallback means no migration is required to keep current report behavior. Next: validate tests/CI, design controlled table creation and admin edit with audit, then Extended Report 2 UI/export. No deployment/live writes.

@@ -610,3 +610,7 @@ Updated `src/OwnershipExclusions.gs` (`4d5d6e1`) so admin config read returns ro
 ## 2026-11-15 — Admin ownership configuration UI
 
 Added admin-panel controls to `src/Index.html` (`7eab515`): load exclusions, preview defaults if table absent, explicitly confirm table initialization, add/edit active tokens, save with `expectedRevision`, reload after save, and display server errors. This UI is inside the existing administrator-only panel; backend authorization still required. **No browser/Apps Script integration test or deployment**. Important next work: mock-test full initialization/save paths and verify input handling; ensure complete audit and safe write semantics before production; implement Extended Report 2 renderer/export. No live DB changes.
+
+## 2026-11-15 — Mock workflow tests and row deletion fix
+
+Added mock-Sheets tests for admin initialization, confirmation rejection, duplicate setup rejection, stale revision rejection, save, and row removal (`febeb4c`, `de2ddd1`). Discovered that clearing removed token cells leaves blank rows inside `getLastRow()` and causes strict token validation to fail; changed save to `sheet.deleteRows` (`ad4f6e3`). **Tests committed but execution/CI not verified** (attempted ad hoc JS harness was incompatible with Node assert). Need run actual Node suite, test save workflow end-to-end, and consider partial-write recovery. No live DB writes/deployment. Extended Report 2 UI/export still pending.

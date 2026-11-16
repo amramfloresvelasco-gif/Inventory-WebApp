@@ -22,10 +22,20 @@ function invLocationComparison_(sessionId) {
 /** Pure builder for fixture tests; endpoint always validates session and reads live sheets. */
 function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRows) {
   const locations=locationRows.filter(x=>String(x.Active).toLowerCase()==='true');
-  const products=new Map(productRows.filter(x=>String(x.Active).toLowerCase()==='true')
-    .map(x=>[String(x.WSItemID),x]));
+  const activeProducts=productRows.filter(x=>String(x.Active).toLowerCase()==='true');
+  const products=new Map(activeProducts.map(x=>[String(x.WSItemID),x]));
+  const productIdCounts=new Map();
+  for(const p of activeProducts){
+    const id=String(p.WSItemID);
+    productIdCounts.set(id,(productIdCounts.get(id)||0)+1);
+  }
   const grouped=new Map(), invalid=[];
   const validLocationIds=new Set(locations.map(x=>String(x.LocationID)));
+  const locationIdCounts=new Map();
+  for(const l of locations){
+    const id=String(l.LocationID);
+    locationIdCounts.set(id,(locationIdCounts.get(id)||0)+1);
+  }
   const emptyByLocation=new Map(), invalidCounts=new Map();
   // Invalid active entries must never be hidden behind a green location pin.
   function flagInvalid(r,loc,reason){
@@ -39,11 +49,17 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
     if(!validLocationIds.has(loc)){
       flagInvalid(r,loc,'Unknown or inactive location');continue;
     }
+    if(locationIdCounts.get(loc)!==1){
+      flagInvalid(r,loc,'Duplicate active location ID');continue;
+    }
     if(String(r.EntryMethod).trim().toUpperCase()==='EMPTY') {
       if(!['A','B'].includes(team)){flagInvalid(r,loc,'Invalid EMPTY team');continue;}
       if(!emptyByLocation.has(loc))emptyByLocation.set(loc,new Set());
       emptyByLocation.get(loc).add(team);
       continue;
+    }
+    if(productIdCounts.get(id)>1){
+      flagInvalid(r,loc,'Duplicate active product ID');continue;
     }
     if(!['A','B'].includes(team)||!p||r.Quantity===''||r.Quantity===null||!Number.isFinite(n)||n<0){
       flagInvalid(r,loc,'Invalid team/product/quantity');continue;
@@ -78,10 +94,11 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
     // No Finish Location action: status follows submitted counts automatically.
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
     const invalidCount=invalidCounts.get(id)||0;
-    const color=invalidCount>0?'red':invLocationColor_(startedA,startedB,differences.length);
+    const duplicateLocation=locationIdCounts.get(id)>1;
+    const color=duplicateLocation||invalidCount>0?'red':invLocationColor_(startedA,startedB,differences.length);
     return {locationId:id,warehouse:String(l.Warehouse),bay:String(l.Bay),
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,
-      mismatchCount:differences.length,differences,invalidCount};
+      mismatchCount:differences.length,differences,invalidCount,duplicateLocation};
   });
   const allGreen=invalid.length===0&&result.length>0&&result.every(x=>x.color==='green');
   return {sessionId,locations:result,invalid,

@@ -535,3 +535,8 @@ Executed current `src/Code.gs` with in-memory stubs for `invSheet_`, `invRows_`,
 ### 2026-11-15 — Reproducible Node count workflow test committed
 
 Commit `1f9ce5603e89ab9a24bba33ff03a7259d5fb8efd` adds `tests/count-workflow.test.js`, a Node built-in VM/strict-assert mock integration harness loading the real `src/Code.gs` source and running 13 save/retry/EMPTY/delete/ownership checks against in-memory Sheets stubs. Run from repository root: `node tests/count-workflow.test.js`. Earlier equivalent 13 checks passed in an isolated JavaScript execution, but **the new committed Node file has not yet been run in Node**. No Apps Script runtime tests or deployment; no live data changed; freeze disabled. Next: execute committed Node test file and both comparison suites, fix any regressions, then Apps Script integration tests on safe test data.
+
+
+### 2026-11-15 — Automated Node regression workflow
+
+Commit `9a715ff1a07dcff5dea80c3c33ab635b2b361fb3` adds `tests/location-comparison.test.js`, loading actual Apps Script comparison sources in Node VM and asserting 26 rule + 13 fixture checks. Commit `7c8a60c73878f238d3b4645c377766c14deb3340` adds `.github/workflows/inventory-tests.yml` to run both Node test files (52 total checks) on relevant main pushes, PRs, and manual dispatch. Workflow uses read-only GitHub permissions, no Apps Script credentials, no database access, no deployment. **CI run result not yet verified**. Next: inspect GitHub Actions first run and resolve failures, then actual Apps Script test-database integration. Freeze disabled.

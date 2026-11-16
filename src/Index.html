@@ -21,7 +21,7 @@ small,.muted{color:#64748b}#message{white-space:pre-wrap}#message.error{color:#a
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
-<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Users</h3><div id="users"></div></section></main>
+<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Users</h3><div id="users"></div></section></main>
 <script>
 let data=null, busy=false, pendingId=null, pendingEmptyId=null;
 const el=id=>document.getElementById(id);
@@ -54,6 +54,34 @@ function save(){if(busy)return;busy=true;el('save').disabled=true;
 el('warehouse').addEventListener('change',locations);el('bay').addEventListener('change',updateLocations);
 el('barcode').addEventListener('input',search);el('product').addEventListener('change',selectUom);
 el('save').addEventListener('click',save);
+function loadEntries(){
+ const sessionId=el('session').value,locationId=el('location').value;
+ if(!sessionId||!locationId){message('Select a session and location.',true);return;}
+ google.script.run.withSuccessHandler(rows=>{
+  const list=el('entryList');list.replaceChildren();
+  if(!rows.length){list.textContent='No active entries for this location.';return;}
+  for(const r of rows){
+   const line=document.createElement('div');
+   line.style.cssText='padding:10px 0;border-bottom:1px solid #dbe1e9';
+   const label=document.createElement('span');
+   label.textContent=(r.method==='EMPTY'?'EMPTY':r.itemId+' · '+r.quantity+' '+r.uom)+' · Team '+r.team+' ';
+   const remove=document.createElement('button');
+   remove.type='button';remove.textContent='Remove';remove.style.cssText='width:auto;margin:0 0 0 8px;padding:7px 12px;background:#a32626';
+   remove.addEventListener('click',()=>{
+    if(!confirm('Remove this entry? The change will be audited.'))return;
+    remove.disabled=true;
+    google.script.run.withSuccessHandler(()=>{message('Entry removed.');loadEntries()})
+      .withFailureHandler(e=>{remove.disabled=false;message(e.message||String(e),true)})
+      .apiInventoryDeleteEntry({sessionId,entryId:r.entryId,reason:'Counter correction'});
+   });
+   line.append(label,remove);list.appendChild(line);
+  }
+ }).withFailureHandler(e=>message(e.message||String(e),true))
+ .apiInventoryMyEntries({sessionId,locationId});
+}
+el('loadEntries').addEventListener('click',loadEntries);
+el('location').addEventListener('change',()=>el('entryList').replaceChildren());
+el('session').addEventListener('change',()=>el('entryList').replaceChildren());
 el('markEmpty').addEventListener('click',()=>{
  if(busy)return;
  const sessionId=el('session').value,locationId=el('location').value;

@@ -124,3 +124,27 @@ assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,{.
 assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,{...evidence.journal,events:evidence.journal.events.slice(0,1)},'tx','admin').ready,false);
 assert.strictEqual(ctx.invVerifyProductIndexEvidenceReadback_(stage,evidence,{...evidence,backup:{...evidence.backup,backupId:'different'}},'tx','admin').ready,false);
 console.log('Durable ProductIndex evidence contract tests PASS');
+
+const driveFiles=new Map(), driveFolder={
+ getFilesByName:name=>{const items=[...driveFiles.values()].filter(f=>f.getName()===name);let i=0;return {hasNext:()=>i<items.length,next:()=>items[i++]};},
+ createFile:(name,body)=>{const id='drive-'+(driveFiles.size+1);
+  const file={getId:()=>id,getName:()=>name,getBlob:()=>({getDataAsString:()=>body})};
+  driveFiles.set(id,file);return file;}
+};
+const driveCtx=vm.createContext({
+ PropertiesService:{getScriptProperties:()=>({getProperty:()=> 'folder-1'})},
+ DriveApp:{getFolderById:()=>driveFolder,getFileById:id=>driveFiles.get(id)},
+ invInitialProductIndexAuditEvent_:ctx.invInitialProductIndexAuditEvent_,
+ invVerifyProductIndexEvidenceReadback_:ctx.invVerifyProductIndexEvidenceReadback_,
+ invValidateProductIndexEvidence_:ctx.invValidateProductIndexEvidence_
+});
+vm.runInContext(fs.readFileSync('src/ProductIndexEvidenceDrive.gs','utf8'),driveCtx);
+const saved=driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin','test-import-001',
+ {headers:stage.headers,rows:[]});
+assert.strictEqual(saved.verified,true);
+assert.strictEqual(driveFiles.size,2);
+assert.throws(()=>driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin','test-import-001',
+ {headers:stage.headers,rows:[]}),/already exists/);
+assert.throws(()=>driveCtx.invProductIndexPersistEvidenceDisabled_(stage,'admin','test-import-002',
+ {headers:stage.headers,rows:stage.rows}),/must be empty/);
+console.log('ProductIndex Drive evidence mock tests PASS');

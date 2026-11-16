@@ -31,6 +31,7 @@ function invProductIndexFreshPlan_(markPhase) {
   const subtypes=invProductPreviewRows_(INV_SPIRITS_ID,'BrandReleaseTypes',
     ['BrandReleaseTypeID','BrandID','ReleaseTypeName','UnitsPerCase'],10000);
   markPhase('Read SPIRITS subtypes');
+  const sourceFingerprints=invProductIndexSourceFingerprints_({raw,finishedGoods:fg,spiritsProducts:products,releases,subtypes});
   const packs=invResolveSpiritsCasePacks_(products,releases,subtypes);
   markPhase('Resolve case packs');
   const preview=invPreviewProductIndex_(raw,fg,packs.rows);
@@ -46,7 +47,7 @@ function invProductIndexFreshPlan_(markPhase) {
   markPhase('Calculate ProductIndex diff');
   const issues=[...packs.issues,...preview.issues,...plan.issues];
   const ready=packs.ready&&preview.ready&&plan.ready&&issues.length===0;
-  return {packs,preview,plan,issues,ready,existing,sourceRows:{raw:raw.length,finishedGoods:fg.length,spiritsProducts:products.length,releases:releases.length,subtypes:subtypes.length,verifiedCasePacks:packs.rows.length}};
+  return {packs,preview,plan,issues,ready,existing,sourceFingerprints,sourceRows:{raw:raw.length,finishedGoods:fg.length,spiritsProducts:products.length,releases:releases.length,subtypes:subtypes.length,verifiedCasePacks:packs.rows.length}};
 }
 /** Administrator-only: fresh WS/SPIRITS reads and full mapper + diff. */
 function apiInventoryAdminProductIndexPreview() {

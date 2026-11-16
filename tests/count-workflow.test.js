@@ -47,6 +47,11 @@ check('idempotent retry',()=>assert.equal(save(count('COUNT-000001')).duplicate,
 reject('altered duplicate payload',()=>save(count('COUNT-000001',3)));
 reject('forged EMPTY entry method',()=>save({...count('COUNT-000002'),entryMethod:'EMPTY'}));
 reject('blank quantity',()=>save(count('COUNT-000002','')));
+reject('whitespace quantity',()=>save(count('COUNT-000002','   ')));
+reject('boolean quantity',()=>save(count('COUNT-000002',true)));
+reject('array quantity',()=>save(count('COUNT-000002',[1])));
+reject('exponential string quantity',()=>save(count('COUNT-000002','1e3')));
+check('integer string quantity accepted',()=>assert.equal(save(count('COUNT-000006','3')).duplicate,false));
 reject('EMPTY blocked by active item',()=>markEmpty({sessionId:'S1',locationId:'L1',entryId:'EMPTY-000001'}));
 user={...user,email:'b@example.com'};
 reject('cross-user delete',()=>remove({sessionId:'S1',entryId:'COUNT-000001'}));
@@ -66,6 +71,6 @@ reject('invalid location',()=>save({...count('COUNT-000005'),locationId:'MISSING
 check('admin can remove counter entry',()=>{user={...user,email:'admin@example.com',role:'administrator'};assert.equal(remove({sessionId:'S1',entryId:'COUNT-000004'}).ok,true);});
 check('admin deletion is audited',()=>assert.equal(audit[audit.length-1].ChangedBy,'admin@example.com'));
 check('deleted entry no longer visible to owner',()=>{user={...user,email:'a@example.com',role:'counter'};assert.equal(vm.runInContext('apiInventoryMyEntries',context)({sessionId:'S1',locationId:'L1'}).length,0);});
-assert.equal(entries.length,3);
+assert.equal(entries.length,4);
 assert.equal(audit.length,3);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');

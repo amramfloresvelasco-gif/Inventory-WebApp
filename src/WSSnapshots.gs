@@ -79,3 +79,31 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
       legacyZeroCount:p.legacyZeroCount};
   }finally{lock.releaseLock();}
 }
+
+/**
+ * Extended-report-only legacy UOM watchlist. Read-only and source-preserving.
+ * Uses ORIGINAL source quantities; never treats unsupported UOM as countable.
+ */
+function invExtendedLegacyUomWatchlist_(rows) {
+  if(!Array.isArray(rows))throw new Error('Invalid source rows.');
+  const grouped=new Map();
+  for(const r of rows) {
+    const cls=String(r.ClassOfMaterial||r.classOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
+    if(cls!=='BLENDINGINGREDIENT')continue;
+    const uom=String(r.UnitOfMeasure||r.UOM||r.uom||'').trim();
+    if(['Each','Pounds','Gallons'].includes(uom))continue;
+    const id=String(r.RawMaterialId||r.WSItemID||r.id||'').trim();
+    const warehouse=String(r.WarehouseId||r.Warehouse||r.warehouse||'').trim();
+    const value=r.Units!==undefined?r.Units:(r.originalQuantity!==undefined?r.originalQuantity:r.Quantity);
+    const quantity=Number(value);
+    if(!id||!uom||value==null||String(value).trim()===''||!Number.isFinite(quantity))
+      throw new Error('Invalid legacy UOM source record.');
+    const key=JSON.stringify([id,uom,warehouse]);
+    if(!grouped.has(key))grouped.set(key,{WSItemID:id,ItemName:String(r.MaterialName||r.ItemName||r.itemName||''),Warehouse:warehouse,UOM:uom,SourceQuantity:0,EffectiveQuantity:0,Rows:0});
+    const item=grouped.get(key);
+    item.SourceQuantity+=quantity;
+    item.Rows++;
+  }
+  const items=[...grouped.values()];
+  return {items,nonzero:items.filter(x=>x.SourceQuantity!==0),nonzeroCount:items.filter(x=>x.SourceQuantity!==0).length};
+}

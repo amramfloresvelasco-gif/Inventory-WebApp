@@ -21,6 +21,15 @@ function invProductIndexEvidenceWriteOnce_(folder,name,payload) {
   const iterator=folder.getFilesByName(name);
   if(iterator.hasNext())throw new Error('Evidence file already exists: '+name);
   const file=folder.createFile(name,JSON.stringify(invProductIndexEvidenceEnvelope_(payload)),'application/json');
+  // Detect competing writers creating the same name, even after our precheck.
+  const matching=folder.getFilesByName(name);
+  let count=0,ownsFile=false;
+  while(matching.hasNext()){
+    const found=matching.next();count++;
+    if(found.getId()===file.getId())ownsFile=true;
+  }
+  if(count!==1||!ownsFile)
+    throw new Error('Evidence filename collision after creation: '+name);
   // Verify through Drive readback, not the in-memory payload.
   const read=invProductIndexVerifyEvidenceEnvelope_(JSON.parse(file.getBlob().getDataAsString('UTF-8')));
   if(JSON.stringify(read)!==JSON.stringify(payload))

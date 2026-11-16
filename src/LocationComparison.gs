@@ -35,7 +35,7 @@ function invLocationComparison_(sessionId) {
       emptyByLocation.get(loc).add(team);
       continue;
     }
-    if(!['A','B'].includes(team)||!p||!Number.isFinite(n)||n<0){
+    if(!['A','B'].includes(team)||!p||r.Quantity===''||r.Quantity===null||!Number.isFinite(n)||n<0){
       invalid.push({entryId:String(r.EntryID),reason:'Invalid team/product/quantity'});continue;
     }
     if(!Number.isSafeInteger(n)||n<0){
@@ -45,7 +45,7 @@ function invLocationComparison_(sessionId) {
     let amount=n,unit=uom;
     if(fg){
       const perCase=Number(p.UnitsPerCase);
-      if(!Number.isSafeInteger(perCase)||perCase<=0){
+      if(p.UnitsPerCase===''||p.UnitsPerCase===null||!Number.isSafeInteger(perCase)||perCase<=0){
         invalid.push({entryId:String(r.EntryID),reason:'Missing or invalid units per case'});continue;
       }
       if(uom==='Bottle')amount=n/perCase;

@@ -25,9 +25,12 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
   const products=new Map(productRows.map(x=>[String(x.WSItemID),x]));
   const grouped=new Map(), invalid=[];
   const validLocationIds=new Set(locations.map(x=>String(x.LocationID)));
-  const emptyByLocation=new Map();
+  const emptyByLocation=new Map(), invalidCounts=new Map();
   // Invalid active entries must never be hidden behind a green location pin.
-  function flagInvalid(r,loc,reason){invalid.push({entryId:String(r.EntryID),locationId:loc,reason});}
+  function flagInvalid(r,loc,reason){
+    invalid.push({entryId:String(r.EntryID),locationId:loc,reason});
+    invalidCounts.set(loc,(invalidCounts.get(loc)||0)+1);
+  }
   for(const r of entryRows) {
     if(String(r.SessionID)!==sessionId||String(r.Status).toUpperCase()!=='ACTIVE')continue;
     const team=String(r.Team).toUpperCase(),loc=String(r.LocationID),id=String(r.WSItemID);
@@ -73,7 +76,7 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
     const differences=invLocationDifferences_(g.A,g.B,empty.has('A'),empty.has('B'),g.countA,g.countB);
     // No Finish Location action: status follows submitted counts automatically.
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
-    const invalidCount=invalid.filter(x=>x.locationId===id).length;
+    const invalidCount=invalidCounts.get(id)||0;
     const color=invalidCount>0?'red':invLocationColor_(startedA,startedB,differences.length);
     return {locationId:id,warehouse:String(l.Warehouse),bay:String(l.Bay),
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,

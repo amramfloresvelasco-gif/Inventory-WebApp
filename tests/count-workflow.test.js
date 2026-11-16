@@ -92,7 +92,7 @@ const teamChanges=[];
 context.invRows_=name=>name==='AppUsers'?teamRows:name==='CountEntries'?entries:name==='CountEntryAudit'?audit:[];
 context.invSheet_=name=>name==='AppUsers'?{
  getRange:(row,col)=>({setValue:v=>{teamRows[row-2].TeamLocked=v;teamChanges.push('unlock');},
- setValues:values=>{teamRows[row-2].AssignedTeam=values[0][0];teamRows[row-2].TeamLocked=values[0][1];teamChanges.push('lock');}})
+ setValues:values=>{if(col===1){teamRows[row-2].Email=values[0][0];teamRows[row-2].Role=values[0][1];teamRows[row-2].Status=values[0][2];teamRows[row-2].AssignedTeam=values[0][3];teamRows[row-2].TeamLocked=values[0][4];}else{teamRows[row-2].AssignedTeam=values[0][0];teamRows[row-2].TeamLocked=values[0][1];}teamChanges.push('lock');}})
 }:mocks.invSheet_(name);
 context.invUser_=()=>({email:'a@example.com',role:'counter',team:teamRows[0].AssignedTeam,teamLocked:teamRows[0].TeamLocked});
 const chooseTeam=vm.runInContext('apiInventorySelectTeam',context);

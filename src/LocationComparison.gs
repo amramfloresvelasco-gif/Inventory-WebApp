@@ -1,3 +1,9 @@
+/** Pure location status rule; no Finish Location action. */
+function invLocationColor_(startedA,startedB,mismatchCount) {
+  if(!startedA&&!startedB)return 'neutral';
+  if(!startedA||!startedB)return 'yellow';
+  return mismatchCount>0?'red':'green';
+}
 /** Location comparison is session-scoped and read-only. Never infer EMPTY from missing entries. */
 function invLocationComparison_(sessionId) {
   invSession_(sessionId);
@@ -49,8 +55,7 @@ function invLocationComparison_(sessionId) {
     if(empty.has('B')&&g.countB>0)differences.push('EMPTY_B_AND_ITEMS_B');
     // No Finish Location action: status follows submitted counts automatically.
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
-    const color=startedA&&startedB?(differences.length?'red':'green'):
-      (startedA||startedB?'yellow':'neutral');
+    const color=invLocationColor_(startedA,startedB,differences.length);
     return {locationId:id,warehouse:String(l.Warehouse),bay:String(l.Bay),
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,
       mismatchCount:differences.length,differences};
@@ -58,7 +63,7 @@ function invLocationComparison_(sessionId) {
   const allGreen=invalid.length===0&&result.length>0&&result.every(x=>x.color==='green');
   return {sessionId,locations:result,invalid,
     allGreen,freezeAllowed:false,
-    note:'EMPTY entries participate in mismatch detection; EMPTY submission endpoint and freeze validation pending.'};
+    note:'EMPTY entries participate in mismatch detection; freeze validation pending.'};
 }
 function apiInventoryAdminLocationComparison(input) {
   invRequireAdmin_();

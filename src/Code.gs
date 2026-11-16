@@ -8,7 +8,9 @@ const INV_HEADERS = {
   InventorySessions: ['SessionID','InventoryDate','Status','CreatedAt','CreatedBy','FrozenAt','FrozenBy','OriginalWSSnapshotID','UpdatedWSSnapshotID','Notes'],
   Locations: ['LocationID','Warehouse','Bay','LocationType','Active','SortOrder'],
   ProductIndex: ['WSItemID','ItemName','ClassOfMaterial','Barcode','UnitsPerCase','DefaultUOM','Source','SourceUpdatedAt','Active'],
-  CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status']
+  CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'],
+  WSSnapshots: ['SnapshotID','SessionID','SnapshotType','UploadedAt','UploadedBy','SourceTimestamp','Version','Status','Notes'],
+  WSRows: ['SnapshotID','WSItemID','Warehouse','UOM','Quantity','ItemName','ClassOfMaterial']
 };
 function invSheet_(name) {
   const s = SpreadsheetApp.openById(INV_DB_ID).getSheetByName(name);

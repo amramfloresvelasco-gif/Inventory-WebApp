@@ -214,7 +214,10 @@ function apiInventoryMarkEmpty(request) {
     const own=entries.filter(x=>String(x.SessionID)===sessionId&&
       String(x.LocationID)===locationId&&String(x.Team).toUpperCase()===team&&
       String(x.Status).toUpperCase()==='ACTIVE');
-    if(own.some(x=>String(x.EntryMethod).toUpperCase()!=='EMPTY'))
+    if(entries.some(x=>String(x.SessionID)===sessionId&&
+      String(x.LocationID)===locationId&&String(x.Team).toUpperCase()===team&&
+      String(x.Status).toUpperCase()==='ACTIVE'&&
+      String(x.EntryMethod).toUpperCase()!=='EMPTY'))
       throw new Error('This team has item counts here; remove those before marking EMPTY.');
     if(own.some(x=>String(x.EntryMethod).toUpperCase()==='EMPTY'))
       return {ok:true,entryId:String(own[0].EntryID),alreadyEmpty:true};
@@ -290,13 +293,9 @@ function apiInventoryAdminUpsertUser(input) {
   const email=String(input&&input.email||'').trim().toLowerCase();
   const role=String(input&&input.role||'').trim().toLowerCase();
   const status=String(input&&input.status||'').trim().toLowerCase();
-  const team=String(input&&input.team||'').trim().toUpperCase();
-  const locked=Boolean(input&&input.teamLocked);
   if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Invalid email.');
   if(!['administrator','counter'].includes(role)) throw new Error('Invalid role.');
   if(!['active','inactive'].includes(status)) throw new Error('Invalid status.');
-  if(team && !['A','B'].includes(team)) throw new Error('Invalid team.');
-  if(locked && !team) throw new Error('Assign a team before locking it.');
   if(email===admin.email && (role!=='administrator'||status!=='active'))
     throw new Error('Cannot revoke your own administrator access.');
   const lock=LockService.getScriptLock();
@@ -306,8 +305,12 @@ function apiInventoryAdminUpsertUser(input) {
     const matches=rows.map((r,i)=>({r,i})).filter(x=>String(x.r.Email).trim().toLowerCase()===email);
     if(matches.length>1) throw new Error('Duplicate user records need review.');
     const target=matches.length?matches[0].i+2:s.getLastRow()+1;
+    const existing=matches.length?matches[0].r:null;
+    const preservedTeam=existing?String(existing.AssignedTeam||''):'';
+    const preservedLock=existing?(existing.TeamLocked===true||
+      String(existing.TeamLocked).toLowerCase()==='true'):false;
     s.getRange(target,1,1,7).setValues([[email,role==='administrator'?'Administrator':'Counter',
-      status==='active'?'Active':'Inactive',team,locked,new Date(),admin.email]]);
+      status==='active'?'Active':'Inactive',preservedTeam,preservedLock,new Date(),admin.email]]);
     return {ok:true,email};
   } finally {lock.releaseLock();}
 }

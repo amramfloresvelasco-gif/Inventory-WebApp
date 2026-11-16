@@ -21,3 +21,18 @@ assert.strictEqual(result.nonzeroCount,1);
 assert.strictEqual(ctx.invExtendedLegacyUomWatchlist_([{...rows[0],Quantity:0}],tokens).nonzeroCount,0);
 assert.throws(()=>ctx.invExtendedLegacyUomWatchlist_([{...rows[0],Quantity:'bad'}],tokens),/Invalid legacy/);
 console.log('Extended legacy report syntax, ownership and source-quantity tests passed');
+
+const standard=ctx.invExtendedStandardBlending_([
+ {WSItemID:'100',ItemName:'Pickers Syrup',ClassOfMaterial:'Blending Ingredient',UOM:'Gallons',Warehouse:'344',Quantity:2},
+ {WSItemID:'100',ItemName:'Pickers Syrup',ClassOfMaterial:'Blending Ingredient',UOM:'Gallons',Warehouse:'344',Quantity:3},
+ {WSItemID:'100',ItemName:'Pickers Syrup',ClassOfMaterial:'Blending Ingredient',UOM:'Gallons',Warehouse:'1592',Quantity:4},
+ {WSItemID:'200',ItemName:'JYP Ingredient',ClassOfMaterial:'Blending Ingredient',UOM:'Pounds',Warehouse:'344',Quantity:10},
+ {WSItemID:'300',ItemName:'Unsupported',ClassOfMaterial:'Blending Ingredient',UOM:'FluidOunces',Warehouse:'344',Quantity:1}
+],tokens);
+assert.strictEqual(standard.length,2);
+assert.strictEqual(standard[0].SourceQuantity,5);
+assert.strictEqual(standard[0].EffectiveQuantity,5);
+assert.strictEqual(standard[0].Rows,2);
+assert.strictEqual(standard[1].Warehouse,'1592');
+assert.throws(()=>ctx.invExtendedStandardBlending_([{WSItemID:'1',ItemName:'X',ClassOfMaterial:'Blending Ingredient',UOM:'Each',Warehouse:'344',Quantity:-1}],tokens),/Invalid standard/);
+console.log('Standard blending grouping tests passed');

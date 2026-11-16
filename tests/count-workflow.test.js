@@ -104,3 +104,13 @@ reject('cannot unlock with team payload',()=>chooseTeam({unlock:true,team:'A'}))
 reject('cannot lock invalid team',()=>chooseTeam({team:'C'}));
 check('team history is unchanged',()=>assert.equal(entries[0].Team,'A'));
 console.log('PASS self-service team selection tests; mock sheets only.');
+
+const adminUpsert=vm.runInContext('apiInventoryAdminUpsertUser',context);
+context.invRequireAdmin_=()=>({email:'admin@example.com',role:'administrator'});
+const originalTeam=teamRows[0].AssignedTeam;
+const originalLocked=teamRows[0].TeamLocked;
+check('admin user edit preserves self-selected team',()=>{
+ adminUpsert({email:'a@example.com',role:'Counter',status:'Active',team:'A',teamLocked:false});
+ assert.equal(teamRows[0].AssignedTeam,originalTeam);
+ assert.equal(teamRows[0].TeamLocked,originalLocked);
+});

@@ -16,12 +16,26 @@ function invProductIndexSourceFingerprints_(sources) {
   }
   return result;
 }
+function invProductIndexValidateSourceFingerprint_(value) {
+  const names=['raw','finishedGoods','spiritsProducts','releases','subtypes'];
+  if(!value||value.format!=='product-index-sources-v1'||
+      !value.tables||typeof value.tables!=='object'||
+      Object.keys(value.tables).length!==names.length)
+    return false;
+  return names.every(name=>{
+    const table=value.tables[name];
+    return table&&Number.isSafeInteger(table.count)&&table.count>=0&&
+      typeof table.sha256==='string'&&/^[a-f0-9]{64}$/.test(table.sha256);
+  });
+}
 function invProductIndexVerifySourceFingerprints_(sources,expected) {
-  if(!expected||expected.format!=='product-index-sources-v1')
+  if(!invProductIndexValidateSourceFingerprint_(expected))
     return {ok:false,reason:'Trusted source fingerprints required'};
   try{
     const actual=invProductIndexSourceFingerprints_(sources);
-    if(JSON.stringify(actual)!==JSON.stringify(expected))
+    if(Object.keys(actual.tables).some(name=>
+      actual.tables[name].count!==expected.tables[name].count||
+      actual.tables[name].sha256!==expected.tables[name].sha256))
       return {ok:false,reason:'ProductIndex source snapshots changed'};
     return {ok:true};
   }catch(error){return {ok:false,reason:String(error.message||error)};}

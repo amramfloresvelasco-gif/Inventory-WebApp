@@ -775,3 +775,8 @@ Confirmed Stage 15 `8915f27d` CI and deployment success. Added `src/ProductIndex
 ## 2026-11-16 — Stage 17 fingerprint schema and fail-closed validation
 
 Confirmed Stage 16 `9f054ca7` CI/deploy success. Hardened `src/ProductIndexSourceFingerprint.gs` (`17f92b3c`) to validate all five expected source table hashes and nonnegative safe counts, compare fields independent of object key order. Hardened `src/ProductIndexTrustedPreflightCompare.gs` (`32101846`) to reject unresolved fresh/staged issues and reuse schema-aware source verifier. Tests `e3b05c93` cover malformed hash/count, reordered table keys and unresolved issues. Check CI/deploy before claiming success. The endpoint remains read-only and caller-provided fingerprints are not trusted authorization; no live import or evidence writes. Next test lock contention, exceptions and malformed inputs at the admin endpoint; consider bounded request size and verified independent fingerprint anchor.
+
+
+## 2026-11-16 — Stage 18 verification endpoint failure-path hardening
+
+Confirmed Stage 17 `e3b05c93` backend CI and deploy successful. Updated `src/ProductIndexVerifyPreflight.gs` commit `dedef184` to validate five-table source fingerprint schema and staged fingerprint format, count, SHA-256 before acquiring lock; malformed input fails closed without fresh reads. Added mock tests commit `efb61288` for invalid source/stage hashes, script lock contention (no unlock if not acquired), and source read exception (lock always released). Check CI/deploy. This remains an admin-only read-only comparison of caller-supplied hashes, NOT trusted approval. No ProductIndex import or live evidence writes. Next: verify run results; consider independent fingerprint anchoring and explicit approval design before any writer.

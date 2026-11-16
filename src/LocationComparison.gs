@@ -53,7 +53,10 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
       flagInvalid(r,loc,'Duplicate active location ID');continue;
     }
     if(String(r.EntryMethod).trim().toUpperCase()==='EMPTY') {
-      if(!['A','B'].includes(team)){flagInvalid(r,loc,'Invalid EMPTY team');continue;}
+      if(!['A','B'].includes(team)||id.trim()!==''||uom.trim()!==''||
+         r.Quantity===''||r.Quantity===null||n!==0){
+        flagInvalid(r,loc,'Malformed EMPTY declaration');continue;
+      }
       if(!emptyByLocation.has(loc))emptyByLocation.set(loc,new Set());
       emptyByLocation.get(loc).add(team);
       continue;

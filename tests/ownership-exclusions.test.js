@@ -18,3 +18,12 @@ const configured=ctx.invOwnershipConfig_();
 assert.strictEqual(configured.configured,true);
 assert.deepStrictEqual(Array.from(configured.tokens),['JYP']);
 console.log('Ownership exclusion configuration tests passed');
+
+const base=[{Token:'JYP',Active:true,UpdatedAt:'2026-11-15',UpdatedBy:'admin@example.com'},
+ {Token:'OTS',Active:false,UpdatedAt:'2026-11-15',UpdatedBy:'admin@example.com'}];
+const rev=ctx.invOwnershipRevision_(base);
+assert.notStrictEqual(rev,ctx.invOwnershipRevision_([{...base[0]},{...base[1],Active:true}]));
+assert.notStrictEqual(rev,ctx.invOwnershipRevision_([{...base[0]},{...base[1],UpdatedBy:'other@example.com'}]));
+assert.notStrictEqual(rev,ctx.invOwnershipRevision_([base[0]]));
+assert.strictEqual(typeof configured.revision,'string');
+assert.strictEqual(configured.rows.length,2);

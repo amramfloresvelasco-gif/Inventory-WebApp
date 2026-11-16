@@ -14,3 +14,12 @@ assert(script[1].includes("lines.join('\\r\\n')"),'CSV must use CRLF row delimit
 assert(script[1].includes("el('extendedSnapshot').addEventListener('change'"),'Snapshot change must invalidate export');
 assert(script[1].includes('extendedRows=null;extendedMeta=null'),'Report cache must clear before reloading');
 console.log('Inventory UI syntax and CSV safety checks passed');
+
+for(const id of ['myTeam','teamAction','locationAction','locationStatus','qty'])
+ assert(html.includes('id="'+id+'"'),'Missing count workflow control: '+id);
+assert(!html.includes('id="userTeam"'),'Admin must not override counter team');
+assert(!html.includes('id="userLocked"'),'Admin must not override counter team lock');
+assert(script[1].includes("if(!/^[0-9]+$/.test(qtyText)"),'Client must reject blank or fractional quantities');
+assert(script[1].includes("if(!data||!data.user.teamLocked)"),'Team lock required for count submissions');
+assert(script[1].includes("updateTeamControls();"),'Submission controls must restore team gating');
+console.log('Inventory counting UI guard checks passed');

@@ -55,7 +55,7 @@ function apiInventorySelectTeam(input) {
   const user=invUser_();
   const requested=String(input&&input.team||'').trim().toUpperCase();
   const unlock=input&&input.unlock===true;
-  if(unlock===(!requested))throw new Error('Choose a team to lock or request unlock.');
+  if((unlock&&requested)||(!unlock&&!requested))throw new Error('Choose a team to lock or request unlock.');
   if(requested&&!['A','B'].includes(requested))throw new Error('Invalid team.');
   const lock=LockService.getScriptLock();
   if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');

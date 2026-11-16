@@ -36,3 +36,16 @@ assert.strictEqual(standard[0].Rows,2);
 assert.strictEqual(standard[1].Warehouse,'1592');
 assert.throws(()=>ctx.invExtendedStandardBlending_([{WSItemID:'1',ItemName:'X',ClassOfMaterial:'Blending Ingredient',UOM:'Each',Warehouse:'344',Quantity:-1}],tokens),/Invalid standard/);
 console.log('Standard blending grouping tests passed');
+
+const barrels=ctx.invExtendedBarrels_([
+ {WSItemID:'B1',ItemName:'BMD Barrel',ClassOfMaterial:'BARREL',UOM:'Each',Warehouse:'344',Quantity:2},
+ {WSItemID:'B1',ItemName:'BMD Barrel',ClassOfMaterial:'BARREL',UOM:'Each',Warehouse:'344',Quantity:3},
+ {WSItemID:'B2',ItemName:'JYP Barrel',ClassOfMaterial:'BARREL',UOM:'Each',Warehouse:'344',Quantity:4},
+ {WSItemID:'B1',ItemName:'BMD Barrel',ClassOfMaterial:'BARREL',UOM:'Each',Warehouse:'1592',Quantity:1}
+],tokens);
+assert.strictEqual(barrels.length,2);
+assert.strictEqual(barrels[0].SourceQuantity,5);
+assert.strictEqual(barrels[0].EffectiveQuantity,0);
+assert.strictEqual(barrels[1].Warehouse,'1592');
+assert.throws(()=>ctx.invExtendedBarrels_([{WSItemID:'B1',ItemName:'X',ClassOfMaterial:'BARREL',UOM:'Each',Warehouse:'344',Quantity:-1}],tokens),/Invalid barrel/);
+console.log('Barrel source-preserving tests passed');

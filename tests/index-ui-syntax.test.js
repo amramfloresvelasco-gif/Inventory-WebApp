@@ -23,3 +23,8 @@ assert(script[1].includes("if(!/^[0-9]+$/.test(qtyText)"),'Client must reject bl
 assert(script[1].includes("if(!data||!data.user.teamLocked)"),'Team lock required for count submissions');
 assert(script[1].includes("updateTeamControls();"),'Submission controls must restore team gating');
 console.log('Inventory counting UI guard checks passed');
+
+for(const id of ['palletCount','partialCases','looseBottles','palletPreview'])
+ assert(html.includes('id="'+id+'"'),'Missing pallet preview control: '+id);
+assert(html.includes('Multi-pallet saving is not enabled yet.'),'Pallet preview must not imply live batch persistence');
+console.log('Pallet preview UI controls passed');

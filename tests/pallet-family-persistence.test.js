@@ -55,7 +55,7 @@ assert.equal(save(request).childCount,7);
 assert.equal(writes,3);
 assert.equal(releases,8);
 rows=[];partialWrite=true;
-assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/could not be verified \\(PARTIAL\\)/);
+assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/could not be verified \(PARTIAL\)/);
 assert.equal(rows.length,2);
 partialWrite=false;
 assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/PARTIAL/);

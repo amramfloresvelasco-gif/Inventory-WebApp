@@ -36,7 +36,7 @@ function apiInventoryAdminPreviewWSSnapshot(input) {
 function apiInventoryAdminSaveOriginalWSSnapshot(input) {
   const admin=invRequireAdmin_(),sessionId=String(input&&input.sessionId||'').trim();
   const sourceTimestamp=String(input&&input.sourceTimestamp||'').trim();
-  if(!sourceTimestamp)throw new Error('Source timestamp required.');
+  if(!sourceTimestamp)throw new Error('Source timestamp required.');\n  // Event-driven only: this function is invoked explicitly for a created OPEN session.\n  // Never install a time-based trigger for snapshot collection.
   if(!input||!Array.isArray(input.rows)||!input.rows.length)
     throw new Error('WS rows required.');
   const lock=LockService.getScriptLock();

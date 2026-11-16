@@ -14,13 +14,8 @@ function invProductPreviewRows_(id,tab,required,maxRows) {
   return values.filter(row=>row.some(x=>String(x).trim()))
     .map(row=>Object.fromEntries(headers.map((key,i)=>[key,row[i]])));
 }
-/** Administrator-only: fresh WS/SPIRITS reads and full mapper + diff. */
-function apiInventoryAdminProductIndexPreview() {
-  invRequireAdmin_();
-  const started=Date.now();
-  const phases=[];
-  let phaseStart=Date.now();
-  function markPhase(name){const now=Date.now();phases.push({name,elapsedMs:now-phaseStart});phaseStart=now;}
+/** Fresh source-to-staging plan; caller must hold a script lock for import preflight. */
+function invProductIndexFreshPlan_(markPhase) {
   const raw=invProductPreviewRows_(INV_PRODUCT_PREVIEW_RAW_ID,'LiveData',
     ['RawMaterialId','MaterialName','ClassOfMaterial','UnitOfMeasure'],20000);
   markPhase('Read WS raw materials');
@@ -51,10 +46,18 @@ function apiInventoryAdminProductIndexPreview() {
   markPhase('Calculate ProductIndex diff');
   const issues=[...packs.issues,...preview.issues,...plan.issues];
   const ready=packs.ready&&preview.ready&&plan.ready&&issues.length===0;
+  return {packs,preview,plan,issues,ready,existing,sourceRows:{raw:raw.length,finishedGoods:fg.length,spiritsProducts:products.length,releases:releases.length,subtypes:subtypes.length,verifiedCasePacks:packs.rows.length}};
+}
+/** Administrator-only: fresh WS/SPIRITS reads and full mapper + diff. */
+function apiInventoryAdminProductIndexPreview() {
+  invRequireAdmin_();
+  const started=Date.now(),phases=[];
+  let phaseStart=Date.now();
+  function markPhase(name){const now=Date.now();phases.push({name,elapsedMs:now-phaseStart});phaseStart=now;}
+  const {packs,preview,plan,issues,ready,sourceRows}=invProductIndexFreshPlan_(markPhase);
   return {
     readOnly:true,ready,counts:preview.counts,
-    sourceRows:{raw:raw.length,finishedGoods:fg.length,spiritsProducts:products.length,
-      releases:releases.length,subtypes:subtypes.length,verifiedCasePacks:packs.rows.length},
+    sourceRows,
     diff:{adds:plan.adds.length,updates:plan.updates.length,
       unchanged:plan.unchanged.length,missing:plan.missing.length},
     issueCount:issues.length,issues:issues.slice(0,50),

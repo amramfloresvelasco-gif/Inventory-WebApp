@@ -85,11 +85,11 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
  * Uses ORIGINAL source quantities; never treats unsupported UOM as countable.
  */
 function invExtendedOwnershipExcluded_(name, tokens) {
-  const value=String(name||'').toUpperCase();
-  return (tokens||[]).some(token=>{
-    const word=String(token||'').toUpperCase().trim();
-    if(!word)return false;
-    const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,'\\function invExtendedLegacyUomWatchlist_(rows) {');
+  const words=String(name||'').toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean);
+  const set=new Set(words);
+  return (tokens||[]).some(token=>set.has(String(token||'').trim().toUpperCase()));
+}
+function invExtendedLegacyUomWatchlist_(rows) {');
     return new RegExp('(^|[^A-Z0-9])'+escaped+'(?=$|[^A-Z0-9])').test(value);
   });
 }

@@ -58,6 +58,12 @@ function invSavePalletFamilyPrivate_(request) {
       entryMethod,notes,'ACTIVE'
     ]);
     sheet.getRange(start,1,rows.length,14).setValues(rows);
+    // A Sheets write acknowledgement is not proof that every child persisted.
+    // Verify the complete family while still holding the same script lock.
+    const verified=invClassifyPalletFamily_(family,invRows_('CountEntries'),scope);
+    if(verified.state!=='COMPLETE')
+      throw new Error('Pallet family write could not be verified ('+verified.state+
+        '). Do not retry with a different parent ID; contact administrator.');
     return {ok:true,duplicate:false,parentSubmissionId:family.parentSubmissionId,
       childCount:family.childCount,totalCases:family.totalCases,
       totalLooseBottles:family.totalLooseBottles};

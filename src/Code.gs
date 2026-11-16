@@ -114,6 +114,11 @@ function apiInventorySaveCount(request) {
       if(uom!==configured) throw new Error('Material must be counted in its configured UOM: '+configured);
     }
     const sheet=invSheet_('CountEntries'), last=sheet.getLastRow();
+    if(invRows_('CountEntries').some(x=>String(x.SessionID)===sessionId&&
+      String(x.LocationID)===locationId&&String(x.Team).toUpperCase()===team&&
+      String(x.Status).toUpperCase()==='ACTIVE'&&
+      String(x.EntryMethod).toUpperCase()==='EMPTY'))
+      throw new Error('Location marked EMPTY by your team; remove EMPTY before counting items.');
     // Phase 1 correctness-first duplicate check; replace with indexed ID store after benchmark.
     if(last>1) {
       const ids=sheet.getRange(2,1,last-1,1).getDisplayValues();
@@ -125,6 +130,43 @@ function apiInventorySaveCount(request) {
     sheet.getRange(last+1,1,1,row.length).setValues([row]);
     return {ok:true,entryId,duplicate:false,elapsedMs:Date.now()-started};
   } finally { lock.releaseLock(); }
+}
+/** A team may mark a location EMPTY only when it has no active item entries there. */
+function apiInventoryMarkEmpty(request) {
+  const started=Date.now(),user=invUser_(),team=invTeam_(user);
+  const sessionId=String(request&&request.sessionId||'').trim();
+  const locationId=String(request&&request.locationId||'').trim();
+  const entryId=String(request&&request.entryId||'').trim();
+  if(!/^[a-zA-Z0-9_-]{12,100}$/.test(entryId))throw new Error('Invalid submission ID.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
+  try {
+    invSession_(sessionId);
+    if(!invReference_().locations.some(x=>String(x.LocationID)===locationId))
+      throw new Error('Invalid location.');
+    const entries=invRows_('CountEntries');
+    const existing=entries.find(x=>String(x.EntryID)===entryId);
+    if(existing) {
+      if(String(existing.SessionID)!==sessionId||String(existing.LocationID)!==locationId||
+         String(existing.Team)!==team||String(existing.EntryMethod).toUpperCase()!=='EMPTY'||
+         String(existing.EnteredBy).toLowerCase()!==user.email)
+        throw new Error('Submission ID already used for another entry.');
+      return {ok:true,entryId,duplicate:true};
+    }
+    const own=entries.filter(x=>String(x.SessionID)===sessionId&&
+      String(x.LocationID)===locationId&&String(x.Team).toUpperCase()===team&&
+      String(x.Status).toUpperCase()==='ACTIVE');
+    if(own.some(x=>String(x.EntryMethod).toUpperCase()!=='EMPTY'))
+      throw new Error('This team has item counts here; remove those before marking EMPTY.');
+    if(own.some(x=>String(x.EntryMethod).toUpperCase()==='EMPTY'))
+      return {ok:true,entryId:String(own[0].EntryID),alreadyEmpty:true};
+    const sheet=invSheet_('CountEntries');
+    sheet.getRange(sheet.getLastRow()+1,1,1,14).setValues([[
+      entryId,sessionId,team,locationId,'','',0,'',1,user.email,new Date(),
+      'EMPTY','','ACTIVE'
+    ]]);
+    return {ok:true,entryId,elapsedMs:Date.now()-started};
+  }finally{lock.releaseLock();}
 }
 /** Administrator operations: all permissions checked server-side. */
 function apiInventoryAdminOverview() {

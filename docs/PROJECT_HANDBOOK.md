@@ -800,3 +800,8 @@ Confirmed Stage 20 `3eaad068` CI and deployment succeeded. Removed obsolete admi
 ## Stage 21 follow-up CI fixes
 
 Added regression test for admin user updates preserving counter-owned team and lock state (`e18dae56`). CI revealed pre-existing invalid email regex in `apiInventoryAdminUpsertUser`, fixed in `7001526a`. Subsequent CI revealed test mock incorrectly modeled AppUsers seven-column writes, fixed in `2509273b`. Await final CI/deployment result. Do not claim warehouse validation. No live data mutation performed.
+
+
+## 2026-11-16 — Stage 22 count UI validation and retry guardrails
+
+Confirmed Stage 21 final `2509273b` CI and deployment succeeded. Updated `src/Index.html` (`bd59794d`) to reject blank, fractional, non-integer, or unsafe quantity input before an RPC; require locked team/session/location/product for Save and locked team for EMPTY; and restore Save/EMPTY button disabled state from team permissions after success or failure instead of blindly enabling them. Added static UI regression checks in `tests/index-ui-syntax.test.js` (`4c9baebf`) for these guards, team controls, and removal of admin team overrides. Updated server error message in `src/Code.gs` (`1287bb0e`) to reflect self-service team locking. CI/deployment pending verification. No live writes. **Next:** implement pallet entry multiplier and child-count semantics only after checking handbook requirements; ensure per-pallet records remain independently auditable, and add realistic end-to-end mocked tests. Also verify phone barcode scanning, location map and warehouse flows before production.

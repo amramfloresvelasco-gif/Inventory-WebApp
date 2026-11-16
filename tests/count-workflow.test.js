@@ -57,6 +57,15 @@ check('EMPTY after deletion',()=>assert.equal(markEmpty({sessionId:'S1',location
 reject('count blocked by EMPTY',()=>save(count('COUNT-000003')));
 check('delete EMPTY',()=>assert.equal(remove({sessionId:'S1',entryId:'EMPTY-000001'}).ok,true));
 reject('deleted EMPTY retry',()=>markEmpty({sessionId:'S1',locationId:'L1',entryId:'EMPTY-000001'}));
-assert.equal(entries.length,2);
-assert.equal(audit.length,2);
+check('new count after EMPTY removal',()=>assert.equal(save(count('COUNT-000004')).duplicate,false));
+reject('duplicate ID different method',()=>save({...count('COUNT-000004'),entryMethod:'Barcode'}));
+reject('negative quantity',()=>save(count('COUNT-000005',-1)));
+reject('fractional quantity',()=>save(count('COUNT-000005',1.5)));
+reject('invalid product',()=>save({...count('COUNT-000005'),productId:'MISSING'}));
+reject('invalid location',()=>save({...count('COUNT-000005'),locationId:'MISSING'}));
+check('admin can remove counter entry',()=>{user={...user,email:'admin@example.com',role:'administrator'};assert.equal(remove({sessionId:'S1',entryId:'COUNT-000004'}).ok,true);});
+check('admin deletion is audited',()=>assert.equal(audit[audit.length-1].ChangedBy,'admin@example.com'));
+check('deleted entry no longer visible to owner',()=>{user={...user,email:'a@example.com',role:'counter'};assert.equal(vm.runInContext('apiInventoryMyEntries',context)({sessionId:'S1',locationId:'L1'}).length,0);});
+assert.equal(entries.length,3);
+assert.equal(audit.length,3);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');

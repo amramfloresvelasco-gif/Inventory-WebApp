@@ -641,3 +641,8 @@ Confirmed Stage 13 `9316eb07` CI/deploy success. Added `src/ProductIndexSourceFi
 ## Stage 14 CI correction
 
 Initial Stage 14 `cd9c638e` CI and deploy failed because the locked preflight mock did not provide the newly required stage fingerprint helper. Fixed mock dependencies and assertions in `a3fdf584`; CI tests passed. Await latest deployment completion. This was a test-harness failure, not a ProductIndex write. No import or live data changes.
+
+
+## 2026-11-16 — Stage 15 trusted preflight comparison (pure)
+
+Added `src/ProductIndexTrustedPreflightCompare.gs` commit `1ad5fea6` to compare a freshly validated source plan and stage against independently retained source/stage fingerprints, returning `importEnabled:false` unconditionally. Fresh source snapshots now remain in the private in-memory plan (`c59a5737`), not exposed in the preflight RPC response. Mock tests `8915f27d` cover unchanged, changed source, changed stage and missing trusted fingerprints. **Not wired to an import writer or a public RPC; no trusted fingerprint storage exists yet.** A script lock and trusted external snapshot must be supplied by a future caller. No live ProductIndex or Drive writes. Check latest CI/deploy before declaring complete. Next design a read-only comparison endpoint with explicit caller-supplied trusted fingerprints, bounded validation and lock-held fresh reads, or independently anchored evidence storage; do not implement import without explicit approval.

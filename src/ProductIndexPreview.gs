@@ -24,9 +24,12 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
     const cls=String(r.ClassOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
     if(!['PACKAGING','BLENDINGINGREDIENT'].includes(cls))continue;
     const id=String(r.RawMaterialId||'').trim();
+    const rawUom=String(r.UnitOfMeasure||'').trim();
+    if(!['Each','Pounds','Gallons'].includes(rawUom))
+      issues.push({source:'raw',id,reason:'Unsupported raw-material UOM: '+(rawUom||'(blank)')});
     add({WSItemID:id,ItemName:String(r.MaterialName||'').trim(),
       ClassOfMaterial:cls==='PACKAGING'?'Packaging':'Blending Ingredient',
-      Barcode:id,UnitsPerCase:'',DefaultUOM:String(r.UnitOfMeasure||'').trim(),
+      Barcode:id,UnitsPerCase:'',DefaultUOM:rawUom,
       Source:'WS Raw Materials',SourceUpdatedAt:'',Active:true},'raw');
   }
   const packs=new Map();

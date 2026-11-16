@@ -125,6 +125,8 @@ function apiInventorySaveCount(request) {
          String(existingId.EnteredBy).trim().toLowerCase()!==user.email||
          String(existingId.EntryMethod).toUpperCase()==='EMPTY')
         throw new Error('Submission ID already used for another count.');
+      if(String(existingId.Status).toUpperCase()!=='ACTIVE')
+        throw new Error('Submission was removed; use a new submission ID for a new count.');
       return {ok:true,entryId,duplicate:true};
     }
     if(existingEntries.some(x=>String(x.SessionID)===sessionId&&
@@ -159,6 +161,8 @@ function apiInventoryMarkEmpty(request) {
          String(existing.Team)!==team||String(existing.EntryMethod).toUpperCase()!=='EMPTY'||
          String(existing.EnteredBy).toLowerCase()!==user.email)
         throw new Error('Submission ID already used for another entry.');
+      if(String(existing.Status).toUpperCase()!=='ACTIVE')
+        throw new Error('EMPTY submission was removed; use a new submission ID.');
       return {ok:true,entryId,duplicate:true};
     }
     const own=entries.filter(x=>String(x.SessionID)===sessionId&&

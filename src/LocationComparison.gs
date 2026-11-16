@@ -4,6 +4,16 @@ function invLocationColor_(startedA,startedB,mismatchCount) {
   if(!startedA||!startedB)return 'yellow';
   return mismatchCount>0?'red':'green';
 }
+/** Compare normalized product/unit totals and explicit EMPTY declarations. */
+function invLocationDifferences_(a,b,emptyA,emptyB,countA,countB) {
+  const keys=new Set([...a.keys(),...b.keys()]);
+  const differences=[...keys].filter(k=>Math.abs((a.get(k)||0)-(b.get(k)||0))>1e-8);
+  if(emptyA&&countB>0)differences.push('EMPTY_A_VS_ITEMS_B');
+  if(emptyB&&countA>0)differences.push('EMPTY_B_VS_ITEMS_A');
+  if(emptyA&&countA>0)differences.push('EMPTY_A_AND_ITEMS_A');
+  if(emptyB&&countB>0)differences.push('EMPTY_B_AND_ITEMS_B');
+  return differences;
+}
 /** Location comparison is session-scoped and read-only. Never infer EMPTY from missing entries. */
 function invLocationComparison_(sessionId) {
   invSession_(sessionId);
@@ -47,12 +57,7 @@ function invLocationComparison_(sessionId) {
     const empty=emptyByLocation.get(id)||new Set();
     const startedA=g.countA>0||empty.has('A')||!!(record&&String(record.TeamAStarted).toLowerCase()==='true');
     const startedB=g.countB>0||empty.has('B')||!!(record&&String(record.TeamBStarted).toLowerCase()==='true');
-    const keys=new Set([...g.A.keys(),...g.B.keys()]);
-    const differences=[...keys].filter(k=>Math.abs((g.A.get(k)||0)-(g.B.get(k)||0))>1e-8);
-    if(empty.has('A')&&g.countB>0)differences.push('EMPTY_A_VS_ITEMS_B');
-    if(empty.has('B')&&g.countA>0)differences.push('EMPTY_B_VS_ITEMS_A');
-    if(empty.has('A')&&g.countA>0)differences.push('EMPTY_A_AND_ITEMS_A');
-    if(empty.has('B')&&g.countB>0)differences.push('EMPTY_B_AND_ITEMS_B');
+    const differences=invLocationDifferences_(g.A,g.B,empty.has('A'),empty.has('B'),g.countA,g.countB);
     // No Finish Location action: status follows submitted counts automatically.
     // A dedicated EMPTY/NO COUNT entry is required for truly empty locations.
     const color=invLocationColor_(startedA,startedB,differences.length);

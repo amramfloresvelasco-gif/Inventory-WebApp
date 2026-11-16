@@ -1,7 +1,7 @@
 /** Pure recovery classification for a multi-row pallet submission.
  * No Sheets writes. Caller must hold script lock while inspecting/recovering.
  */
-function invClassifyPalletFamily_(expected,existing) {
+function invClassifyPalletFamily_(expected,existing,scope) {
   if(!expected||!Array.isArray(expected.children)||!expected.children.length||
      !Array.isArray(existing))throw new Error('Expected family and existing rows required.');
   const parent=String(expected.parentSubmissionId||'');
@@ -12,7 +12,14 @@ function invClassifyPalletFamily_(expected,existing) {
     String(row.UOM)===child.uom&&
     Number(row.Quantity)===child.quantity&&
     String(row.Status).toUpperCase()==='ACTIVE'&&
-    Number(row.PalletMultiplier)===1;
+    Number(row.PalletMultiplier)===1&&
+    (!scope||(String(row.SessionID)===scope.sessionId&&
+      String(row.LocationID)===scope.locationId&&
+      String(row.WSItemID)===scope.productId&&
+      String(row.Team).toUpperCase()===scope.team&&
+      String(row.EnteredBy).trim().toLowerCase()===scope.email&&
+      String(row.EntryMethod)===scope.entryMethod&&
+      String(row.Notes||'')===scope.notes));
   const family=existing.filter(r=>String(r.ParentEntryID)===parent||
     expected.children.some(c=>c.entryId===String(r.EntryID)));
   for(const row of family){

@@ -103,8 +103,12 @@ function invBuildLocationComparison_(sessionId,locationRows,productRows,entryRow
       color,startedA,startedB,emptyA:empty.has('A'),emptyB:empty.has('B'),entryCountA:g.countA,entryCountB:g.countB,
       mismatchCount:differences.length,differences,invalidCount,duplicateLocation};
   });
-  const allGreen=invalid.length===0&&result.length>0&&result.every(x=>x.color==='green');
-  return {sessionId,locations:result,invalid,
+  // Duplicate catalog IDs are unsafe even before a count references them.
+  const duplicateProductIds=[...productIdCounts].filter(([id,count])=>count>1).map(([id])=>id);
+  const duplicateLocationIds=[...locationIdCounts].filter(([id,count])=>count>1).map(([id])=>id);
+  const allGreen=invalid.length===0&&duplicateProductIds.length===0&&
+    duplicateLocationIds.length===0&&result.length>0&&result.every(x=>x.color==='green');
+  return {sessionId,locations:result,invalid,duplicateProductIds,duplicateLocationIds,
     allGreen,freezeAllowed:false,
     note:'EMPTY entries participate in mismatch detection; freeze validation pending.'};
 }

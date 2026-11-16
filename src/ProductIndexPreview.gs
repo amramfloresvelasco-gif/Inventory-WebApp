@@ -57,7 +57,7 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
  */
 function invResolveSpiritsCasePacks_(products, releases, subtypes) {
   const issues=[],rows=[],byProduct=new Map(),bySubtype=new Map(),byBrandName=new Map(),byWsId=new Map();
-  const norm=v=>String(v==null?'':v).trim().replace(/\\s+/g,' ').toUpperCase();
+  const norm=v=>String(v==null?'':v).trim().replace(/\s+/g,' ').toUpperCase();
   for(const t of subtypes) {
     const id=String(t.BrandReleaseTypeID||'').trim();
     if(id)bySubtype.set(id,t);

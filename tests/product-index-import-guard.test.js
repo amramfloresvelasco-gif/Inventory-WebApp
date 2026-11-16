@@ -107,3 +107,20 @@ m=mockAdapter();
 m.state.rows.push(stage.rows[0].slice());
 assert.throws(()=>ctx.invSimulateInitialProductIndexTransaction_(stage,'admin',m.adapter,'tx5'),/empty target/);
 console.log('ProductIndex mock transaction and failure injection tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexDurableEvidence.gs','utf8'),ctx);
+const evidence={
+ backup:{backupId:'immutable-backup-1',importId:'tx',actor:'admin',immutable:true,
+   headers:stage.headers.slice(),rows:[]},
+ journal:{importId:'tx',actor:'admin',backupId:'immutable-backup-1',durable:true,
+   events:[{importId:'tx',actor:'admin',phase:'PREPARED'},
+     {importId:'tx',actor:'admin',phase:'BACKUP_VERIFIED'}]}
+};
+assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,evidence.journal,'tx','admin').ready,true);
+assert.strictEqual(ctx.invVerifyProductIndexEvidenceReadback_(stage,evidence,evidence,'tx','admin').ready,true);
+assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,{...evidence.backup,immutable:false},evidence.journal,'tx','admin').ready,false);
+assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,{...evidence.journal,durable:false},'tx','admin').ready,false);
+assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,{...evidence.journal,backupId:'wrong'},'tx','admin').ready,false);
+assert.strictEqual(ctx.invValidateProductIndexEvidence_(stage,evidence.backup,{...evidence.journal,events:evidence.journal.events.slice(0,1)},'tx','admin').ready,false);
+assert.strictEqual(ctx.invVerifyProductIndexEvidenceReadback_(stage,evidence,{...evidence,backup:{...evidence.backup,backupId:'different'}},'tx','admin').ready,false);
+console.log('Durable ProductIndex evidence contract tests PASS');

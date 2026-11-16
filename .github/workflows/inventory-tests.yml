@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/Code.gs'
+      - 'src/ProductIndexPreview.gs'
       - 'src/LocationComparison.gs'
       - 'src/LocationComparisonTests.gs'
       - 'src/LocationComparisonFixtureTests.gs'
@@ -13,6 +14,7 @@ on:
   pull_request:
     paths:
       - 'src/Code.gs'
+      - 'src/ProductIndexPreview.gs'
       - 'src/LocationComparison.gs'
       - 'src/LocationComparisonTests.gs'
       - 'src/LocationComparisonFixtureTests.gs'
@@ -36,3 +38,5 @@ jobs:
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures
         run: node tests/location-comparison.test.js
+      - name: ProductIndex preview mapping
+        run: node tests/product-index-preview.test.js

@@ -755,3 +755,8 @@ Confirmed Stage 12 `04c6c669` CI/deployment successful. Added pure `src/ProductI
 ## 2026-11-16 — Stage 14 five-source fingerprints in read-only preflight
 
 Confirmed Stage 13 `9316eb07` CI/deploy success. Added `src/ProductIndexSourceFingerprint.gs` commit `48fe82aa` with SHA-256 fingerprints of all five normalized source row datasets (WS raw, WS finished goods, SPIRITS Products, Releases, BrandReleaseTypes). Integrated source fingerprints into fresh source plan commit `aed0b292`; read-only admin preflight now returns both source fingerprints and stage fingerprint when ready (commit `5c18b612`). Mock tests commit `cd9c638e` detect changed/missing source rows. **Scope:** these hashes cover normalized, nonblank source records after display-value conversion; they do not cover unused columns, source formatting, blank rows, or original raw sheet bytes. Preflight is still read-only and no import authorization or writer is enabled. Check CI/deploy. Next: compare fresh source fingerprints under lock against a trusted prior snapshot and address the remaining permission/approval workflow.
+
+
+## Stage 14 CI correction
+
+Initial Stage 14 `cd9c638e` CI and deploy failed because the locked preflight mock did not provide the newly required stage fingerprint helper. Fixed mock dependencies and assertions in `a3fdf584`; CI tests passed. Await latest deployment completion. This was a test-harness failure, not a ProductIndex write. No import or live data changes.

@@ -1,11 +1,14 @@
 /** Read-only import preparation. Never writes ProductIndex or filters by SPIRITS planner status. */
 function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
-  const issues=[], products=[], byId=new Map(), byBarcode=new Map();
+  const issues=[], products=[], byId=new Map(), byBarcode=new Map(), byUnscopedId=new Map();
   function add(row,source) {
     const id=String(row.WSItemID||'').trim(), name=String(row.ItemName||'').trim();
     const barcode=String(row.Barcode||'').trim();
     if(!id||!name||!barcode){issues.push({source,id,reason:'Missing product ID, name or barcode'});return;}
     const scopedId=source+'|'+id;
+    if(byUnscopedId.has(id)&&byUnscopedId.get(id)!==source)
+      issues.push({source,id,reason:'Cross-source WS ID collision: current ProductIndex/CountEntries schema needs source-qualified identity'});
+    else byUnscopedId.set(id,source);
     const existing=byId.get(scopedId);
     if(existing) {
       if(existing.ItemName!==name||existing.Barcode!==barcode||existing.ClassOfMaterial!==row.ClassOfMaterial||String(existing.UnitsPerCase)!==String(row.UnitsPerCase))

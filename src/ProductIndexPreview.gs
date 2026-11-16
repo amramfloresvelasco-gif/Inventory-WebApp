@@ -22,12 +22,13 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
   }
   for(const r of rawRows) {
     const cls=String(r.ClassOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
-    // Blending ingredients are report-only; fermentation materials are excluded.
-    if(cls!=='PACKAGING')continue;
+    // Blending ingredients remain visible for legacy-UOM anomaly tracking.
+    // Fermentation_Support and other out-of-scope classes remain excluded.
+    if(!['PACKAGING','BLENDINGINGREDIENT'].includes(cls))continue;
     const id=String(r.RawMaterialId||'').trim();
     const rawUom=String(r.UnitOfMeasure||'').trim();
-    if(!['Each','Pounds','Gallons'].includes(rawUom))
-      issues.push({source:'raw',id,reason:'Unsupported raw-material UOM: '+(rawUom||'(blank)')});
+    // Unsupported legacy UOMs remain in the catalog. Snapshot normalization
+    // determines effective quantity; never convert their units or hide them.
     add({WSItemID:id,ItemName:String(r.MaterialName||'').trim(),
       ClassOfMaterial:cls==='PACKAGING'?'Packaging':'Blending Ingredient',
       Barcode:id,UnitsPerCase:'',DefaultUOM:rawUom,

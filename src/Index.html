@@ -116,11 +116,11 @@ function refreshLocationMap(){
    cell.addEventListener('click',()=>{
     const d=el('mapDetail');d.hidden=false;
     d.textContent=x.warehouse+' / '+x.bay+' / '+x.locationId+
-     '\\nStatus: '+x.color.toUpperCase()+
-     '\\nTeam A: '+(x.emptyA?'EMPTY':x.entryCountA+' entries')+
-     '\\nTeam B: '+(x.emptyB?'EMPTY':x.entryCountB+' entries')+
-     '\\nMismatches: '+x.mismatchCount+
-     (x.differences.length?'\\n'+x.differences.join('\\n'):'');
+     '\nStatus: '+x.color.toUpperCase()+
+     '\nTeam A: '+(x.emptyA?'EMPTY':x.entryCountA+' entries')+
+     '\nTeam B: '+(x.emptyB?'EMPTY':x.entryCountB+' entries')+
+     '\nMismatches: '+x.mismatchCount+
+     (x.differences.length?'\n'+x.differences.join('\n'):'');
    });
    grid.appendChild(cell);
   }

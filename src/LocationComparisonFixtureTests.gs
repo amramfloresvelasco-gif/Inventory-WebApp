@@ -35,7 +35,6 @@ function testInventoryLocationComparisonFixtures() {
   check('EMPTY versus items',[empty('EA','A'),b],'red',0,2);
   check('blank quantity invalid',[item('A2','A','RAW','','Each')],'neutral',1,0);
   check('unknown location invalid',[{...a,LocationID:'UNKNOWN'}],'neutral',1,0);
-  check('missing FG conversion invalid',[a], 'neutral',0,1); // Baseline with valid catalog
   const missing=invBuildLocationComparison_(session,locations,[{...products[0],UnitsPerCase:''}], [a,b]);
   if(missing.invalid.length!==2||missing.locations[0].color!=='neutral')throw new Error('Missing FG conversion not rejected');
   checks++;

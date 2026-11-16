@@ -90,7 +90,14 @@ function apiInventorySaveCount(request) {
   const productId=String(request.productId||'').trim();
   const uom=String(request.uom||'').trim();
   const entryId=String(request.entryId||'').trim();
-  const quantity=Number(request.quantity);
+  const rawQuantity=request.quantity;
+  // Reject coercions such as whitespace, booleans, arrays and exponential strings.
+  if(typeof rawQuantity!=='number' &&
+     (typeof rawQuantity!=='string'||!/^[0-9]+$/.test(rawQuantity.trim())))
+    throw new Error('Quantity must be a nonnegative integer.');
+  if(typeof rawQuantity==='string' && !rawQuantity.trim())
+    throw new Error('Quantity is required.');
+  const quantity=Number(rawQuantity);
   const entryMethod=String(request.entryMethod||'Manual').trim();
   if(!['Manual','Barcode','QR'].includes(entryMethod))
     throw new Error('Invalid count entry method. Use the EMPTY action to declare an empty location.');

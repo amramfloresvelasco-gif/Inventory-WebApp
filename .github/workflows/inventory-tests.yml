@@ -1,0 +1,38 @@
+name: Inventory backend tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/Code.gs'
+      - 'src/LocationComparison.gs'
+      - 'src/LocationComparisonTests.gs'
+      - 'src/LocationComparisonFixtureTests.gs'
+      - 'tests/**'
+      - '.github/workflows/inventory-tests.yml'
+  pull_request:
+    paths:
+      - 'src/Code.gs'
+      - 'src/LocationComparison.gs'
+      - 'src/LocationComparisonTests.gs'
+      - 'src/LocationComparisonFixtureTests.gs'
+      - 'tests/**'
+      - '.github/workflows/inventory-tests.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Counting, EMPTY and deletion workflow
+        run: node tests/count-workflow.test.js
+      - name: Location comparison rules and fixtures
+        run: node tests/location-comparison.test.js

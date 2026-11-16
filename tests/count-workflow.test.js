@@ -34,8 +34,12 @@ const context=vm.createContext({
   LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
   Utilities:{getUuid:()=> 'TEST-UUID'}
 });
+const mocks={invUser_:context.invUser_,invTeam_:context.invTeam_,invSession_:context.invSession_,
+  invReference_:context.invReference_,invRows_:context.invRows_,invSheet_:context.invSheet_};
 const code=fs.readFileSync(path.join(__dirname,'../src/Code.gs'),'utf8');
 vm.runInContext(code,context,{filename:'Code.gs'});
+// Code.gs declares real database helpers; replace them AFTER loading the source.
+Object.assign(context,mocks);
 const save=request=>vm.runInContext('apiInventorySaveCount',context)(request);
 const markEmpty=request=>vm.runInContext('apiInventoryMarkEmpty',context)(request);
 const remove=request=>vm.runInContext('apiInventoryDeleteEntry',context)(request);

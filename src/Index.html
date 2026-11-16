@@ -34,10 +34,12 @@ small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(a
 <strong>Inventory Performance Monitor</strong>
 <p class="muted">RPC durations include network and Apps Script execution. Times are browser-observed.</p>
 <textarea id="invPerfLog" readonly aria-label="Performance events"></textarea>
-<div class="inv-perf-actions"><button id="invPerfCopy" type="button">Copy Results</button><button id="invPerfClear" type="button">Clear</button><button id="invPerfClose" type="button">Close</button></div>
+<div class="inv-perf-actions"><button id="invDiagnosticCopy" type="button">Copy Diagnostic Report</button></div><div class="inv-perf-actions"><button id="invPerfCopy" type="button">Copy Results</button><button id="invPerfClear" type="button">Clear</button><button id="invPerfClose" type="button">Close</button></div>
 </section>
 <script>
 const invPerfEvents=[];
+let invLastProductPreview=null;
+let invLastProductPreviewError=null;
 const invPerfStart=performance.now();
 function invPerfLog(message){
  const elapsed=Math.round(performance.now()-invPerfStart);
@@ -71,6 +73,26 @@ document.addEventListener('click',event=>{
  if(target&&target.id&&!target.id.startsWith('invPerf'))
   invPerfLog('ACTION click '+target.id);
 },true);
+function invDiagnosticReport(){
+ const lines=['BMD Inventory diagnostic report','Generated: '+new Date().toISOString(),
+ 'Deployed version: '+el('invBuild').textContent,'Browser-observed performance events:',...invPerfEvents];
+ if(invLastProductPreview){
+  const r=invLastProductPreview;
+  lines.push('ProductIndex: '+(r.ready?'READY':'NOT READY'),
+   'Products: '+r.counts.products+' (raw '+r.counts.raw+', FG '+r.counts.finishedGoods+')',
+   'Verified case packs: '+r.sourceRows.verifiedCasePacks,'Issues: '+r.issueCount,
+   'Server total: '+r.elapsedMs+'ms','Server phase timings:');
+  (r.phases||[]).forEach(p=>lines.push(p.name+': '+p.elapsedMs+'ms'));
+  if(r.issueCount)lines.push('Issue details: '+JSON.stringify(r.issues));
+ }else lines.push('ProductIndex validation: not run in this page session');
+ if(invLastProductPreviewError)lines.push('ProductIndex error: '+invLastProductPreviewError);
+ return lines.join('\n');
+}
+document.getElementById('invDiagnosticCopy').addEventListener('click',()=>{
+ const report=invDiagnosticReport();
+ navigator.clipboard.writeText(report).then(()=>invPerfLog('DIAGNOSTIC report copied'))
+ .catch(()=>{const output=el('invPerfLog');output.value=report;output.select();});
+});
 document.getElementById('invPerfToggle').addEventListener('click',()=>{
  const panel=document.getElementById('invPerfPanel');panel.hidden=!panel.hidden;
  document.getElementById('invPerfToggle').setAttribute('aria-expanded',String(!panel.hidden));
@@ -222,7 +244,8 @@ el('previewProductIndex').addEventListener('click',()=>{
  const button=el('previewProductIndex'),status=el('productIndexStatus');
  button.disabled=true;status.textContent='Validating fresh WS and SPIRITS sources…';
  invRun().withSuccessHandler(r=>{
-  button.disabled=false;
+  button.disabled=false;invLastProductPreview=r;invLastProductPreviewError=null;
+  (r.phases||[]).forEach(p=>invPerfLog('SERVER phase '+p.name+' elapsedMs='+p.elapsedMs));
   status.textContent='ProductIndex '+(r.ready?'READY FOR REVIEW':'NOT READY')+
    '\\nProducts: '+r.counts.products+' (raw '+r.counts.raw+', finished goods '+r.counts.finishedGoods+')'+
    '\\nVerified case packs: '+r.sourceRows.verifiedCasePacks+
@@ -231,7 +254,7 @@ el('previewProductIndex').addEventListener('click',()=>{
    '\\nNo import performed.'+
    (r.issueCount?'\\n'+JSON.stringify(r.issues,null,2):'');
  }).withFailureHandler(e=>{
-  button.disabled=false;status.textContent='Validation failed: '+(e.message||String(e));
+  button.disabled=false;invLastProductPreviewError=e.message||String(e);status.textContent='Validation failed: '+invLastProductPreviewError;
  }).apiInventoryAdminProductIndexPreview();
 });
 el('previewCatalog').addEventListener('click',()=>{

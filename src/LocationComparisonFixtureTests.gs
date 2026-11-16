@@ -40,6 +40,13 @@ function testInventoryLocationComparisonFixtures() {
   checks++;
   check('matching totals with invalid third entry cannot be green',
     [a,b,item('BAD','A','RAW','','Each')],'red',1,0);
+  const twoLocations=[...locations,{LocationID:'L2',Warehouse:'MAIN',Bay:'02',Active:true}];
+  const separate=invBuildLocationComparison_(session,twoLocations,products,
+    [a,b,{...item('BAD2','A','RAW','','Each'),LocationID:'L2'}]);
+  if(separate.locations[0].color!=='green'||separate.locations[0].invalidCount!==0||
+     separate.locations[1].color!=='red'||separate.locations[1].invalidCount!==1)
+    throw new Error('Invalid entries must affect only their own location');
+  checks++;
   const inactive=invBuildLocationComparison_(session,[{...locations[0],Active:false}],products,[a]);
   if(inactive.invalid.length!==1||inactive.locations.length!==0)throw new Error('Inactive location not rejected');
   checks++;

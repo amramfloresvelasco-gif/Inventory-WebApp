@@ -84,12 +84,22 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
  * Extended-report-only legacy UOM watchlist. Read-only and source-preserving.
  * Uses ORIGINAL source quantities; never treats unsupported UOM as countable.
  */
-function invExtendedLegacyUomWatchlist_(rows) {
+function invExtendedOwnershipExcluded_(name, tokens) {
+  const value=String(name||'').toUpperCase();
+  return (tokens||[]).some(token=>{
+    const word=String(token||'').toUpperCase().trim();
+    if(!word)return false;
+    const escaped=word.replace(/[.*+?^${}()|[\]\\]/g,'\\function invExtendedLegacyUomWatchlist_(rows) {');
+    return new RegExp('(^|[^A-Z0-9])'+escaped+'(?=$|[^A-Z0-9])').test(value);
+  });
+}
+function invExtendedLegacyUomWatchlist_(rows, exclusionTokens) {
   if(!Array.isArray(rows))throw new Error('Invalid source rows.');
   const grouped=new Map();
   for(const r of rows) {
     const cls=String(r.ClassOfMaterial||r.classOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');
     if(cls!=='BLENDINGINGREDIENT')continue;
+    if(invExtendedOwnershipExcluded_(r.MaterialName||r.ItemName||r.itemName,exclusionTokens))continue;
     const uom=String(r.UnitOfMeasure||r.UOM||r.uom||'').trim();
     if(['Each','Pounds','Gallons'].includes(uom))continue;
     const id=String(r.RawMaterialId||r.WSItemID||r.id||'').trim();
@@ -116,7 +126,8 @@ function apiInventoryAdminExtendedLegacyUomWatchlist(input) {
   const snapshots=invRows_('WSSnapshots').filter(r=>String(r.SnapshotID)===snapshotId);
   if(snapshots.length!==1)throw new Error('Snapshot not found or duplicated.');
   const rows=invRows_('WSRows').filter(r=>String(r.SnapshotID)===snapshotId);
-  const watch=invExtendedLegacyUomWatchlist_(rows);
+  // Default tokens are report-only; editable table remains a separate task.
+  const watch=invExtendedLegacyUomWatchlist_(rows,['JYP','OTS','Dios','SCG']);
   return {snapshotId,sourceTimestamp:String(snapshots[0].SourceTimestamp||''),
     items:watch.items,nonzero:watch.nonzero,nonzeroCount:watch.nonzeroCount};
 }

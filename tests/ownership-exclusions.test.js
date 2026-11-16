@@ -30,6 +30,7 @@ assert.strictEqual(configured.rows.length,2);
 
 let cells=[],sheetExists=false,lockReleased=0;
 const sheet={
+ deleteRows:(start,count)=>{cells.splice(start-1,count);},
  getLastRow:()=>cells.length,
  getRange:(row,col,height,width)=>({
   getDisplayValues:()=>row===1?[['Token','Active','UpdatedAt','UpdatedBy']]:cells.slice(row-1,row-1+height),
@@ -55,6 +56,6 @@ assert.strictEqual(cells.length,5);
 const saved=ctx.apiInventoryAdminSaveOwnershipExclusions({rows:[{Token:'JYP',Active:true},{Token:'NEW',Active:false}],expectedRevision:original.revision});
 assert.strictEqual(saved.ok,true);
 assert.strictEqual(ctx.apiInventoryAdminOwnershipExclusions().tokens.join(','),'JYP');
-assert.strictEqual(cells[3][0],'');
+assert.strictEqual(cells.length,3);
 assert(lockReleased>=4);
 console.log('Mocked admin setup/save/stale-edit checks passed');

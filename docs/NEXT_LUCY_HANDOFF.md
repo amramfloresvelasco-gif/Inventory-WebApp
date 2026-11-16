@@ -590,3 +590,7 @@ Updated `src/WSSnapshots.gs` (`bb315773`) to apply whole-token, case-insensitive
 ## 2026-11-15 — Critical JS syntax repair in Extended Report 2
 
 On continuing, inspected latest `src/WSSnapshots.gs` and found malformed JavaScript introduced by prior ownership-token edit: stray `function invExtendedLegacyUomWatchlist_(rows) {');` and leftover regex lines made entire Apps Script source invalid. Replaced matcher with safe split-on-nonalphanumeric whole-token Set lookup and removed invalid fragment (`da5f519`, `2bbdc11`). Executed full source via `new Function` successfully and verified targeted watchlist behavior: `JYP OTS` excluded, Pickers retained with original quantity 3 and effective 0, `LOTS` does not match `OTS`. **Next:** add persistent regression tests for syntax and ownership filters; implement editable ownership exclusions and Extended Report 2 UI/export. No deployment or live writes; full CI not verified.
+
+## 2026-11-15 — Permanent Extended Report 2 regression coverage
+
+Created `tests/ws-extended-report.test.js` (`5f844b0`) covering full `WSSnapshots.gs` JavaScript parse, whole-token ownership filtering, blending-only scope, original source quantity aggregation, effective zero, zero-balance behavior, and invalid source quantity. Updated `.github/workflows/inventory-tests.yml` (`beda5369`) to run it and trigger on `src/WSSnapshots.gs` changes. **CI run status not yet verified**, and no Apps Script deployment/live writes. Next: implement editable `OwnershipExclusions` table with safe schema migration, then Extended Report 2 UI/export.

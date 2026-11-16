@@ -6,7 +6,12 @@
 function apiInventoryAdminProductIndexVerifyPreflight(trusted) {
   const admin=invRequireAdmin_();
   if(!trusted||typeof trusted!=='object'||
-      !trusted.sourceFingerprints||!trusted.stageFingerprint)
+      !invProductIndexValidateSourceFingerprint_(trusted.sourceFingerprints)||
+      !trusted.stageFingerprint||
+      trusted.stageFingerprint.format!=='product-index-stage-v1'||
+      !Number.isSafeInteger(trusted.stageFingerprint.count)||
+      trusted.stageFingerprint.count<1||
+      !/^[a-f0-9]{64}$/.test(String(trusted.stageFingerprint.sha256||'')))
     return {readOnly:true,matches:false,importEnabled:false,
       issues:['Complete prior preflight fingerprints required']};
   const lock=LockService.getScriptLock();

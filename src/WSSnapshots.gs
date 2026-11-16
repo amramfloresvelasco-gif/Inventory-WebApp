@@ -107,3 +107,16 @@ function invExtendedLegacyUomWatchlist_(rows) {
   const items=[...grouped.values()];
   return {items,nonzero:items.filter(x=>x.SourceQuantity!==0),nonzeroCount:items.filter(x=>x.SourceQuantity!==0).length};
 }
+
+/** Admin-only read-only source for Extended Report 2 legacy-UOM section. */
+function apiInventoryAdminExtendedLegacyUomWatchlist(input) {
+  invRequireAdmin_();
+  const snapshotId=String(input&&input.snapshotId||'').trim();
+  if(!snapshotId)throw new Error('Snapshot ID required.');
+  const snapshots=invRows_('WSSnapshots').filter(r=>String(r.SnapshotID)===snapshotId);
+  if(snapshots.length!==1)throw new Error('Snapshot not found or duplicated.');
+  const rows=invRows_('WSRows').filter(r=>String(r.SnapshotID)===snapshotId);
+  const watch=invExtendedLegacyUomWatchlist_(rows);
+  return {snapshotId,sourceTimestamp:String(snapshots[0].SourceTimestamp||''),
+    items:watch.items,nonzero:watch.nonzero,nonzeroCount:watch.nonzeroCount};
+}

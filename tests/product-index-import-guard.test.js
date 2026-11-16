@@ -202,3 +202,22 @@ fileForTamper.getBlob=()=>({getDataAsString:()=>JSON.stringify({
 assert.throws(()=>driveCtx.invProductIndexEvidenceReadById_(driveFolder,
  saved.backupFileId,'product-index-test-import-001-backup.json'),/digest mismatch/);
 console.log('ProductIndex SHA-256 integrity tampering tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexEvidenceAccessPolicy.gs','utf8'),ctx);
+const owner=[{type:'user',role:'owner',emailAddress:'admin@example.test'}];
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_(owner,true).ready,true);
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_(owner,false).ready,false);
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_([...owner,{type:'anyone',role:'reader'}],true).ready,false);
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_([...owner,{type:'domain',role:'reader'}],true).ready,false);
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_([...owner,{type:'group',role:'writer'}],true).ready,false);
+assert.strictEqual(ctx.invProductIndexEvidenceAccessCheck_([],true).ready,false);
+const raceName='product-index-race-test-001-backup.json';
+const originalCreate=driveFolder.createFile;
+driveFolder.createFile=(name,body)=>{
+ const result=originalCreate(name,body);
+ if(name===raceName)originalCreate(name,body);
+ return result;
+};
+assert.throws(()=>driveCtx.invProductIndexEvidenceWriteOnce_(driveFolder,raceName,{test:true}),/collision/);
+driveFolder.createFile=originalCreate;
+console.log('ProductIndex folder policy and concurrent filename collision tests PASS');

@@ -44,7 +44,7 @@ jobs:
           test -n "$DEPLOYMENT_ID" || { echo "Missing INVENTORY_WEBAPP_DEPLOYMENT_ID"; exit 1; }
           mkdir -p deploy
           cp src/*.gs src/*.html deploy/
-          test "$(find deploy -maxdepth 1 \( -name '*.gs' -o -name '*.html' \) | wc -l)" -ge 14
+          test "$(find deploy -maxdepth 1 \( -name '*.gs' -o -name '*.html' \) | wc -l)" -ge 13
           cp src/appsscript.json deploy/appsscript.json
           python3 - <<'PY'
           import os

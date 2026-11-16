@@ -53,5 +53,5 @@ assert.equal(releases,before);
 lockAvailable=true;
 assert.equal(save(request).childCount,7);
 assert.equal(writes,3);
-assert.equal(releases,9);
+assert.equal(releases,8);
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

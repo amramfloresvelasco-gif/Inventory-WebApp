@@ -11,7 +11,8 @@ function invWsSnapshotPreview_(rows) {
     if(invIsExcludedMaterialClass_(cls)){excluded.fermentation++;return;}
     const raw=!['finished good','finished_goods','finishedgoods'].includes(cls.toLowerCase());
     const uom=String(r.UnitOfMeasure||r.UOM||'').trim();
-    const sourceQuantity=r.Units!==undefined?r.Units:r.Quantity;\n    const n=sourceQuantity===null||sourceQuantity===undefined||String(sourceQuantity).trim()===''?NaN:Number(sourceQuantity);
+    const sourceQuantity=r.Units!==undefined?r.Units:r.Quantity;
+    const n=sourceQuantity===null||sourceQuantity===undefined||String(sourceQuantity).trim()===''?NaN:Number(sourceQuantity);
     if(!id||!uom||!Number.isFinite(n)||n<0){
       rejected.push({row:i+1,id,reason:'Missing ID/UOM or invalid quantity'});return;
     }
@@ -36,7 +37,9 @@ function apiInventoryAdminPreviewWSSnapshot(input) {
 function apiInventoryAdminSaveOriginalWSSnapshot(input) {
   const admin=invRequireAdmin_(),sessionId=String(input&&input.sessionId||'').trim();
   const sourceTimestamp=String(input&&input.sourceTimestamp||'').trim();
-  if(!sourceTimestamp)throw new Error('Source timestamp required.');\n  // Event-driven only: this function is invoked explicitly for a created OPEN session.\n  // Never install a time-based trigger for snapshot collection.
+  if(!sourceTimestamp)throw new Error('Source timestamp required.');
+  // Event-driven only: this function is invoked explicitly for a created OPEN session.
+  // Never install a time-based trigger for snapshot collection.
   if(!input||!Array.isArray(input.rows)||!input.rows.length)
     throw new Error('WS rows required.');
   const lock=LockService.getScriptLock();
@@ -56,10 +59,16 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
     if(invRows_('WSSnapshots').some(x=>String(x.SessionID)===sessionId&&String(x.SnapshotType).toUpperCase()==='ORIGINAL'))
       throw new Error('Original WS snapshot already exists for session.');
     const snapshotId='WS-'+Utilities.getUuid();
-    // Preserve source quantity and source UOM in WSRows; normalize only during reconciliation.\n    // Commit rows first, then metadata and session pointer.
+    // Preserve source quantity and source UOM in WSRows; normalize only during reconciliation.
+    // Commit rows first, then metadata and session pointer.
     const values=p.accepted.map(x=>[snapshotId,x.id,x.warehouse,x.uom,x.originalQuantity,
       x.itemName,x.classOfMaterial]);
-    // Sheets write limits: chunk source rows, no timer or background sync.\n    const first=ws.getLastRow()+1;\n    for(let offset=0;offset<values.length;offset+=500){\n      const chunk=values.slice(offset,offset+500);\n      ws.getRange(first+offset,1,chunk.length,7).setValues(chunk);\n    }
+    // Sheets write limits: chunk source rows, no timer or background sync.
+    const first=ws.getLastRow()+1;
+    for(let offset=0;offset<values.length;offset+=500){
+      const chunk=values.slice(offset,offset+500);
+      ws.getRange(first+offset,1,chunk.length,7).setValues(chunk);
+    }
     snapshots.getRange(snapshots.getLastRow()+1,1,9).setValues([[
       snapshotId,sessionId,'ORIGINAL',new Date(),admin.email,sourceTimestamp,1,'ACTIVE',
       'Source quantities preserved; Eligible '+values.length+'; excluded warehouse '+p.excluded.warehouse+

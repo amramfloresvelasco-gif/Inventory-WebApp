@@ -67,6 +67,17 @@ function testInventoryLocationComparisonFixtures() {
      !duplicateLocation.locations.every(x=>x.color==='red'&&x.duplicateLocation))
     throw new Error('Duplicate active location must be flagged');
   checks++;
+  const unusedDuplicateProduct=invBuildLocationComparison_(session,locations,
+    [products[0],products[1],{...products[1]}],[a,b]);
+  if(unusedDuplicateProduct.allGreen||unusedDuplicateProduct.duplicateProductIds[0]!=='RAW')
+    throw new Error('Unused duplicate active product must block allGreen');
+  checks++;
+  const emptyDuplicateLocation=invBuildLocationComparison_(session,
+    [locations[0],{...locations[0]}],products,[]);
+  if(emptyDuplicateLocation.duplicateLocationIds[0]!=='L1'||
+     !emptyDuplicateLocation.locations.every(x=>x.color==='red'))
+    throw new Error('Duplicate active location must be flagged before counting');
+  checks++;
   const inactive=invBuildLocationComparison_(session,[{...locations[0],Active:false}],products,[a]);
   if(inactive.invalid.length!==1||inactive.locations.length!==0)throw new Error('Inactive location not rejected');
   checks++;

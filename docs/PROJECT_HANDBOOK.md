@@ -565,3 +565,8 @@ Commit `c8956a07abd2913783f7cd4ba3811b05350d9291` filters ProductIndex by Active
 ### 2026-11-15 — Strict count quantity input validation
 
 Commit `3cc26c475669207e7eb0802911a1bf988cc31e67` rejects quantity coercions (whitespace-only strings, booleans, arrays, exponential-form strings) in `apiInventorySaveCount`, retaining nonnegative safe-integer validation and digit-only numeric strings. Commit `3d8a71861eb0ff4219b6e3b86aef8eb39299a503` adds 5 mocked integration checks, bringing count workflow to **27 scenarios**, plus 42 map assertions = **69 planned checks**. Newly expanded Node suite and GitHub Actions results not yet verified. No Apps Script runtime test, no deployment, no live Sheets writes; freeze disabled. Next: verify CI and Apps Script test database integration; ProductIndex import remains pending.
+
+
+### 2026-11-15 — Fail closed on duplicate active reference IDs
+
+Commit `60cf9ac9d915c2e0626a213b2a5c47bd27e4d71c` changes count and EMPTY endpoints to require exactly one active location match, and counts to require exactly one active product match; duplicate identifiers now block writes rather than selecting first row. Commit `919f55af325dbebd61cd799468eb387289977918` adds three mocked integration checks for duplicate location count, duplicate location EMPTY, and duplicate product count. Planned suite: **30 mocked workflow checks + 42 comparison assertions = 72**. CI and full Node execution still unverified; Apps Script runtime not tested; no live database changes/deployment. Freeze remains disabled. Next: execute tests, verify CI and perform isolated Apps Script integration, then validate ProductIndex/Locations imports before production use.

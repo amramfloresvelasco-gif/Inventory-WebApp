@@ -5,14 +5,17 @@
  */
 function invProductIndexCompareTrustedPreflight_(fresh,stage,trusted) {
   const issues=[];
-  if(!fresh||fresh.ready!==true||!stage||stage.ready!==true)
+  if(!fresh||fresh.ready!==true||!stage||stage.ready!==true||
+      !Array.isArray(fresh.issues)||fresh.issues.length!==0||
+      !Array.isArray(stage.issues)||stage.issues.length!==0)
     issues.push('Fresh validated source plan and stage required');
   if(!trusted||!trusted.sourceFingerprints||!trusted.stageFingerprint)
     issues.push('Independently retained preflight fingerprints required');
   if(!issues.length){
     try {
-      const source=invProductIndexSourceFingerprints_(fresh.sourceSnapshots);
-      if(JSON.stringify(source)!==JSON.stringify(trusted.sourceFingerprints))
+      const source=invProductIndexVerifySourceFingerprints_(
+        fresh.sourceSnapshots,trusted.sourceFingerprints);
+      if(!source.ok)
         issues.push('Source data changed since trusted preflight');
     }catch(error){issues.push('Cannot verify fresh sources: '+String(error.message||error));}
     const staged=invProductIndexVerifyStageFingerprint_(stage,trusted.stageFingerprint);

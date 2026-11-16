@@ -48,6 +48,36 @@ function invRequireAdmin_() {
   if (u.role !== 'administrator') throw new Error('Administrator permission required.');
   return u;
 }
+/** Authorized counters select and lock their own team; no administrator assignment needed.
+ * Existing team entries remain attributed to the team saved on each row.
+ */
+function apiInventorySelectTeam(input) {
+  const user=invUser_();
+  const requested=String(input&&input.team||'').trim().toUpperCase();
+  const unlock=input&&input.unlock===true;
+  if(unlock===(!requested))throw new Error('Choose a team to lock or request unlock.');
+  if(requested&&!['A','B'].includes(requested))throw new Error('Invalid team.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry.');
+  try {
+    const sheet=invSheet_('AppUsers'),rows=invRows_('AppUsers');
+    const hits=rows.map((r,i)=>({r,i})).filter(x=>
+      String(x.r.Email).trim().toLowerCase()===user.email);
+    if(hits.length!==1||String(hits[0].r.Status).trim().toLowerCase()!=='active')
+      throw new Error('Active user record required.');
+    const current=hits[0].r;
+    const isLocked=current.TeamLocked===true||
+      String(current.TeamLocked).toLowerCase()==='true';
+    if(unlock){
+      if(!isLocked)throw new Error('Team already unlocked.');
+      sheet.getRange(hits[0].i+2,5).setValue(false);
+      return {ok:true,team:String(current.AssignedTeam||'').toUpperCase(),teamLocked:false};
+    }
+    if(isLocked)throw new Error('Unlock your current team before selecting another.');
+    sheet.getRange(hits[0].i+2,4,1,2).setValues([[requested,true]]);
+    return {ok:true,team:requested,teamLocked:true};
+  }finally{lock.releaseLock();}
+}
 function invTeam_(user) {
   if (!['A','B'].includes(user.team)) throw new Error('Team assignment is required.');
   if (!user.teamLocked) throw new Error('Team must be locked by an administrator before counting.');

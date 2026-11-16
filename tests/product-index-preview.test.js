@@ -72,7 +72,8 @@ console.log('ProductIndex sync diff: 11 assertions PASS');
 
 r=preview([{RawMaterialId:'300',MaterialName:'Flavor',ClassOfMaterial:'Blending_Ingredient',UnitOfMeasure:'FluidOunces'}],[],[]);
 assert.strictEqual(r.ready,true);
-assert.strictEqual(r.products.length,0);
+assert.strictEqual(r.products.length,1);
+assert.strictEqual(r.products[0].DefaultUOM,'FluidOunces');
 assert.strictEqual(r.issues.length,0);
 
 r=preview([{RawMaterialId:'301',MaterialName:'Ferment aid',ClassOfMaterial:'Fermentation_Support',UnitOfMeasure:'Kilograms'}],[],[]);

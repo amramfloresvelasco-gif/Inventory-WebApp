@@ -36,11 +36,12 @@ const preflightCtx=vm.createContext({
   invRequireAdmin_:()=>({email:'admin@example.test'}),
   LockService:{getScriptLock:()=>({tryLock:()=>{calls.push('lock');return true;},releaseLock:()=>calls.push('unlock')})},
   invProductIndexFreshPlan_:()=>{calls.push('fresh');return {
-    preview,existing:[],ready:true,issues:[],
+    preview,existing:[],ready:true,issues:[],sourceFingerprints:{format:'test-source-fingerprints'},
     plan:{adds:preview.products,updates:[],unchanged:[],missing:[]}
   };},
   invPrepareInitialProductIndex_:ctx.invPrepareInitialProductIndex_,
   invStageInitialProductIndex_:ctx.invStageInitialProductIndex_,
+  invProductIndexStageFingerprint_:stage=>({format:'test-stage-fingerprint',count:stage.count}),
   invPlanProductIndexSync_:ctx.invPlanProductIndexSync_
 });
 vm.runInContext(fs.readFileSync('src/ProductIndexImportPreflight.gs','utf8'),preflightCtx);
@@ -49,6 +50,8 @@ assert.strictEqual(dry.readOnly,true);
 assert.strictEqual(dry.importEnabled,false);
 assert.strictEqual(dry.ready,true);
 assert.strictEqual(dry.stagedRows,2);
+assert.strictEqual(dry.stageFingerprint.count,2);
+assert.strictEqual(dry.sourceFingerprints.format,'test-source-fingerprints');
 assert.deepStrictEqual(calls,['lock','fresh','unlock']);
 console.log('Locked ProductIndex dry-run preflight tests PASS');
 

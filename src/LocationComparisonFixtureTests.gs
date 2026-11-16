@@ -33,11 +33,13 @@ function testInventoryLocationComparisonFixtures() {
   check('both EMPTY',[empty('EA','A'),empty('EB','B')],'green',0,0);
   check('one EMPTY',[empty('EA','A')],'yellow',0,0);
   check('EMPTY versus items',[empty('EA','A'),b],'red',0,2);
-  check('blank quantity invalid',[item('A2','A','RAW','','Each')],'neutral',1,0);
+  check('blank quantity invalid',[item('A2','A','RAW','','Each')],'red',1,0);
   check('unknown location invalid',[{...a,LocationID:'UNKNOWN'}],'neutral',1,0);
   const missing=invBuildLocationComparison_(session,locations,[{...products[0],UnitsPerCase:''}], [a,b]);
-  if(missing.invalid.length!==2||missing.locations[0].color!=='neutral')throw new Error('Missing FG conversion not rejected');
+  if(missing.invalid.length!==2||missing.locations[0].color!=='red')throw new Error('Missing FG conversion not rejected');
   checks++;
+  check('matching totals with invalid third entry cannot be green',
+    [a,b,item('BAD','A','RAW','','Each')],'red',1,0);
   const inactive=invBuildLocationComparison_(session,[{...locations[0],Active:false}],products,[a]);
   if(inactive.invalid.length!==1||inactive.locations.length!==0)throw new Error('Inactive location not rejected');
   checks++;

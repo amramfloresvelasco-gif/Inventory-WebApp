@@ -44,7 +44,9 @@ function invCatalogPreview_() {
     const id=String(r[1]||'').trim(),uom=String(r[8]||'').trim();
     if(!id||!uom)return;
     if(legacyUom.has(id)&&legacyUom.get(id)!==uom)legacyConflicts.add(id);
-    legacyUom.set(id,uom);\n    const cls=String(r[10]||'').trim();\n    if(cls)legacyClass.set(id,cls);
+    legacyUom.set(id,uom);
+    const cls=String(r[10]||'').trim();
+    if(cls)legacyClass.set(id,cls);
   });
   const diagnostic={legacyMatches:0,legacyMissing:0,legacyConflicts:0,
     missingByCategory:{},legacyUomExamples:[]};
@@ -72,7 +74,9 @@ function invCatalogPreview_() {
     const cls=category==='packaging'?'Packaging':'Raw Material';
     const id=String(row['Material ID']).trim();
     const detail=detailByWsId.get(id);
-    const uom=String(detail&&detail.UOM||'').trim();\n    if(uom&&!INV_RAW_UOMS.includes(uom))\n      missing.push({source:'Materials',id,reason:'Unsupported material UOM: '+uom});
+    const uom=String(detail&&detail.UOM||'').trim();
+    if(uom&&!INV_RAW_UOMS.includes(uom))
+      missing.push({source:'Materials',id,reason:'Unsupported material UOM: '+uom});
     // Do not invent UOM. Material Reference has no UOM and Materials may be empty.
     if(!uom) {
       const candidate=legacyUom.get(id);
@@ -88,7 +92,13 @@ function invCatalogPreview_() {
       missing.push({source:'Materials',id,reason:'Missing verified official UOM',
         candidateUOM:candidate||''});
     }
-    if(invIsExcludedMaterialClass_(legacyClass.get(id))) {\n      diagnostic.fermentationExcluded=(diagnostic.fermentationExcluded||0)+1;\n      // Remove any missing-UOM issue for excluded fermentation records.\n      for(let i=missing.length-1;i>=0;i--)if(String(missing[i].id)===id)missing.splice(i,1);\n      continue;\n    }\n    add(id,row['Material Name'],cls,uom,'','Material Reference');
+    if(invIsExcludedMaterialClass_(legacyClass.get(id))) {
+      diagnostic.fermentationExcluded=(diagnostic.fermentationExcluded||0)+1;
+      // Remove any missing-UOM issue for excluded fermentation records.
+      for(let i=missing.length-1;i>=0;i--)if(String(missing[i].id)===id)missing.splice(i,1);
+      continue;
+    }
+    add(id,row['Material Name'],cls,uom,'','Material Reference');
   }
   for(const row of productRows) {
     if(String(row.Status||'').trim().toLowerCase()!=='active')continue;

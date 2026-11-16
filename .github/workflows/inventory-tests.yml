@@ -18,6 +18,7 @@ on:
       - 'src/PalletFamilyRecovery.gs'
       - 'src/PalletFamilyPersistence.gs'
       - 'src/PalletFamilyDiagnostics.gs'
+      - 'src/PalletIntentContract.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
   pull_request:
@@ -56,6 +57,8 @@ jobs:
         run: node tests/pallet-family-persistence.test.js
       - name: Admin pallet family diagnostics
         run: node tests/pallet-family-diagnostics.test.js
+      - name: Canonical pallet submission intent
+        run: node tests/pallet-intent-contract.test.js
       - name: Counting, EMPTY and deletion workflow
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures

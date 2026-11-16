@@ -293,7 +293,7 @@ function apiInventoryAdminUpsertUser(input) {
   const email=String(input&&input.email||'').trim().toLowerCase();
   const role=String(input&&input.role||'').trim().toLowerCase();
   const status=String(input&&input.status||'').trim().toLowerCase();
-  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Invalid email.');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Invalid email.');
   if(!['administrator','counter'].includes(role)) throw new Error('Invalid role.');
   if(!['active','inactive'].includes(status)) throw new Error('Invalid status.');
   if(email===admin.email && (role!=='administrator'||status!=='active'))

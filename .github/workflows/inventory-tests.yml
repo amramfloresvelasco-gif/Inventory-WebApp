@@ -7,6 +7,8 @@ on:
       - 'src/Code.gs'
       - 'src/Index.html'
       - 'src/ProductIndexPreview.gs'
+      - 'src/ProductIndexLivePreview.gs'
+      - 'src/ProductIndexImportGuard.gs'
       - 'src/WSSnapshots.gs'
       - 'src/OwnershipExclusions.gs'
       - 'src/LocationComparison.gs'
@@ -19,6 +21,8 @@ on:
       - 'src/Code.gs'
       - 'src/Index.html'
       - 'src/ProductIndexPreview.gs'
+      - 'src/ProductIndexLivePreview.gs'
+      - 'src/ProductIndexImportGuard.gs'
       - 'src/WSSnapshots.gs'
       - 'src/OwnershipExclusions.gs'
       - 'src/LocationComparison.gs'
@@ -46,6 +50,8 @@ jobs:
         run: node tests/location-comparison.test.js
       - name: ProductIndex preview mapping
         run: node tests/product-index-preview.test.js
+      - name: ProductIndex initial import safety guards
+        run: node tests/product-index-import-guard.test.js
       - name: Extended legacy report ownership and quantity
         run: node tests/ws-extended-report.test.js
       - name: Ownership exclusion configuration

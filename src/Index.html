@@ -252,6 +252,7 @@ el('previewProductIndex').addEventListener('click',()=>{
    '\\nChanges: '+r.diff.adds+' adds, '+r.diff.updates+' updates, '+r.diff.unchanged+' unchanged, '+r.diff.missing+' missing'+
    '\\nIssues: '+r.issueCount+' · '+r.elapsedMs+' ms'+
    '\\nNo import performed.'+
+   (r.phases?'\\nServer phase timings:\\n'+r.phases.map(p=>p.name+': '+p.elapsedMs+' ms').join('\\n'):'')+
    (r.issueCount?'\\n'+JSON.stringify(r.issues,null,2):'');
  }).withFailureHandler(e=>{
   button.disabled=false;invLastProductPreviewError=e.message||String(e);status.textContent='Validation failed: '+invLastProductPreviewError;

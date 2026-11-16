@@ -421,3 +421,8 @@ Commit `1f9ce5603e89ab9a24bba33ff03a7259d5fb8efd` adds `tests/count-workflow.tes
 ### 2026-11-15 — Automated Node regression workflow
 
 Commit `9a715ff1a07dcff5dea80c3c33ab635b2b361fb3` adds `tests/location-comparison.test.js`, loading actual Apps Script comparison sources in Node VM and asserting 26 rule + 13 fixture checks. Commit `7c8a60c73878f238d3b4645c377766c14deb3340` adds `.github/workflows/inventory-tests.yml` to run both Node test files (52 total checks) on relevant main pushes, PRs, and manual dispatch. Workflow uses read-only GitHub permissions, no Apps Script credentials, no database access, no deployment. **CI run result not yet verified**. Next: inspect GitHub Actions first run and resolve failures, then actual Apps Script test-database integration. Freeze disabled.
+
+
+### 2026-11-15 — CI verification limitation and expanded mocked integration tests
+
+GitHub connector checks for workflow commit `7c8a60c73878f238d3b4645c377766c14deb3340` returned empty combined statuses and no PR-triggered workflow runs; **this does not prove a push workflow passed or failed**. Commit `e0de4762da4be9a90dcfe9aa7d057119a34c6e4a` expands `tests/count-workflow.test.js` from 13 to 22 checks: new count after EMPTY removal, duplicate method mismatch, negative/fractional quantities, invalid product/location, admin deletion, audit actor, and hidden deleted entries. Combined planned CI suite: **61 checks (22 mocked workflow + 39 pure map)**. Expanded committed file not yet executed in Node or GitHub Actions. No Apps Script execution, deployment, or live data change. Freeze remains disabled. Next: verify CI via GitHub Actions UI/logs; fix test failures; run Apps Script integration with isolated test database.

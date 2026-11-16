@@ -20,9 +20,9 @@ function invProductIndexEvidenceFileName_(importId,kind) {
 function invProductIndexEvidenceWriteOnce_(folder,name,payload) {
   const iterator=folder.getFilesByName(name);
   if(iterator.hasNext())throw new Error('Evidence file already exists: '+name);
-  const file=folder.createFile(name,JSON.stringify(payload),'application/json');
+  const file=folder.createFile(name,JSON.stringify(invProductIndexEvidenceEnvelope_(payload)),'application/json');
   // Verify through Drive readback, not the in-memory payload.
-  const read=JSON.parse(file.getBlob().getDataAsString('UTF-8'));
+  const read=invProductIndexVerifyEvidenceEnvelope_(JSON.parse(file.getBlob().getDataAsString('UTF-8')));
   if(JSON.stringify(read)!==JSON.stringify(payload))
     throw new Error('Evidence persistence readback mismatch: '+name);
   return {fileId:file.getId(),data:read};
@@ -35,7 +35,7 @@ function invProductIndexEvidenceReadById_(folder,fileId,expectedName) {
   const files=folder.getFilesByName(expectedName);
   while(files.hasNext())if(files.next().getId()===fileId)found=true;
   if(!found)throw new Error('Evidence file is outside configured folder');
-  return JSON.parse(file.getBlob().getDataAsString('UTF-8'));
+  return invProductIndexVerifyEvidenceEnvelope_(JSON.parse(file.getBlob().getDataAsString('UTF-8')));
 }
 /**
  * Internal persistence preparation; never called by production flow.

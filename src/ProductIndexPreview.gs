@@ -5,16 +5,17 @@ function invPreviewProductIndex_(rawRows,fgRows,casePacks) {
     const id=String(row.WSItemID||'').trim(), name=String(row.ItemName||'').trim();
     const barcode=String(row.Barcode||'').trim();
     if(!id||!name||!barcode){issues.push({source,id,reason:'Missing product ID, name or barcode'});return;}
-    const existing=byId.get(id);
+    const scopedId=source+'|'+id;
+    const existing=byId.get(scopedId);
     if(existing) {
       if(existing.ItemName!==name||existing.Barcode!==barcode||existing.ClassOfMaterial!==row.ClassOfMaterial||String(existing.UnitsPerCase)!==String(row.UnitsPerCase))
         issues.push({source,id,reason:'Conflicting records for the same WS item ID'});
       return;
     }
-    if(byBarcode.has(barcode)&&byBarcode.get(barcode)!==id)
+    if(byBarcode.has(barcode)&&byBarcode.get(barcode)!==scopedId)
       issues.push({source,id,reason:'Scan payload shared by multiple WS item IDs'});
-    byBarcode.set(barcode,id);
-    byId.set(id,row);products.push(row);
+    byBarcode.set(barcode,scopedId);
+    byId.set(scopedId,row);products.push(row);
   }
   for(const r of rawRows) {
     const cls=String(r.ClassOfMaterial||'').toUpperCase().replace(/[^A-Z]/g,'');

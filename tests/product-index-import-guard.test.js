@@ -238,3 +238,23 @@ assert.strictEqual(inspectCtx.invInspectProductIndexEvidenceFolderDisabled_().po
 inspectCtx.Drive={Permissions:{list:()=>{throw Error('forbidden');}}};
 assert.strictEqual(inspectCtx.invInspectProductIndexEvidenceFolderDisabled_().inspectionComplete,false);
 console.log('Read-only Drive permissions inspection fail-closed tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexImportAuthorizationReview.gs','utf8'),ctx);
+const approvalBase={
+ adminVerified:true,actor:'admin@example.test',preflightReady:true,existingRows:0,
+ stagedRows:748,sourceFingerprintVerified:true,evidenceBackupVerified:true,
+ auditChainVerified:true,permissionInspectionComplete:true,
+ permissionPolicyReady:true,inheritedAccessReviewed:true,lockHeld:true,
+ operatorAcknowledgedRisks:true,explicitApprovalRecorded:true
+};
+const review=ctx.invProductIndexImportAuthorizationReview_(approvalBase);
+assert.strictEqual(review.readyForHumanReview,true);
+assert.strictEqual(review.importEnabled,false);
+assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_({...approvalBase,
+ existingRows:1}).readyForHumanReview,false);
+assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_({...approvalBase,
+ inheritedAccessReviewed:false}).readyForHumanReview,false);
+assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_({...approvalBase,
+ explicitApprovalRecorded:false}).readyForHumanReview,false);
+assert.strictEqual(ctx.invProductIndexImportAuthorizationReview_(null).importEnabled,false);
+console.log('ProductIndex authorization review fail-closed tests PASS');

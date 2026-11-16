@@ -11,7 +11,7 @@ function invWsSnapshotPreview_(rows) {
     if(invIsExcludedMaterialClass_(cls)){excluded.fermentation++;return;}
     const raw=!['finished good','finished_goods','finishedgoods'].includes(cls.toLowerCase());
     const uom=String(r.UnitOfMeasure||r.UOM||'').trim();
-    const n=Number(r.Units!==undefined?r.Units:r.Quantity);
+    const sourceQuantity=r.Units!==undefined?r.Units:r.Quantity;\n    const n=Number(sourceQuantity);
     if(!id||!uom||!Number.isFinite(n)||n<0){
       rejected.push({row:i+1,id,reason:'Missing ID/UOM or invalid quantity'});return;
     }
@@ -52,15 +52,17 @@ function apiInventoryAdminSaveOriginalWSSnapshot(input) {
     if(index<0)throw new Error('Session not found.');
     if(String(all[index].OriginalWSSnapshotID||'').trim())
       throw new Error('Original WS snapshot already assigned; immutable.');
-    const snapshots=invSheet_('WSSnapshots'),ws=invSheet_('WSRows');\n    if(invRows_('WSSnapshots').some(x=>String(x.SessionID)===sessionId&&String(x.SnapshotType).toUpperCase()==='ORIGINAL'))\n      throw new Error('Original WS snapshot already exists for session.');
+    const snapshots=invSheet_('WSSnapshots'),ws=invSheet_('WSRows');
+    if(invRows_('WSSnapshots').some(x=>String(x.SessionID)===sessionId&&String(x.SnapshotType).toUpperCase()==='ORIGINAL'))
+      throw new Error('Original WS snapshot already exists for session.');
     const snapshotId='WS-'+Utilities.getUuid();
-    // Commit rows first, then metadata and session pointer.
-    const values=p.accepted.map(x=>[snapshotId,x.id,x.warehouse,x.uom,x.quantity,
+    // Preserve source quantity and source UOM in WSRows; normalize only during reconciliation.\n    // Commit rows first, then metadata and session pointer.
+    const values=p.accepted.map(x=>[snapshotId,x.id,x.warehouse,x.uom,x.originalQuantity,
       x.itemName,x.classOfMaterial]);
     ws.getRange(ws.getLastRow()+1,1,values.length,7).setValues(values);
     snapshots.getRange(snapshots.getLastRow()+1,1,9).setValues([[
       snapshotId,sessionId,'ORIGINAL',new Date(),admin.email,sourceTimestamp,1,'ACTIVE',
-      'Eligible '+values.length+'; excluded warehouse '+p.excluded.warehouse+
+      'Source quantities preserved; Eligible '+values.length+'; excluded warehouse '+p.excluded.warehouse+
       '; fermentation '+p.excluded.fermentation+'; legacy UOM zero '+p.legacyZeroCount
     ]]);
     sessions.getRange(index+2,8).setValue(snapshotId);

@@ -3,8 +3,8 @@ function testInventoryLocationComparisonFixtures() {
   const session='TEST-SESSION';
   const locations=[{LocationID:'L1',Warehouse:'MAIN',Bay:'01',Active:true}];
   const products=[
-    {WSItemID:'FG',ClassOfMaterial:'Finished Good',UnitsPerCase:12},
-    {WSItemID:'RAW',ClassOfMaterial:'Raw Material',DefaultUOM:'Each'}
+    {WSItemID:'FG',ClassOfMaterial:'Finished Good',UnitsPerCase:12,Active:true},
+    {WSItemID:'RAW',ClassOfMaterial:'Raw Material',DefaultUOM:'Each',Active:true}
   ];
   let checks=0;
   function check(name,entries,color,invalidCount,mismatches) {
@@ -46,6 +46,11 @@ function testInventoryLocationComparisonFixtures() {
   if(separate.locations[0].color!=='green'||separate.locations[0].invalidCount!==0||
      separate.locations[1].color!=='red'||separate.locations[1].invalidCount!==1)
     throw new Error('Invalid entries must affect only their own location');
+  checks++;
+  const inactiveProduct=invBuildLocationComparison_(session,locations,
+    [{...products[0],Active:false},products[1]],[a,b]);
+  if(inactiveProduct.invalid.length!==2||inactiveProduct.locations[0].color!=='red')
+    throw new Error('Inactive catalog product must not be reconciled as valid');
   checks++;
   const inactive=invBuildLocationComparison_(session,[{...locations[0],Active:false}],products,[a]);
   if(inactive.invalid.length!==1||inactive.locations.length!==0)throw new Error('Inactive location not rejected');

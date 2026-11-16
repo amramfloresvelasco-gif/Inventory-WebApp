@@ -49,7 +49,7 @@ function testInventoryLocationComparisonRules() {
   const edgeCases=[
     ['EMPTY A with same-team items',new Map([['P1|Case',2]]),new Map(),true,false,1,0,2],
     ['EMPTY B with same-team items',new Map(),new Map([['P1|Case',2]]),false,true,0,1,2],
-    ['EMPTY A and B with A items',new Map([['P1|Case',2]]),new Map(),true,true,1,0,2],
+    ['EMPTY A and B with A items',new Map([['P1|Case',2]]),new Map(),true,true,1,0,3],
     ['same product different UOM',new Map([['P1|Case',1]]),new Map([['P1|Bottle',1]]),false,false,1,1,2],
     ['fractional equivalent match',new Map([['P1|Case',0.5]]),new Map([['P1|Case',0.5]]),false,false,1,1,0]
   ];

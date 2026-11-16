@@ -467,3 +467,8 @@ Commit `60cf9ac9d915c2e0626a213b2a5c47bd27e4d71c` changes count and EMPTY endpoi
 ### 2026-11-15 — Test harness isolation correction
 
 Commit `f5089331ee6d086b5b982aadafea07944200b644` saves the counting test's mock invUser_/invTeam_/invSession_/invReference_/invRows_/invSheet_ functions and restores them to the Node VM context after loading production `Code.gs`, whose real helper declarations would otherwise override them. This is a test-only change; no app deployment or database writes. Attempted direct GitHub clone for local Node execution, but container DNS could not resolve github.com; a simplified JS simulation was not equivalent to Node VM and did not establish a test result. **Do not claim full 72-check suite passed.** Next: verify GitHub Actions logs or execute Node tests in an environment with repo access; fix any actual failures. Inventory freeze disabled.
+
+
+### 2026-11-15 — Counting mock test ordering fixed; 30 simulated checks pass
+
+Commit `16ede5fca8677441f4f12117bccc9aa1963c0448` moves the accepted numeric-string count scenario after EMPTY lifecycle and admin-delete assertions. Previously it inserted an active count too early, incorrectly causing the EMPTY-after-deletion test to fail. Re-executed the current test logic against production `Code.gs` in an isolated JavaScript simulation with mocked Apps Script helpers: **30/30 count checks PASS**. This is **not** a native Node VM run or GitHub Actions result; GitHub Actions and Apps Script integration remain unverified. The pure comparison suites last passed 26+16=42 checks, yielding 72 defined checks. No deployment or live data changes. Freeze remains disabled. Next: confirm native Node/GitHub Actions run, then test with isolated Apps Script database.

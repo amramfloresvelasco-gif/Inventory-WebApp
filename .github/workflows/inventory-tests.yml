@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/Code.gs'
+      - 'src/Index.html'
       - 'src/ProductIndexPreview.gs'
       - 'src/WSSnapshots.gs'
       - 'src/OwnershipExclusions.gs'
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - 'src/Code.gs'
+      - 'src/Index.html'
       - 'src/ProductIndexPreview.gs'
       - 'src/WSSnapshots.gs'
       - 'src/OwnershipExclusions.gs'
@@ -48,3 +50,5 @@ jobs:
         run: node tests/ws-extended-report.test.js
       - name: Ownership exclusion configuration
         run: node tests/ownership-exclusions.test.js
+      - name: Admin UI syntax and CSV export safety
+        run: node tests/index-ui-syntax.test.js

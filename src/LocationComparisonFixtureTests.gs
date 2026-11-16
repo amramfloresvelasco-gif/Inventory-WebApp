@@ -52,6 +52,17 @@ function testInventoryLocationComparisonFixtures() {
   if(inactiveProduct.invalid.length!==2||inactiveProduct.locations[0].color!=='red')
     throw new Error('Inactive catalog product must not be reconciled as valid');
   checks++;
+  const duplicateProduct=invBuildLocationComparison_(session,locations,
+    [products[0],{...products[0]},products[1]],[a,b]);
+  if(duplicateProduct.invalid.length!==2||duplicateProduct.locations[0].color!=='red')
+    throw new Error('Duplicate active product must be flagged');
+  checks++;
+  const duplicateLocation=invBuildLocationComparison_(session,
+    [locations[0],{...locations[0]}],products,[a,b]);
+  if(duplicateLocation.invalid.length!==2||
+     !duplicateLocation.locations.every(x=>x.color==='red'&&x.duplicateLocation))
+    throw new Error('Duplicate active location must be flagged');
+  checks++;
   const inactive=invBuildLocationComparison_(session,[{...locations[0],Active:false}],products,[a]);
   if(inactive.invalid.length!==1||inactive.locations.length!==0)throw new Error('Inactive location not rejected');
   checks++;

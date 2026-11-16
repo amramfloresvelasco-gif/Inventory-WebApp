@@ -91,6 +91,11 @@ function apiInventorySaveCount(request) {
   const uom=String(request.uom||'').trim();
   const entryId=String(request.entryId||'').trim();
   const quantity=Number(request.quantity);
+  const entryMethod=String(request.entryMethod||'Manual').trim();
+  if(!['Manual','Barcode','QR'].includes(entryMethod))
+    throw new Error('Invalid count entry method. Use the EMPTY action to declare an empty location.');
+  if(request.quantity===''||request.quantity===null||request.quantity===undefined)
+    throw new Error('Quantity is required.');
   if(!/^[a-zA-Z0-9_-]{12,100}$/.test(entryId)) throw new Error('Invalid submission ID.');
   if(!Number.isSafeInteger(quantity) || quantity<0) throw new Error('Quantity must be a nonnegative integer.');
   if(!uom || uom.length>40) throw new Error('Invalid unit.');
@@ -123,7 +128,7 @@ function apiInventorySaveCount(request) {
          String(existingId.WSItemID)!==productId||String(existingId.UOM)!==uom||
          Number(existingId.Quantity)!==quantity||
          String(existingId.EnteredBy).trim().toLowerCase()!==user.email||
-         String(existingId.EntryMethod).toUpperCase()==='EMPTY')
+         String(existingId.EntryMethod)!==entryMethod)
         throw new Error('Submission ID already used for another count.');
       if(String(existingId.Status).toUpperCase()!=='ACTIVE')
         throw new Error('Submission was removed; use a new submission ID for a new count.');
@@ -135,7 +140,7 @@ function apiInventorySaveCount(request) {
       String(x.EntryMethod).toUpperCase()==='EMPTY'))
       throw new Error('Location marked EMPTY by your team; remove EMPTY before counting items.');
     const row=[entryId,sessionId,team,locationId,productId,uom,quantity,'',1,
-      user.email,new Date(),String(request.entryMethod||'Manual').slice(0,32),
+      user.email,new Date(),entryMethod,
       String(request.notes||'').slice(0,500),'ACTIVE'];
     sheet.getRange(last+1,1,1,row.length).setValues([row]);
     return {ok:true,entryId,duplicate:false,elapsedMs:Date.now()-started};

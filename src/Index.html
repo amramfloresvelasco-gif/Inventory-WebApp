@@ -21,7 +21,7 @@ small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(a
 <div class="row"><div><label for="uom">Unit</label><select id="uom"><option>Case</option><option>Bottle</option><option>Each</option></select></div>
 <div><label for="qty">Quantity</label><input id="qty" type="number" min="0" step="1" value="1"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
-<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Location comparison</h3><p class="muted">Read-only supervisor view. Select a session, then refresh to see Team A/B status by location.</p><button id="refreshMap" type="button">Refresh location map</button><div id="mapSummary" class="map-summary" role="status"></div><div id="locationMap" class="map-grid"></div><div id="mapDetail" class="map-detail" hidden></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Extended Report 2 ownership exclusions</h3><p class="muted">Only additional report sections are filtered. Physical counts and Report 1 are unaffected.</p><button id="loadOwnership" type="button">Load exclusions</button><div id="ownershipStatus" role="status"></div><div id="ownershipRows"></div><button id="addOwnership" type="button" disabled>Add token</button><button id="saveOwnership" type="button" disabled>Save exclusions</button><button id="initOwnership" type="button" hidden>Initialize exclusion table</button><h3>Users</h3><div id="users"></div></section></main>
+<button id="save">Save count</button><button id="markEmpty" type="button" style="background:#52657e">Mark location EMPTY</button><button id="loadEntries" type="button" style="background:#52657e">Review my entries</button><div id="entryList" aria-live="polite"></div></div></section><section id="admin" class="panel" hidden><h2>Administrator controls</h2><p class="muted">Changes are verified by the server.</p><h3>Start inventory session</h3><label for="inventoryDate">Inventory date</label><input id="inventoryDate" type="date"><button id="createSession">Create session</button><h3>Manage user</h3><label for="userEmail">Workspace email</label><input id="userEmail" type="email" placeholder="person@company.com"><div class="row"><div><label for="userRole">Role</label><select id="userRole"><option value="Counter">Counter</option><option value="Administrator">Administrator</option></select></div><div><label for="userStatus">Status</label><select id="userStatus"><option>Active</option><option>Inactive</option></select></div></div><div class="row"><div><label for="userTeam">Assigned team</label><select id="userTeam"><option value="">No team</option><option>A</option><option>B</option></select></div><div><label for="userLocked">Team assignment</label><select id="userLocked"><option value="false">Unlocked</option><option value="true">Locked</option></select></div></div><button id="saveUser">Save user</button><div id="adminStatus" role="status"></div><h3>Location comparison</h3><p class="muted">Read-only supervisor view. Select a session, then refresh to see Team A/B status by location.</p><button id="refreshMap" type="button">Refresh location map</button><div id="mapSummary" class="map-summary" role="status"></div><div id="locationMap" class="map-grid"></div><div id="mapDetail" class="map-detail" hidden></div><h3>Product catalog</h3><p class="muted">Read-only SPIRITS source check. No import until reviewed.</p><button id="previewCatalog">Preview source catalog</button><pre id="catalogStatus" style="white-space:pre-wrap;overflow-wrap:anywhere"></pre><h3>Extended Report 2 ownership exclusions</h3><p class="muted">Only additional report sections are filtered. Physical counts and Report 1 are unaffected.</p><button id="loadOwnership" type="button">Load exclusions</button><div id="ownershipStatus" role="status"></div><div id="ownershipRows"></div><button id="addOwnership" type="button" disabled>Add token</button><button id="saveOwnership" type="button" disabled>Save exclusions</button><button id="initOwnership" type="button" hidden>Initialize exclusion table</button><h3>Extended Report 2 · Legacy UOM</h3><p class="muted">Read-only blending ingredient watchlist. Unsupported UOM source quantities are preserved; effective countable quantities remain zero.</p><button id="loadExtendedSnapshots" type="button">Load snapshots</button><label for="extendedSnapshot">WS snapshot</label><select id="extendedSnapshot"></select><button id="viewExtended" type="button">View legacy UOM report</button><button id="exportExtended" type="button" disabled>Export legacy UOM CSV</button><div id="extendedStatus" role="status"></div><div id="extendedResults" style="overflow-x:auto"></div><h3>Users</h3><div id="users"></div></section></main>
 <script>
 let data=null, busy=false, pendingId=null, pendingEmptyId=null;
 const el=id=>document.getElementById(id);
@@ -197,6 +197,44 @@ el('saveOwnership').addEventListener('click',()=>{
  google.script.run.withSuccessHandler(()=>{ownershipStatus('Saved.');loadOwnership()})
  .withFailureHandler(e=>{el('saveOwnership').disabled=false;ownershipStatus(e.message||String(e))})
  .apiInventoryAdminSaveOwnershipExclusions({rows,expectedRevision:ownershipRevision});
+});
+
+let extendedRows=null,extendedMeta=null;
+function extendedStatus(t){el('extendedStatus').textContent=t}
+el('loadExtendedSnapshots').addEventListener('click',()=>{
+ el('loadExtendedSnapshots').disabled=true;extendedStatus('Loading snapshots…');
+ google.script.run.withSuccessHandler(rows=>{
+  el('loadExtendedSnapshots').disabled=false;
+  const select=el('extendedSnapshot');select.replaceChildren();
+  rows.forEach(r=>{const option=document.createElement('option');option.value=r.snapshotId;option.textContent=r.snapshotId+' · '+r.snapshotType+' · '+r.sourceTimestamp;select.append(option)});
+  extendedStatus(rows.length?rows.length+' snapshots available.':'No saved snapshots.');
+ }).withFailureHandler(e=>{el('loadExtendedSnapshots').disabled=false;extendedStatus(e.message||String(e))})
+ .apiInventoryAdminExtendedSnapshotList();
+});
+el('viewExtended').addEventListener('click',()=>{
+ const snapshotId=el('extendedSnapshot').value;if(!snapshotId){extendedStatus('Select a snapshot first.');return;}
+ el('viewExtended').disabled=true;el('exportExtended').disabled=true;extendedStatus('Loading legacy UOM rows…');
+ google.script.run.withSuccessHandler(r=>{
+  el('viewExtended').disabled=false;extendedRows=r.items;extendedMeta=r;
+  const container=el('extendedResults');container.replaceChildren();
+  const table=document.createElement('table');table.style.width='100%';table.style.marginTop='12px';
+  const columns=['WSItemID','ItemName','Warehouse','UOM','SourceQuantity','EffectiveQuantity','Rows'];
+  const head=document.createElement('tr');columns.forEach(k=>{const th=document.createElement('th');th.textContent=k;th.style.textAlign='left';head.append(th)});table.append(head);
+  r.items.forEach(item=>{const tr=document.createElement('tr');columns.forEach(k=>{const td=document.createElement('td');td.textContent=String(item[k]??'');td.style.padding='5px';tr.append(td)});table.append(tr)});
+  container.append(table);
+  extendedStatus(r.items.length+' legacy UOM groups · '+r.nonzeroCount+' nonzero source quantities · '+r.sourceTimestamp);
+  el('exportExtended').disabled=false;
+ }).withFailureHandler(e=>{el('viewExtended').disabled=false;extendedStatus(e.message||String(e))})
+ .apiInventoryAdminExtendedLegacyUomWatchlist({snapshotId});
+});
+el('exportExtended').addEventListener('click',()=>{
+ if(!extendedRows||!extendedMeta)return;
+ const columns=['WSItemID','ItemName','Warehouse','UOM','SourceQuantity','EffectiveQuantity','Rows'];
+ const csvCell=v=>'"'+String(v??'').replace(/^[=+@-]/,'\\tbootstrap();
+</script>').replace(/"/g,'""')+'"';
+ const lines=[columns.join(','),...extendedRows.map(r=>columns.map(k=>csvCell(r[k])).join(','))];
+ const blob=new Blob([lines.join('\\r\\n')],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob);const link=document.createElement('a');link.href=url;link.download='extended-legacy-uom-'+extendedMeta.snapshotId.replace(/[^a-zA-Z0-9_-]/g,'_')+'.csv';document.body.append(link);link.click();link.remove();URL.revokeObjectURL(url);
 });
 bootstrap();
 </script></body></html>

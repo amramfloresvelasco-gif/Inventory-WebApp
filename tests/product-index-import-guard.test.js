@@ -359,3 +359,16 @@ vm.runInContext(fs.readFileSync('src/ProductIndexVerifyPreflight.gs','utf8'),fai
 assert.throws(()=>failureCtx.apiInventoryAdminProductIndexVerifyPreflight(trusted),/source unavailable/);
 assert.deepStrictEqual(failureCalls,['lock','fresh','unlock']);
 console.log('ProductIndex malformed input, lock contention and exception tests PASS');
+
+vm.runInContext(fs.readFileSync('src/ProductIndexAnchorRecordContract.gs','utf8'),driveCtx);
+const anchor={format:'product-index-anchor-v1',anchorId:'test-1',actor:'admin@example.test',
+ createdAtMs:1000,expiresAtMs:2000,sourceFingerprints:sourceHashes,
+ stageFingerprint:fingerprint,targetEmptyVerified:true,independentVerification:true};
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_(anchor,1500).valid,true);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_(anchor,1500).importEnabled,false);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_(anchor,2000).valid,false);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_(anchor,999).valid,false);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_({...anchor,sourceFingerprints:null},1500).valid,false);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_({...anchor,independentVerification:false},1500).valid,false);
+assert.strictEqual(driveCtx.invProductIndexValidateAnchorRecord_(null,1500).valid,false);
+console.log('ProductIndex anchor record structural contract tests PASS');

@@ -202,7 +202,7 @@ el('saveOwnership').addEventListener('click',()=>{
 let extendedRows=null,extendedMeta=null;
 function extendedStatus(t){el('extendedStatus').textContent=t}
 el('loadExtendedSnapshots').addEventListener('click',()=>{
- el('loadExtendedSnapshots').disabled=true;extendedStatus('Loading snapshots…');
+ el('loadExtendedSnapshots').disabled=true;extendedRows=null;extendedMeta=null;el('exportExtended').disabled=true;el('extendedResults').replaceChildren();extendedStatus('Loading snapshots…');
  google.script.run.withSuccessHandler(rows=>{
   el('loadExtendedSnapshots').disabled=false;
   const select=el('extendedSnapshot');select.replaceChildren();
@@ -212,8 +212,8 @@ el('loadExtendedSnapshots').addEventListener('click',()=>{
  .apiInventoryAdminExtendedSnapshotList();
 });
 el('viewExtended').addEventListener('click',()=>{
- const snapshotId=el('extendedSnapshot').value;if(!snapshotId){extendedStatus('Select a snapshot first.');return;}
- el('viewExtended').disabled=true;el('exportExtended').disabled=true;extendedStatus('Loading legacy UOM rows…');
+ const snapshotId=el('extendedSnapshot').value;extendedRows=null;extendedMeta=null;el('extendedResults').replaceChildren();if(!snapshotId){el('exportExtended').disabled=true;extendedStatus('Select a snapshot first.');return;}
+ el('viewExtended').disabled=true;el('exportExtended').disabled=true;extendedStatus('Loading blending ingredient rows…');
  google.script.run.withSuccessHandler(r=>{
   el('viewExtended').disabled=false;extendedRows=[...r.standard.map(x=>({...x,Section:'Standard blending'})),...r.legacy.map(x=>({...x,Section:'Legacy UOM'}))];extendedMeta=r;
   const container=el('extendedResults');container.replaceChildren();
@@ -227,6 +227,7 @@ el('viewExtended').addEventListener('click',()=>{
  }).withFailureHandler(e=>{el('viewExtended').disabled=false;extendedStatus(e.message||String(e))})
  .apiInventoryAdminExtendedBlendingReport({snapshotId});
 });
+el('extendedSnapshot').addEventListener('change',()=>{extendedRows=null;extendedMeta=null;el('exportExtended').disabled=true;el('extendedResults').replaceChildren();extendedStatus('Snapshot changed. View the report to load its data.');});
 el('exportExtended').addEventListener('click',()=>{
  if(!extendedRows||!extendedMeta)return;
  const columns=['WSItemID','ItemName','Warehouse','UOM','SourceQuantity','EffectiveQuantity','Rows'];

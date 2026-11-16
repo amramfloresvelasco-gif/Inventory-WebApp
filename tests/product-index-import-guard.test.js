@@ -291,7 +291,14 @@ console.log('ProductIndex five-source fingerprint tests PASS');
 
 vm.runInContext(fs.readFileSync('src/ProductIndexTrustedPreflightCompare.gs','utf8'),driveCtx);
 const trusted={sourceFingerprints:sourceHashes,stageFingerprint:fingerprint};
-const freshPlan={ready:true,sourceSnapshots};
+const reorderedSourceHashes={format:sourceHashes.format,tables:Object.fromEntries(
+ Object.entries(sourceHashes.tables).reverse())};
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(sourceSnapshots,reorderedSourceHashes).ok,true);
+assert.strictEqual(driveCtx.invProductIndexVerifySourceFingerprints_(sourceSnapshots,{
+ ...sourceHashes,tables:{...sourceHashes.tables,raw:{count:-1,sha256:'x'}}}).ok,false);
+const freshPlan={ready:true,issues:[],sourceSnapshots};
+assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(
+ {...freshPlan,issues:['unresolved']},stage,trusted).matches,false);
 assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,trusted).matches,true);
 assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(freshPlan,stage,trusted).importEnabled,false);
 assert.strictEqual(driveCtx.invProductIndexCompareTrustedPreflight_(

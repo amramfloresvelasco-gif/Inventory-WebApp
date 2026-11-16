@@ -19,7 +19,7 @@ small,.muted{color:#64748b}.map-grid{display:grid;grid-template-columns:repeat(a
 </style></head><body><main><div class="inv-top"><div><h1>BMD Inventory</h1><p class="muted">Physical counting · Phase 1</p></div><div id="invBuild" class="inv-build" title="GitHub commit deployed">Version: checking…</div></div>
 <div id="message" role="status">Loading your Inventory account…</div>
 <section id="app" hidden><div class="panel"><div id="identity" class="muted"></div>
-<label for="session">Inventory session</label><select id="session"></select>
+<div class="row"><div><label for="myTeam">My counting team</label><select id="myTeam"><option value="A">Team A</option><option value="B">Team B</option></select></div><div><label for="teamAction">Team selection</label><button id="teamAction" type="button">Lock team</button></div></div><div id="teamStatus" class="muted" role="status"></div><label for="session">Inventory session</label><select id="session"></select>
 <div class="row"><div><label for="warehouse">Warehouse</label><select id="warehouse"></select></div>
 <div><label for="bay">Bay</label><select id="bay"></select></div></div>
 <label for="location">Location</label><select id="location"></select>
@@ -127,11 +127,12 @@ function selectUom(){const p=data.products.find(p=>p.id===el('product').value);i
  const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:(p.uom?[p.uom]:[]);
  options('uom',units)}
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
+function updateTeamControls(){if(!data)return;const locked=data.user.teamLocked;el('myTeam').disabled=locked;el('myTeam').value=data.user.team||'A';el('teamAction').textContent=locked?'Unlock team':'Lock selected team';el('teamStatus').textContent=locked?'Team '+data.user.team+' locked for new entries.':'Select a team and lock it before counting.';el('save').disabled=!data.sessions.length||!locked;el('markEmpty').disabled=!data.sessions.length||!locked;}
+el('teamAction').addEventListener('click',()=>{if(busy)return;const locked=data.user.teamLocked;const input=locked?{unlock:true}:{team:el('myTeam').value};el('teamAction').disabled=true;invRun().withSuccessHandler(r=>{data.user.team=r.team;data.user.teamLocked=r.teamLocked;el('teamAction').disabled=false;updateTeamControls();el('identity').textContent='Role: '+data.user.role+' · Team: '+(r.team||'not selected');message(r.teamLocked?'Team '+r.team+' locked.':'Team unlocked. Select a team to continue.');}).withFailureHandler(e=>{el('teamAction').disabled=false;message(e.message||String(e),true);}).apiInventorySelectTeam(input);});
 function bootstrap(){invRun().withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role+' · Team: '+(r.user.team||'not assigned');
  options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
  message(r.sessions.length?'Ready to count.':'No open inventory session. Ask an administrator to open one.');
- el('save').disabled=!r.sessions.length||!r.user.teamLocked;
- el('markEmpty').disabled=!r.sessions.length||!r.user.teamLocked;
+ updateTeamControls();
  }).withFailureHandler(e=>message(e.message||String(e),true)).apiInventoryBootstrap()}
 function save(){if(busy)return;busy=true;el('save').disabled=true;
  if(!pendingId)pendingId='inv_'+crypto.randomUUID().replace(/-/g,'');

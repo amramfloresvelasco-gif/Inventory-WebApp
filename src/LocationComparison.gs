@@ -38,11 +38,17 @@ function invLocationComparison_(sessionId) {
     if(!['A','B'].includes(team)||!p||!Number.isFinite(n)||n<0){
       invalid.push({entryId:String(r.EntryID),reason:'Invalid team/product/quantity'});continue;
     }
+    if(!Number.isSafeInteger(n)||n<0){
+      invalid.push({entryId:String(r.EntryID),reason:'Invalid count quantity'});continue;
+    }
     const fg=String(p.ClassOfMaterial).toLowerCase()==='finished good';
     let amount=n,unit=uom;
     if(fg){
       const perCase=Number(p.UnitsPerCase);
-      if(uom==='Bottle'&&perCase>0)amount=n/perCase;
+      if(!Number.isSafeInteger(perCase)||perCase<=0){
+        invalid.push({entryId:String(r.EntryID),reason:'Missing or invalid units per case'});continue;
+      }
+      if(uom==='Bottle')amount=n/perCase;
       else if(uom!=='Case'){invalid.push({entryId:String(r.EntryID),reason:'Invalid finished goods UOM'});continue;}
       unit='Case';
     }else if(!INV_RAW_UOMS.includes(uom)||uom!==String(p.DefaultUOM)){

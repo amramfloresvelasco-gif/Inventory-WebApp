@@ -841,3 +841,8 @@ User explicitly authorized a separate staging Google Sheets database populated w
 ## 2026-11-16 — Stage 53 isolated Apps Script setup prepared
 
 Added `docs/PALLET_STAGING_APPS_SCRIPT_SETUP.md` (`a0452c0d`), with safe instructions to create a separate Apps Script project, staging-only DB ID, real Workspace identity in staging AppUsers, and a read-only `testStagingIsolationPreflight` verifying ID, sheet parents, identity, open session, synthetic references, and empty staging CountEntries/journal before any writer execution. Production `INV_DB_ID` remains unchanged. No Apps Script project creation tool is connected, so staging script project is NOT yet created and preflight NOT executed. User needs to create separate staging script project (or connect an appropriate Apps Script management capability). No production writes or employee Save activation.
+
+
+## Stage 55 — Corrected staging Apps Script ID and live read-only connection
+
+User explicitly corrected previous staging Script ID (DISREGARD `1EjNiYDkzurHcw0x_qbjFh9WCsASVG2B5zGjG4g5BKbdKo12X04pwVG_k`). **Correct staging Script ID:** `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`. User ran staging-only `testStagingConnection()` at 8:30:48 PM, execution completed successfully, reporting database `BMD Inventory — Staging`, ID `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo`, tabs AppUsers, InventorySessions, Locations, ProductIndex, CountEntries, PalletSubmissionJournal. This proves read-only access from the separate project, not writer deployment or auth preflight. Next: read-only staging identity/schema checks, then staging-only code installation. Do not modify production `INV_DB_ID`, live production data, or enable employee Save.

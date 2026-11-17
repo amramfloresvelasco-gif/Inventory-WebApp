@@ -1141,3 +1141,8 @@ Commit `243d314a` hardens the read-only staging preflight journal inspection: ac
 ## Stage 85 — detect orphan pallet children (2026-11-17)
 
 Commit `3c4239a1` extends staging read-only preflight to count `journalHealth.orphan`: distinct ParentEntryID values on CountEntries whose EntryID matches the generated parent-plus-letter child pattern but which have no matching journal ParentSubmissionID. Orphan families add `PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW` and prevent ready status; parent IDs are not logged. This is conservative detection, not an automated repair. Confirm staging sync and real execution separately; none was verified in this turn. Do not deploy production or enable employee pallet-family Save. Next verify staging workflow run and execute preflight, then progress to authenticated Team A/B staging integration.
+
+
+## Stage 86 — staging preflight automated regression (2026-11-17)
+
+Commits `e41b34c3` and `6aba2fcd` add `tests/staging-pallet-preflight.test.js` and run it in `.github/workflows/inventory-tests.yml` for changes to tests or `staging/PalletTeamIsolationStaging.gs`. In-memory Node VM fixtures cover ready state, missing Team B, empty/complete/COMMITTED journal, invalid JSON, orphan physical child and unauthorized staging context. This is CI source committed, not proof that CI passed: inspect the workflow results before asserting success. No staging database writes or production deployment; employee pallet-family Save remains disabled. Next run/verify CI and staging preflight execution; then authenticated Team A/B integration testing. User prefers consolidated acceptance testing, not incremental manual tests.

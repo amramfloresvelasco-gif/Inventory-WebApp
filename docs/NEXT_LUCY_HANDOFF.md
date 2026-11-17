@@ -972,3 +972,8 @@ Added `docs/PALLET_STAGING_APPS_SCRIPT_SETUP.md` (`a0452c0d`), with safe instruc
 ## Stage 54 — User-created staging Apps Script project
 
 User created a separate empty Apps Script project and supplied its Script ID: `1EjNiYDkzurHcw0x_qbjFh9WCsASVG2B5zGjG4g5BKbdKo12X04pwVG_k`. Staging spreadsheet remains `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo`. **Do not confuse this with production**. No Apps Script management connector is available to push code to the new project directly; next prepare a staging-only clasp configuration or guide user to bind project locally. Keep production main and production `INV_DB_ID` unchanged; do not run writer until isolated project code and read-only preflight are verified. Employee multi-pallet Save disabled.
+
+
+## Stage 55 — Corrected staging Apps Script ID and live read-only connection
+
+User explicitly corrected previous staging Script ID (DISREGARD `1EjNiYDkzurHcw0x_qbjFh9WCsASVG2B5zGjG4g5BKbdKo12X04pwVG_k`). **Correct staging Script ID:** `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`. User ran staging-only `testStagingConnection()` at 8:30:48 PM, execution completed successfully, reporting database `BMD Inventory — Staging`, ID `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo`, tabs AppUsers, InventorySessions, Locations, ProductIndex, CountEntries, PalletSubmissionJournal. This proves read-only access from the separate project, not writer deployment or auth preflight. Next: read-only staging identity/schema checks, then staging-only code installation. Do not modify production `INV_DB_ID`, live production data, or enable employee Save.

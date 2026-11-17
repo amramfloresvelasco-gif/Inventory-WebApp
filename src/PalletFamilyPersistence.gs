@@ -36,7 +36,15 @@ function invSavePalletFamilyPrivate_(request) {
       throw new Error('Missing or invalid units per case.');
     const existing=invRows_('CountEntries');
     const scope={sessionId,locationId,productId,team,email:user.email,entryMethod,notes};
+    // Journal intent must be durable before any physical child record is written.
+    // An unjournaled existing family is an orphan and must never be acknowledged.
+    const intent=invPalletIntent_(request,{email:user.email,team});
+    const journalDecision=invPalletJournalDecision_(intent,invPalletJournalRows_());
+    if(journalDecision.action==='BLOCK')
+      throw new Error('Pallet journal '+journalDecision.reason+'; administrator review required.');
     const state=invClassifyPalletFamily_(family,existing,scope);
+    if(journalDecision.action==='WRITE_INTENT'&&state.state!=='EMPTY')
+      throw new Error('Orphan pallet children without original intent; administrator review required.');
     if(state.state==='COMPLETE')
       return {ok:true,duplicate:true,parentSubmissionId:family.parentSubmissionId,
         childCount:family.childCount,totalCases:family.totalCases,
@@ -50,6 +58,10 @@ function invSavePalletFamilyPrivate_(request) {
       String(x.Status).toUpperCase()==='ACTIVE'&&
       String(x.EntryMethod).toUpperCase()==='EMPTY'))
       throw new Error('Remove your team EMPTY entry before counting items.');
+    invPalletJournalPrepare_(intent);
+    const prepared=invPalletJournalStatus_(intent,existing,scope);
+    if(prepared.status!=='PREPARED')
+      throw new Error('Pallet journal is not ready for child writes: '+prepared.status);
     const sheet=invSheet_('CountEntries'),start=sheet.getLastRow()+1;
     const timestamp=new Date();
     const rows=family.children.map(child=>[
@@ -64,6 +76,9 @@ function invSavePalletFamilyPrivate_(request) {
     if(verified.state!=='COMPLETE')
       throw new Error('Pallet family write could not be verified ('+verified.state+
         '). Do not retry with a different parent ID; contact administrator.');
+    const finalJournal=invPalletJournalStatus_(intent,invRows_('CountEntries'),scope);
+    if(finalJournal.status!=='COMPLETE')
+      throw new Error('Pallet journal final verification failed: '+finalJournal.status);
     return {ok:true,duplicate:false,parentSubmissionId:family.parentSubmissionId,
       childCount:family.childCount,totalCases:family.totalCases,
       totalLooseBottles:family.totalLooseBottles};

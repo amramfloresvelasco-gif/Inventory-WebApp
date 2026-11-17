@@ -961,3 +961,8 @@ User reported GitHub Actions `Sync Inventory Staging Tests` deployment successfu
 ## Stage 72 — pallet-family UI release gate added (2026-11-17)
 
 Added regression assertions to `tests/index-ui-syntax.test.js` commit `bee5d0e2`: employee `savePalletFamily` button must remain disabled and aria-disabled, no client `.apiInventorySavePalletFamily(` call or `Code.gs` public function may be exposed, and the separate single-count Save disclaimer remains visible. Existing CI runs this test through `inventory-tests.yml` and production deploy regression. This is a safety guard, NOT full end-to-end Team A/B staging testing or feature activation. Need verify CI green, then design staging-only authenticated Team A/B end-to-end test using two distinct accounts before enabling the button. Production Save remains disabled.
+
+
+## Stage 72 — read-only pallet preview/server planner parity (2026-11-17)
+
+Corrected `src/Index.html` in `9aa01411`: preview rejects full pallets without cases-per-pallet, cases-per-pallet without full pallets, unsafe integer totals and empty plans; still permits valid partial/loose-only plans. Added UI regression assertions `5f2f1677`. No new RPC or pallet-family Save activation. Main Web App deployment is manual-only per user request; these commits are NOT deployed. User prefers consolidated testing after substantial feature development, not commit-by-commit verification. Next implement staged authenticated Team A/B end-to-end coverage and safe Save activation plan, retaining fail-closed gating until approval.

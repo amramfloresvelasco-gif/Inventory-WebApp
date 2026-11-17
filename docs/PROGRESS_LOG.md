@@ -746,3 +746,8 @@ Stage 32 `21eddf7e` CI/deploy verified successful. Commit `e90b5d20` adds mock n
 ## 2026-11-16 — Stage 34 journal storage negative-path tests
 
 Verified Stage 33 `e90b5d20` backend CI and deployment succeeded. Added `tests/pallet-intent-journal-storage.test.js` cases in `6b8c5828` for simulated Sheets append failure, duplicate parent journal rows, malformed stored IntentJSON, unknown journal status, and recovery to a valid PREPARED journal. Assertions ensure rejected writes and BLOCKED reconciliation on corrupt state. Stage 34 CI/deploy must be checked before declaring success. This is mocked storage testing only; live Google Sheets permissions and latency are not verified. No journal tab provisioned, no live inventory records changed, and employee multi-pallet Save remains disabled. Next: verify CI; inspect and test actual server authorization boundaries, and obtain administrator approval before provisioning PalletSubmissionJournal.
+
+
+## 2026-11-16 — Stage 35 private pallet authorization guards
+
+Verified Stage 34 `6b8c5828` backend CI and automatic deployment both succeeded. Commit `bbda036f` extends private pallet writer mocked regression coverage: unlocked team identity is rejected by invTeam_ before lock/journal/count writes; session access denied by invSession_ is rejected before journal/count writes; retry with authorized session succeeds. These tests do not prove actual live Workspace permissions. Check Stage 35 CI/deployment. No live journal provisioning, inventory data mutation, ProductIndex import or employee multi-pallet Save activation. Next review production invUser_/invTeam_/invSession_ implementation and test actual role/session boundaries, then seek explicit approval before journal tab provisioning.

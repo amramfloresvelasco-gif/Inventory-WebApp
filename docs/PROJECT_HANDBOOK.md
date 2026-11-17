@@ -915,3 +915,8 @@ Verified Stage 42 `d977e8a0` backend CI success; its deployment was still in pro
 ## 2026-11-16 — Stage 44 audit coexistence protocol regression
 
 Verified Stage 42 `d977e8a0` CI and deployment succeeded. Added `tests/pallet-journal-audit-coexistence.test.js` (`2dcaf956`) exercising actual production `invPalletJournalDecision_` with the retained Stage 41 audit-only record: unrelated real parent may write intent; PREPARED retry is detected regardless of row ordering; duplicate real parent blocks; attempted reuse of audit marker blocks INTENT_CHANGED; corrupt real-parent JSON blocks. This is isolated VM testing, not a live writer/recovery run; no new live writes or activation. Check Stage 44 CI/deploy. Next: consider live read-only Apps Script permission verification; seek explicit authorization before any further live journal/count writes.
+
+
+## 2026-11-16 — Stage 45 live-shaped read-only preflight regression
+
+Verified Stage 44 `2dcaf956` backend CI and deployment success. No connected Apps Script execution action was available, so live Apps Script permission execution is NOT verified. Added `tests/pallet-journal-live-shape-preflight.test.js` (`a8a81d82`) using a mock sheet with exact six live headers and retained Stage 41 audit-only row; actual production preflight returns `EXISTING_RECORDS_REVIEW` and `canEnable:false`, audit classifier recognizes one audit-only row and no production journal entries, and a non-admin caller is rejected before any spreadsheet read. Mocked test only; no live database writes, no count changes, no employee multi-pallet Save activation. Check Stage 45 CI/deployment; next live Apps Script execution requires an authorized execution path, and any further journal/count writes require separate user approval.

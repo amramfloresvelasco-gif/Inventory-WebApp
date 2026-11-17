@@ -45,10 +45,18 @@ function invSavePalletFamilyPrivate_(request) {
     const state=invClassifyPalletFamily_(family,existing,scope);
     if(journalDecision.action==='WRITE_INTENT'&&state.state!=='EMPTY')
       throw new Error('Orphan pallet children without original intent; administrator review required.');
-    if(state.state==='COMPLETE')
+    if(state.state==='COMPLETE') {
+      // A complete set of child rows is not enough: its original durable
+      // intent must still exist and match before acknowledging a retry.
+      if(journalDecision.action!=='INSPECT_CHILDREN')
+        throw new Error('Pallet journal missing original intent; administrator review required.');
+      const verifiedJournal=invPalletJournalStatus_(intent,existing,scope);
+      if(verifiedJournal.status!=='COMPLETE')
+        throw new Error('Pallet journal retry verification failed: '+verifiedJournal.status);
       return {ok:true,duplicate:true,parentSubmissionId:family.parentSubmissionId,
         childCount:family.childCount,totalCases:family.totalCases,
         totalLooseBottles:family.totalLooseBottles};
+    }
     if(state.state!=='EMPTY')throw new Error('Pallet family '+state.state+
       '; do not resubmit with a different ID. Contact administrator.');
     if(existing.some(x=>String(x.EntryID)===family.parentSubmissionId))

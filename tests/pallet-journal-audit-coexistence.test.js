@@ -1,0 +1,18 @@
+'use strict';
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const ctx=vm.createContext({JSON,String,Array,Error});
+vm.runInContext(fs.readFileSync('src/PalletIntentJournalProtocol.gs','utf8'),ctx);
+vm.runInContext('invPalletIntentEqual_=(a,b)=>JSON.stringify(a)===JSON.stringify(b)',ctx);
+const decide=vm.runInContext('invPalletJournalDecision_',ctx);
+const marker='TEST_ONLY_JOURNAL_20261116_STAGE41';
+const audit={ParentSubmissionID:marker,Status:'TEST_ONLY',IntentJSON:JSON.stringify({testOnly:true,marker})};
+const intent={parentSubmissionId:'PARENT-REAL-01',sessionId:'SESSION1',children:[]};
+assert.equal(decide(intent,[audit]).action,'WRITE_INTENT');
+const prepared={ParentSubmissionID:intent.parentSubmissionId,Status:'PREPARED',IntentJSON:JSON.stringify(intent)};
+assert.equal(decide(intent,[audit,prepared]).reason,'PREPARED_RETRY');
+assert.equal(decide(intent,[prepared,audit]).reason,'PREPARED_RETRY');
+assert.equal(decide(intent,[audit,prepared,prepared]).reason,'DUPLICATE_JOURNAL');
+assert.equal(decide({...intent,parentSubmissionId:marker},[audit]).action,'BLOCK');
+assert.equal(decide({...intent,parentSubmissionId:marker},[audit]).reason,'INTENT_CHANGED');
+assert.equal(decide(intent,[audit,{...prepared,IntentJSON:'not-json'}]).reason,'INVALID_STORED_INTENT');
+console.log('Stage 44: audit row coexists with unrelated journal intents, never bypasses collisions');

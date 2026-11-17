@@ -731,3 +731,8 @@ Confirmed Stage 29 `564a901e` tests passed and preceding deployment `3da7ad2b` s
 ## 2026-11-16 — Stage 31 journal-gated private pallet writer
 
 Confirmed Stage 30 `87781cfb` CI passed and `5a6a20da` deployment succeeded. Integrated journal protocol into private `invSavePalletFamilyPrivate_` (`9f825569`): canonical server-derived intent, immutable journal comparison, orphan-family rejection if children exist without journal, verified PREPARED journal append before physical children, and final derived COMPLETE check after child verification. Updated mocked private writer test harness to simulate journal records and protocol (`070046a8`). **No journal tab has been provisioned in the live database**; calling this private function now requires PalletSubmissionJournal and will fail closed if missing. No public save RPC or employee UI change. No ProductIndex import or live inventory writes. Check CI/deployment for `070046a8` and fix any failures. Next test orphan children, altered intent on equal child quantities, journal write failure, and permission isolation; only then plan safe journal-tab provisioning and enable live workflow.
+
+
+### 2026-11-16 — Stage 32 private pallet journal negative-path tests
+
+Commit `21eddf7e` on main adds mock coverage for orphan family rejection after removal of original journal, failed journal prepare with zero child writes, and retry under same parent after failure. Existing Stage 31 correction `c61ade15` has successful backend CI and deployment. Stage 32 CI is not yet confirmed. No live count or journal writes were performed; employee multi-pallet Save stays disabled. Next: CI verification, ownership/permission and collision tests, explicit approval for journal-tab provisioning.

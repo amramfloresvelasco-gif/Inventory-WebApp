@@ -917,3 +917,8 @@ Added pure `src/PalletJournalAuditReview.gs` (`a62edbe9`) and `tests/pallet-jour
 ## 2026-11-16 — Stage 43 read-only live audit verification
 
 Verified Stage 42 `d977e8a0` backend CI success; its deployment was still in progress at check (module commit `a62edbe9` deploy succeeded). Read live `BMD Inventory — Database` metadata and `PalletSubmissionJournal!A1:F4` through read-only Google Sheets connector. Confirmed 15 tabs, exact six headers, exactly one journal data row, Stage 41 marker `TEST_ONLY_JOURNAL_20261116_STAGE41`, sentinel session `TEST_ONLY_NO_SESSION`, status `TEST_ONLY`, creator `SYSTEM_TEST_NO_USER`, and expected JSON `testOnly:true` with matching marker and purpose. No additional journal rows; no writes or employee Save activation. This direct connector read does NOT prove the Apps Script journal adapter or private writer/recovery executed in production. Next verify deployment and obtain separate approval before live end-to-end journal or count writes.
+
+
+## 2026-11-16 — Stage 44 audit coexistence protocol regression
+
+Verified Stage 42 `d977e8a0` CI and deployment succeeded. Added `tests/pallet-journal-audit-coexistence.test.js` (`2dcaf956`) exercising actual production `invPalletJournalDecision_` with the retained Stage 41 audit-only record: unrelated real parent may write intent; PREPARED retry is detected regardless of row ordering; duplicate real parent blocks; attempted reuse of audit marker blocks INTENT_CHANGED; corrupt real-parent JSON blocks. This is isolated VM testing, not a live writer/recovery run; no new live writes or activation. Check Stage 44 CI/deploy. Next: consider live read-only Apps Script permission verification; seek explicit authorization before any further live journal/count writes.

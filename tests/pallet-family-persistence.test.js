@@ -12,7 +12,7 @@ const context=vm.createContext({
    products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
  invRows_:name=>{assert.equal(name,'CountEntries');return rows;},
  invPalletJournalRows_:()=>journal,
- invPalletJournalPrepare_:intent=>{if(failJournal)throw Error('Simulated journal write failure');if(!journal.length)journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
+ invPalletJournalPrepare_:intent=>{if(failJournal)throw Error('Simulated journal write failure');if(!journal.some(r=>r.ParentSubmissionID===intent.parentSubmissionId))journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
  invPalletJournalStatus_:(intent,entries,scope)=>{
    if(failJournalReconcile)return {status:'REVIEW_REQUIRED'};
    const outcome=vm.runInContext('invPalletJournalReconcile_',context)(intent,entries,scope);

@@ -19,6 +19,7 @@ on:
       - 'src/PalletFamilyPersistence.gs'
       - 'src/PalletFamilyDiagnostics.gs'
       - 'src/PalletIntentContract.gs'
+      - 'src/PalletIntentJournalProtocol.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
   pull_request:
@@ -59,6 +60,8 @@ jobs:
         run: node tests/pallet-family-diagnostics.test.js
       - name: Canonical pallet submission intent
         run: node tests/pallet-intent-contract.test.js
+      - name: Write-ahead pallet intent protocol
+        run: node tests/pallet-intent-journal-protocol.test.js
       - name: Counting, EMPTY and deletion workflow
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures

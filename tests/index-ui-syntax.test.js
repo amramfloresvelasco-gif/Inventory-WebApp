@@ -46,3 +46,12 @@ assert(!/function\\s+apiInventorySavePalletFamily\\s*\\(/.test(
 assert(html.includes('The separate Save count button records one count only.'),
   'Employee UI must distinguish single-count Save from pallet-family Save');
 console.log('Stage 72: employee pallet-family Save remains gated; no public RPC exposed');
+
+// Stage 72: preview validation must match server planner rules.
+assert(script[1].includes('n>100||(n>0&&c===0)||(n===0&&c!==0)'),
+ 'Full pallet quantity and cases-per-pallet must be consistent');
+assert(script[1].includes('!Number.isSafeInteger(totalCases)'),
+ 'Pallet preview must reject unsafe aggregate case counts');
+assert(script[1].includes('totalCases===0&&bottles===0'),
+ 'Pallet preview must reject empty plans but allow loose-bottle-only plans');
+console.log('Stage 72: pallet preview planner validation guards passed');

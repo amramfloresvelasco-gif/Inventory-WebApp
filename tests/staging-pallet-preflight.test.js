@@ -1,13 +1,14 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const HEADERS=['ParentSubmissionID','SessionID','IntentJSON','Status','CreatedAt','CreatedBy'];
-let journal=[],entries=[],teamB=true,scriptAuthorized=true;
+let journal=[],entries=[],teamB=true,adminAccount=true,scriptAuthorized=true;
 const context=vm.createContext({
   console:{log:()=>{}},Set,Number,String,JSON,
   invAssertStagingOnly_:()=>{if(!scriptAuthorized)throw Error('Wrong staging project')},
   invUser_:()=>({email:'abe.flores@bsbco.com',role:'administrator'}),
   invRows_:name=>({
-    AppUsers:[{Email:'a@example.com',Role:'counter',Status:'Active',AssignedTeam:'A',TeamLocked:true},
+    AppUsers:[...(adminAccount?[{Email:'admin@example.com',Role:'administrator',Status:'Active',AssignedTeam:'',TeamLocked:false}]:[]),
+      {Email:'a@example.com',Role:'counter',Status:'Active',AssignedTeam:'A',TeamLocked:true},
       ...(teamB?[{Email:'b@example.com',Role:'counter',Status:'Active',AssignedTeam:'B',TeamLocked:true}]:[])],
     InventorySessions:[{SessionID:'S1',Status:'OPEN'}],
     Locations:[{LocationID:'L1',Active:true}],
@@ -28,6 +29,10 @@ for(const file of ['PalletChildPlanner','PalletIntentContract','PalletFamilyReco
 vm.runInContext(fs.readFileSync('staging/PalletTeamIsolationStaging.gs','utf8'),context);
 const preflight=vm.runInContext('testStagingPalletIntegrationPreflight',context);
 assert.equal(preflight().readyForTwoAccountTest,true);
+adminAccount=false;
+assert(preflight().blockers.includes('NO_ACTIVE_STAGING_ADMINISTRATOR'));
+assert.equal(preflight().readyForTwoAccountTest,false);
+adminAccount=true;
 teamB=false;
 assert(preflight().blockers.includes('NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT'));
 teamB=true;

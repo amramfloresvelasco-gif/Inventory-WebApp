@@ -55,3 +55,12 @@ assert(script[1].includes('!Number.isSafeInteger(totalCases)'),
 assert(script[1].includes('totalCases===0&&bottles===0'),
  'Pallet preview must reject empty plans but allow loose-bottle-only plans');
 console.log('Stage 72: pallet preview planner validation guards passed');
+
+// Stage 78: read-only child breakdown must show the same child types as the planner.
+assert(html.includes('id="palletPreviewDetails"'),'Detailed pallet preview container missing');
+assert(script[1].includes("kind:'Full pallet '"),'Full pallets must be listed individually');
+assert(script[1].includes("kind:'Partial pallet'"),'Partial pallet must have its own child');
+assert(script[1].includes("kind:'Loose bottles'"),'Loose bottles must have their own child');
+assert(script[1].includes("details.replaceChildren()"),'Invalid plans must clear stale child details');
+assert(script[1].includes("item.textContent=child.kind"),'Child breakdown must use safe text rendering');
+console.log('Stage 78: itemized read-only pallet preview guards passed');

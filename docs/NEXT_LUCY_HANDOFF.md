@@ -1136,3 +1136,8 @@ Commit `8c53c474` extends `testStagingPalletIntegrationPreflight()` with read-on
 ## Stage 84 — canonical staging journal inspection (2026-11-17)
 
 Commit `243d314a` hardens the read-only staging preflight journal inspection: accepts protocol-supported PREPARED and COMMITTED statuses, checks journal creator identity, reconstructs each pallet plan with `invPalletIntent_` and compares it with stored intent using `invPalletIntentEqual_` before classifying child rows. Noncanonical or corrupted intent counts as invalid and blocks integration readiness. No production deployment or DB writes. Confirm staging source includes intent contract helpers (staging writer snapshot) and obtain actual preflight execution before claiming verified success. The user wants one consolidated acceptance test; continue toward authenticated staging integration rather than asking for incremental manual tests.
+
+
+## Stage 85 — detect orphan pallet children (2026-11-17)
+
+Commit `3c4239a1` extends staging read-only preflight to count `journalHealth.orphan`: distinct ParentEntryID values on CountEntries whose EntryID matches the generated parent-plus-letter child pattern but which have no matching journal ParentSubmissionID. Orphan families add `PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW` and prevent ready status; parent IDs are not logged. This is conservative detection, not an automated repair. Confirm staging sync and real execution separately; none was verified in this turn. Do not deploy production or enable employee pallet-family Save. Next verify staging workflow run and execute preflight, then progress to authenticated Team A/B staging integration.

@@ -966,3 +966,8 @@ Added regression assertions to `tests/index-ui-syntax.test.js` commit `bee5d0e2`
 ## Stage 72 — read-only pallet preview/server planner parity (2026-11-17)
 
 Corrected `src/Index.html` in `9aa01411`: preview rejects full pallets without cases-per-pallet, cases-per-pallet without full pallets, unsafe integer totals and empty plans; still permits valid partial/loose-only plans. Added UI regression assertions `5f2f1677`. No new RPC or pallet-family Save activation. Main Web App deployment is manual-only per user request; these commits are NOT deployed. User prefers consolidated testing after substantial feature development, not commit-by-commit verification. Next implement staged authenticated Team A/B end-to-end coverage and safe Save activation plan, retaining fail-closed gating until approval.
+
+
+## Stage 74 — team EMPTY and interrupted-family isolation regression (2026-11-17)
+
+Commit `13b49dc4` extends `tests/pallet-family-persistence.test.js` with in-memory backend scenarios: Team A's active EMPTY blocks only Team A's pallet family; Team B can independently save in the same session/location; after removal of Team A EMPTY, Team A can save; simulated missing Team B child forces Team B retry to fail PARTIAL without new writes while Team A complete family remains idempotently acknowledged. No real authenticated two-account staging test or live Sheets write; CI not independently verified yet. Main Web App remains manual-deploy only and pallet-family Save disabled. Continue building and testing without requesting user test per commit; consolidate acceptance testing later.

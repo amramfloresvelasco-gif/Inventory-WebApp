@@ -1,10 +1,11 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
+let activeEmail='counter@example.com',activeTeam='A';
 let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
- invUser_:()=>({email:'counter@example.com',role:'counter',team:'A',teamLocked:true}),
+ invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked:true}),
  invTeam_:u=>u.teamLocked?u.team:(()=>{throw Error('Team unlocked')})(),
  invSession_:id=>{if(id!=='SESSION1')throw Error('Unknown session');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
@@ -89,5 +90,32 @@ failJournal=false;
 // Retry with the original intent is permitted after the journal error.
 assert.equal(save({...request,parentSubmissionId:'PARENT-JFAIL'}).childCount,7);
 assert.equal(journal.length,1);
+// Stage 33: a journal is bound to the original creator and selected team.
+rows=[];journal=[];
+const scoped={...request,parentSubmissionId:'PARENT-SCOPED'};
+assert.equal(save(scoped).childCount,7);
+const beforeScopeWrites=writes;
+activeEmail='other@example.com';
+assert.throws(()=>save(scoped),/INTENT_CHANGED/);
+assert.equal(writes,beforeScopeWrites);
+activeEmail='counter@example.com';activeTeam='B';
+assert.throws(()=>save(scoped),/INTENT_CHANGED/);
+assert.equal(writes,beforeScopeWrites);
+activeTeam='A';
+assert.throws(()=>save({...scoped,entryMethod:'Barcode'}),/INTENT_CHANGED/);
+assert.equal(writes,beforeScopeWrites);
+// Two journal rows for the same parent are never silently deduplicated.
+journal.push({...journal[0]});
+assert.throws(()=>save(scoped),/DUPLICATE_JOURNAL/);
+assert.equal(writes,beforeScopeWrites);
+// A collision with an unrelated parent ID cannot create a new family.
+rows=[];journal=[];
+const collision={...request,parentSubmissionId:'PARENT-COLLIDE'};
+rows.push({EntryID:'PARENT-COLLIDE',SessionID:'SESSION1',Team:'A',LocationID:'L1',WSItemID:'FG1',Status:'ACTIVE'});
+const beforeCollisionWrites=writes;
+assert.throws(()=>save(collision),/Parent ID already used/);
+assert.equal(writes,beforeCollisionWrites);
+assert.equal(journal.length,0);
+console.log('Stage 33: ownership, team, method, duplicate journal and parent collision passed');
 console.log('Stage 32: orphan, journal failure and retry tests passed');
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

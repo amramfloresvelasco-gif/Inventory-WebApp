@@ -1,13 +1,9 @@
 name: Deploy Inventory Web App
 
+# Development mode: deploy only when explicitly requested for consolidated testing.
+# Backend regression tests still run automatically in inventory-tests.yml.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - '.github/workflows/deploy-inventory.yml'
 
 permissions:
   contents: read

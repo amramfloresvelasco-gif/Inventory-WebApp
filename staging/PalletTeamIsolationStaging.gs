@@ -68,16 +68,26 @@ function testStagingPalletIntegrationPreflight() {
     Number.isSafeInteger(Number(x.UnitsPerCase))&&Number(x.UnitsPerCase)>0);
   const users=invRows_('AppUsers').filter(x=>String(x.Status).toLowerCase()==='active');
   const teams={A:0,B:0};
+  const teamEmails={A:new Set(),B:new Set()};
   users.forEach(x=>{
     const team=String(x.AssignedTeam).toUpperCase();
-    if((team==='A'||team==='B')&&String(x.TeamLocked).toLowerCase()==='true')
+    const email=String(x.Email||'').trim().toLowerCase();
+    if((team==='A'||team==='B')&&email&&
+       String(x.TeamLocked).toLowerCase()==='true') {
       teams[team]++;
+      teamEmails[team].add(email);
+    }
   });
+  // Two team labels alone are insufficient: the test requires two
+  // distinct authenticated Workspace identities.
+  const distinctTeamAccounts=[...teamEmails.A].some(email=>!teamEmails.B.has(email))&&
+    [...teamEmails.B].some(email=>!teamEmails.A.has(email));
   const result={phase:'INTEGRATION_PREFLIGHT',stagingOnly:true,readOnly:true,
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
     eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
-    readyForTwoAccountTest:journalReady&&sessions.length>0&&
+    distinctTeamAccounts,
+    readyForTwoAccountTest:distinctTeamAccounts&&journalReady&&sessions.length>0&&
       locations.length>0&&finishedGoods.length>0&&teams.A>0&&teams.B>0};
   console.log(JSON.stringify(result));
   if(!result.readyForTwoAccountTest)

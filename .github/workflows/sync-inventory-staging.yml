@@ -1,0 +1,71 @@
+name: Sync Inventory Staging Tests
+
+# Intentionally manual until the staging credential and file-preservation
+# procedure have been verified. Never uses the production deployment secrets.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inventory-staging-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install CLASP
+        run: npm install -g @google/clasp@3.4.1
+      - name: Validate isolated staging credentials and retrieve remote source
+        shell: bash
+        env:
+          STAGING_CLASP_CREDENTIALS: ${{ secrets.INVENTORY_STAGING_CLASP_CREDENTIALS }}
+          STAGING_SCRIPT_ID: ${{ secrets.INVENTORY_STAGING_SCRIPT_ID }}
+        run: |
+          set -euo pipefail
+          expected_script='1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP'
+          expected_db='1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo'
+          test "$STAGING_SCRIPT_ID" = "$expected_script" || { echo 'BLOCKED: staging Script ID mismatch'; exit 1; }
+          test -n "$STAGING_CLASP_CREDENTIALS" || { echo 'BLOCKED: missing staging credentials'; exit 1; }
+          mkdir -p staging-sync
+          printf '%s' "$STAGING_CLASP_CREDENTIALS" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+          printf '{"scriptId":"%s","rootDir":"."}\n' "$STAGING_SCRIPT_ID" > staging-sync/.clasp.json
+          cd staging-sync
+          clasp pull
+          test -f appsscript.json || { echo 'BLOCKED: remote staging manifest missing'; exit 1; }
+          test -f Code.js || { echo 'BLOCKED: existing staging Code.js missing'; exit 1; }
+          grep -Fq "$expected_db" Code.js || { echo 'BLOCKED: staging database not found in Code.js'; exit 1; }
+          if grep -R -l -F '12teaGz7z2Ems-Elqz5vHv1Z8S5aV4kJMJrnBxlMYQ5Y' --include='*.gs' --include='*.js' --include='*.html' .; then
+            echo 'BLOCKED: production database ID present in staging project'; exit 1
+          fi
+          echo 'Staging identity and existing remote files verified.'
+      - name: Overlay repository staging test modules without deleting remote-only files
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Only add test modules; do not replace the remote staging writer,
+          # Code.js, appsscript.json, or any production application module.
+          for f in staging/PalletAdminInspectionStaging.gs staging/PalletInterruptedSaveStaging.gs staging/PalletPartialFailClosedStaging.gs staging/PalletRecoveryMatrixStaging.gs staging/PalletTeamIsolationStaging.gs; do
+            test -f "$f"
+            cp "$f" "staging-sync/$(basename "$f")"
+          done
+          cd staging-sync
+          clasp status
+      - name: Push staging test modules only
+        working-directory: staging-sync
+        shell: bash
+        env:
+          STAGING_SCRIPT_ID: ${{ secrets.INVENTORY_STAGING_SCRIPT_ID }}
+        run: |
+          set -euo pipefail
+          test "$STAGING_SCRIPT_ID" = '1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP'
+          clasp push --force
+          echo 'Staging test modules synchronized; no Web App redeployment.'

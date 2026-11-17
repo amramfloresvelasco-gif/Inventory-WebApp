@@ -1146,3 +1146,8 @@ Commit `3c4239a1` extends staging read-only preflight to count `journalHealth.or
 ## Stage 86 — staging preflight automated regression (2026-11-17)
 
 Commits `e41b34c3` and `6aba2fcd` add `tests/staging-pallet-preflight.test.js` and run it in `.github/workflows/inventory-tests.yml` for changes to tests or `staging/PalletTeamIsolationStaging.gs`. In-memory Node VM fixtures cover ready state, missing Team B, empty/complete/COMMITTED journal, invalid JSON, orphan physical child and unauthorized staging context. This is CI source committed, not proof that CI passed: inspect the workflow results before asserting success. No staging database writes or production deployment; employee pallet-family Save remains disabled. Next run/verify CI and staging preflight execution; then authenticated Team A/B integration testing. User prefers consolidated acceptance testing, not incremental manual tests.
+
+
+## Stage 87 — extended staging preflight regression (2026-11-17)
+
+Commit `26e2421b` adds in-memory regression cases for partial physical child persistence, duplicate journal parent IDs, and forged stored intent totals, followed by restoration of a valid complete journal before corrupt JSON/orphan checks. All unsafe states must block `readyForTwoAccountTest`. Changes are to tests only; no database writes or deployment. CI result and actual Apps Script staging execution have not been verified. Next obtain CI logs or run Node tests and staging preflight; do not report PASS without execution. Maintain main branch and manual-only production Web App deployment; employee pallet-family Save remains disabled.

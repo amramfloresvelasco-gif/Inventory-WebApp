@@ -67,6 +67,9 @@ function testStagingPalletIntegrationPreflight() {
     String(x.ClassOfMaterial).trim().toLowerCase()==='finished good'&&
     Number.isSafeInteger(Number(x.UnitsPerCase))&&Number(x.UnitsPerCase)>0);
   const users=invRows_('AppUsers').filter(x=>String(x.Status).toLowerCase()==='active');
+  const activeAdministrators=users.filter(x=>
+    String(x.Role||'').trim().toLowerCase()==='administrator'&&
+    String(x.Email||'').trim()).length;
   const teams={A:0,B:0};
   const teamEmails={A:new Set(),B:new Set()};
   users.forEach(x=>{
@@ -168,13 +171,15 @@ function testStagingPalletIntegrationPreflight() {
   if(!sessions.length)blockers.push('NO_OPEN_STAGING_SESSION');
   if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');
   if(!finishedGoods.length)blockers.push('NO_ELIGIBLE_STAGING_FINISHED_GOOD');
+  if(!activeAdministrators)blockers.push('NO_ACTIVE_STAGING_ADMINISTRATOR');
   if(!teams.A)blockers.push('NO_LOCKED_ACTIVE_TEAM_A_ACCOUNT');
   if(!teams.B)blockers.push('NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT');
   if(!distinctTeamAccounts)blockers.push('TEAM_ACCOUNTS_NOT_DISTINCT');
   const result={phase:'INTEGRATION_PREFLIGHT',stagingOnly:true,readOnly:true,
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
-    eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
+    eligibleFinishedGoods:finishedGoods.length,activeAdministrators,
+    lockedActiveCounters:teams,
     distinctTeamAccounts,journalHealth,reviewRows,blockers,
     readyForTwoAccountTest:blockers.length===0};
   console.log(JSON.stringify(result));

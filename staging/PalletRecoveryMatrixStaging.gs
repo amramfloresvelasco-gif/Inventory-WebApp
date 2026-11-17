@@ -45,7 +45,9 @@ function testStagingPalletRecoveryMatrix() {
   const changed=invPalletIntent_({...request,partialCases:4},identity);
   check('changed retry intent blocks',invPalletJournalDecision_(changed,journal).reason==='INTENT_CHANGED');
   check('duplicate journal blocks',invPalletJournalDecision_(intent,[...journal,...journal]).reason==='DUPLICATE_JOURNAL');
-  check('invalid stored JSON blocks',invPalletJournalDecision_(intent,[{...journal,IntentJSON:'{'}]).reason==='INVALID_STORED_INTENT');
+  const invalidJsonDecision=invPalletJournalDecision_(intent,[{...journal[0],IntentJSON:'{'}]);
+  console.log('DIAGNOSTIC invalid stored JSON '+JSON.stringify(invalidJsonDecision));
+  check('invalid stored JSON blocks',invalidJsonDecision.action==='BLOCK'&&invalidJsonDecision.reason==='INVALID_STORED_INTENT');
   check('unknown journal status blocks',invPalletJournalDecision_(intent,[{...journal,Status:'UNKNOWN'}]).reason==='UNKNOWN_JOURNAL_STATUS');
   check('committed retry inspects',invPalletJournalDecision_(intent,[{...journal,Status:'COMMITTED'}]).action==='INSPECT_CHILDREN');
   console.log(JSON.stringify({phase:'PASS',stagingOnly:true,pureInMemory:true,

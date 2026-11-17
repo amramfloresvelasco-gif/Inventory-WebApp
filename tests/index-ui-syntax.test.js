@@ -64,3 +64,13 @@ assert(script[1].includes("kind:'Loose bottles'"),'Loose bottles must have their
 assert(script[1].includes("details.replaceChildren()"),'Invalid plans must clear stale child details');
 assert(script[1].includes("item.textContent=child.kind"),'Child breakdown must use safe text rendering');
 console.log('Stage 78: itemized read-only pallet preview guards passed');
+
+// Stage 79: changing products or searching for an unknown barcode must not
+// retain the previous finished-goods pallet breakdown.
+assert(script[1].includes("if(!p){options('uom',[]);updatePalletPreview();return;}"),
+ 'Empty product search must refresh and clear stale pallet preview');
+assert(script[1].includes("details.replaceChildren();\n el('palletPreview').textContent='';"),
+ 'Every pallet preview refresh must clear old child rows and totals');
+assert(script[1].includes("el('palletPreviewPanel').hidden=!fg;\n if(!fg)return;"),
+ 'Non-FG product must hide cleared pallet preview');
+console.log('Stage 79: stale pallet preview clearing guards passed');

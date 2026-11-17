@@ -1072,3 +1072,12 @@ Reviewed current `src/Index.html` and `src/Code.gs`. Existing `Save count` calls
 ## Stage 70 — Team A/B isolation test PREPARED, NOT RUN
 
 Added `staging/PalletTeamIsolationStaging.gs` on main, commit 3ea6b6ec. Staging-only `testStagingPalletTeamIsolation()` checks locked authorized staging Team A tester, then exercises 10 **pure in-memory** synthetic family classification scenarios for A/B ownership and mismatched session, location, product, identity, partial/empty. No staging DB writes; no real Team B account or end-to-end RPC tested. Must not label this a real two-user integration test. User needs download via curl, `clasp push`, execute function once and share logs. Existing Stage 69 UI disabled control is committed but not deployed. Production and employee family Save unchanged.
+
+
+## Current checkpoint — Stage 70 verified; Stage 71 staging sync safety (2026-11-17)
+
+Stage 70 `testStagingPalletTeamIsolation` ran in isolated staging Apps Script at 8:49 AM local: 10 PASS, `testCases:10`, `databaseWrites:0`, `teamAandBIsolation:true`. This is pure synthetic in-memory verification, not real Team B end-to-end authorization. Log recorded in PROGRESS_LOG commit `997c0932`. Do not rerun.
+
+Staging script ID `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`; staging database `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo`. User's local `C:\Users\amram\Inventory-Staging` CLASP points to staging script and has Code.js, appsscript.json and staging test files including PalletTeamIsolationStaging.gs; `clasp push` succeeded and test appeared. Code.js has hard-coded staging spreadsheet ID. Production GitHub Actions `.github/workflows/deploy-inventory.yml` deploys `src/**` to production; staging is NOT auto-synced. Do not use production deployment credentials/ID for staging.
+
+Stage 71: safely automate staging source sync. Before creating a workflow that invokes `clasp push --force`, establish complete remote staging file inventory and a deterministic source manifest; CLASP push can delete files absent from its working directory. Preserve remote-only staging tests and avoid duplicate global functions if combining `staging/PalletWriterStaging.gs` with local writer snapshots. Require staging-only credentials/secret, exact script ID check, staging DB guard, explicit rollback plan, and test on manual dispatch before any push-triggered automation. Production remains untouched. Do not claim automation is live yet.

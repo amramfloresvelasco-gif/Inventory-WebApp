@@ -55,7 +55,15 @@ jobs:
           # Code.js, appsscript.json, or any production application module.
           for f in staging/PalletAdminInspectionStaging.gs staging/PalletInterruptedSaveStaging.gs staging/PalletPartialFailClosedStaging.gs staging/PalletRecoveryMatrixStaging.gs staging/PalletTeamIsolationStaging.gs; do
             test -f "$f"
-            cp "$f" "staging-sync/$(basename "$f")"
+            base="$(basename "$f" .gs)"
+            if test -f "staging-sync/$base.js"; then
+              # clasp pull often writes server-side .gs files as .js.
+              # Keep one local representation per Apps Script filename.
+              cp "$f" "staging-sync/$base.js"
+              rm -f "staging-sync/$base.gs"
+            else
+              cp "$f" "staging-sync/$base.gs"
+            fi
           done
           cd staging-sync
           clasp status

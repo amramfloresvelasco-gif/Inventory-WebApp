@@ -40,3 +40,47 @@ function testStagingPalletTeamIsolation() {
   console.log(JSON.stringify({phase:'PASS',stagingOnly:true,pureInMemory:true,
     testCases:tests.length,databaseWrites:0,teamAandBIsolation:true}));
 }
+
+/** Stage 80: real staging database preflight, strictly read-only.
+ * This does not submit pallets or create/modify any spreadsheet tabs.
+ * Execute only in the existing authorized staging Apps Script project.
+ */
+function testStagingPalletIntegrationPreflight() {
+  invAssertStagingOnly_();
+  const user=invUser_();
+  if(user.email!=='abe.flores@bsbco.com'||user.role!=='administrator')
+    throw Error('BLOCKED: authorized staging administrator required');
+  const sheets=['AppUsers','InventorySessions','Locations','ProductIndex','CountEntries'];
+  const counts={};
+  sheets.forEach(name=>{
+    // invRows_ enforces the existing table schema without mutating data.
+    counts[name]=invRows_(name).length;
+  });
+  const journal=SpreadsheetApp.openById(INV_DB_ID).getSheetByName('PalletSubmissionJournal');
+  const expected=['ParentSubmissionID','SessionID','IntentJSON','Status','CreatedAt','CreatedBy'];
+  const actual=journal?journal.getRange(1,1,1,expected.length).getDisplayValues()[0]:[];
+  const journalReady=actual.join('|')===expected.join('|');
+  const sessions=invRows_('InventorySessions').filter(x=>String(x.Status).toUpperCase()==='OPEN');
+  const locations=invRows_('Locations').filter(x=>String(x.Active).toLowerCase()==='true');
+  const finishedGoods=invRows_('ProductIndex').filter(x=>
+    String(x.Active).toLowerCase()==='true'&&
+    String(x.ClassOfMaterial).trim().toLowerCase()==='finished good'&&
+    Number.isSafeInteger(Number(x.UnitsPerCase))&&Number(x.UnitsPerCase)>0);
+  const users=invRows_('AppUsers').filter(x=>String(x.Status).toLowerCase()==='active');
+  const teams={A:0,B:0};
+  users.forEach(x=>{
+    const team=String(x.AssignedTeam).toUpperCase();
+    if((team==='A'||team==='B')&&String(x.TeamLocked).toLowerCase()==='true')
+      teams[team]++;
+  });
+  const result={phase:'INTEGRATION_PREFLIGHT',stagingOnly:true,readOnly:true,
+    databaseWrites:0,tableRowCounts:counts,journalReady,
+    openSessions:sessions.length,activeLocations:locations.length,
+    eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
+    readyForTwoAccountTest:journalReady&&sessions.length>0&&
+      locations.length>0&&finishedGoods.length>0&&teams.A>0&&teams.B>0};
+  console.log(JSON.stringify(result));
+  if(!result.readyForTwoAccountTest)
+    console.log('NOT_READY: staging prerequisites missing; no changes made');
+  return result;
+}

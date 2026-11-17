@@ -1101,3 +1101,8 @@ Committed `dee5d087`: expanded `tests/pallet-family-persistence.test.js` to save
 ## Stage 76 — multi-family test harness fix (2026-11-17)
 
 Commit `3d3ffe54` fixes the in-memory `invPalletJournalPrepare_` mock in `tests/pallet-family-persistence.test.js`: previously it appended a PREPARED intent only when the entire journal was empty, so Team A/B independent family tests introduced in Stages 73–75 could fail falsely. The mock now appends when that *parent submission ID* is absent, matching multi-family append-only journal semantics. No production database writes or main Web App deployment. CI result not independently verified. Next: verify the full Node test suite with GitHub Actions logs or a local checkout, then build the staged UI/API flow with explicit release gating. Keep pallet-family Save disabled and maintain manual-only production deployments.
+
+
+## Stage 77 — retry journal mock fidelity (2026-11-17)
+
+Commit `8e8f1fa0` changes the private persistence Node test's mocked `invPalletJournalStatus_` to check the actual `invPalletJournalDecision_` first (same as production adapter), and adds missing/invalid journal retry scenarios with no extra child writes. No staging or main Web App deployment. Attempted GitHub commit combined status lookup for prior commit `3d3ffe54`: returned empty statuses, which does NOT establish passing CI. Do not claim tests passed until an actual CI job log or local Node run is obtained. User wants meaningful app progress and one consolidated acceptance test, not repeated micro-tests; prioritize actual staged UI/API integration next while keeping public pallet-family Save disabled pending approval.

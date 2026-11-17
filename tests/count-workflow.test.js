@@ -114,3 +114,37 @@ check('admin user edit preserves self-selected team',()=>{
  assert.equal(teamRows[0].AssignedTeam,originalTeam);
  assert.equal(teamRows[0].TeamLocked,originalLocked);
 });
+
+
+// Stage 36: execute the actual production identity/team/session helpers, not mocks.
+const authCtx=vm.createContext({Date,Map,Set,JSON,Number,String,Error,Math});
+vm.runInContext(code,authCtx,{filename:'Code.gs'});
+let authEmail='counter@example.com';
+let authUsers=[{Email:authEmail,Status:'Active',Role:'counter',AssignedTeam:'A',TeamLocked:true}];
+let authSessions=[{SessionID:'S-OPEN',Status:'OPEN'},{SessionID:'S-CLOSED',Status:'CLOSED'}];
+authCtx.invEmail_=()=>authEmail;
+authCtx.invRows_=name=>name==='AppUsers'?authUsers:name==='InventorySessions'?authSessions:(()=>{throw Error('Unexpected auth table '+name)})();
+const realUser=()=>vm.runInContext('invUser_',authCtx)();
+const realTeam=u=>vm.runInContext('invTeam_',authCtx)(u);
+const realSession=id=>vm.runInContext('invSession_',authCtx)(id);
+check('production active counter identity',()=>assert.equal(realUser().role,'counter'));
+check('production locked Team A',()=>assert.equal(realTeam(realUser()),'A'));
+check('production open session',()=>assert.equal(realSession('S-OPEN').Status,'OPEN'));
+authUsers[0].Status='Inactive';
+reject('production inactive account',()=>realUser());
+authUsers[0].Status='Active';authUsers[0].Role='viewer';
+reject('production invalid role',()=>realUser());
+authUsers[0].Role='counter';authUsers[0].TeamLocked=false;
+reject('production unlocked team',()=>realTeam(realUser()));
+authUsers[0].TeamLocked=true;authUsers[0].AssignedTeam='C';
+reject('production invalid team',()=>realTeam(realUser()));
+authUsers[0].AssignedTeam='A';authUsers.push({...authUsers[0]});
+reject('production duplicate user account',()=>realUser());
+authUsers.pop();
+reject('production closed session',()=>realSession('S-CLOSED'));
+reject('production unknown session',()=>realSession('S-UNKNOWN'));
+authSessions.push({...authSessions[0]});
+reject('production duplicate session',()=>realSession('S-OPEN'));
+authSessions.pop();
+check('production authorization restored',()=>{assert.equal(realTeam(realUser()),'A');assert.equal(realSession('S-OPEN').Status,'OPEN');});
+console.log('Stage 36: production identity/team/session helper checks passed');

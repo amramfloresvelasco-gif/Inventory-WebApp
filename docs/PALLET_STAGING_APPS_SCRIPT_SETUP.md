@@ -62,3 +62,58 @@ This preflight performs **no writes**. If any prerequisite fails, stop and repor
 ## Follow-up
 
 Once the separate staging project is created, record its script ID and the read-only preflight result in the handbooks. Then prepare and execute the controlled staging-only writer invocation; production remains untouched and employee Save disabled.
+
+
+## Stage 56 — Phone-friendly standalone read-only preflight
+
+The user has confirmed the separate staging Apps Script project and successful read-only connection. Correct staging Script ID: `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP` (prior ID invalid). The following function works without copying production modules, and does not modify rows:
+
+```javascript
+function testStagingSafetyPreflight() {
+  const id = '1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo';
+  const ss = SpreadsheetApp.openById(id);
+  if (ss.getId() !== id) throw new Error('BLOCKED: incorrect database');
+  const headers = {
+    AppUsers: ['Email','Role','Status','AssignedTeam','TeamLocked','UpdatedAt','UpdatedBy'],
+    InventorySessions: ['SessionID','InventoryDate','Status','CreatedAt','CreatedBy','FrozenAt','FrozenBy','OriginalWSSnapshotID','UpdatedWSSnapshotID','Notes'],
+    Locations: ['LocationID','Warehouse','Bay','LocationType','Active','SortOrder'],
+    ProductIndex: ['WSItemID','ItemName','ClassOfMaterial','Barcode','UnitsPerCase','DefaultUOM','Source','SourceUpdatedAt','Active'],
+    CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'],
+    PalletSubmissionJournal: ['ParentEntryID','SessionID','Team','PayloadHash','State','UpdatedAt']
+  };
+  const rows = {};
+  for (const [name, expected] of Object.entries(headers)) {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet) throw new Error('BLOCKED: missing tab ' + name);
+    const actual = sheet.getRange(1, 1, 1, expected.length).getDisplayValues()[0];
+    if (actual.join('|') !== expected.join('|')) throw new Error('BLOCKED: header mismatch in ' + name);
+    rows[name] = sheet.getLastRow() - 1;
+  }
+  const read = name => {
+    const sheet = ss.getSheetByName(name);
+    const n = sheet.getLastRow() - 1;
+    if (!n) return [];
+    return sheet.getRange(2, 1, n, headers[name].length).getDisplayValues()
+      .map(values => Object.fromEntries(headers[name].map((key, i) => [key, values[i]])));
+  };
+  const email = String(Session.getActiveUser().getEmail() || '').trim().toLowerCase();
+  const users = read('AppUsers').filter(x => x.Email.trim().toLowerCase() === email);
+  const ready = users.length === 1 && users[0].Role.toLowerCase() === 'counter' &&
+    users[0].Status.toLowerCase() === 'active' && users[0].AssignedTeam.toUpperCase() === 'A' &&
+    users[0].TeamLocked.toLowerCase() === 'true';
+  const session = read('InventorySessions').filter(x => x.SessionID === 'STAGING-SESSION-001' && x.Status.toUpperCase() === 'OPEN');
+  const location = read('Locations').filter(x => x.LocationID === 'STAGING-LOC-001' && x.Active.toLowerCase() === 'true');
+  const product = read('ProductIndex').filter(x => x.WSItemID === 'STAGING-FG-001' && x.Active.toLowerCase() === 'true');
+  const report = { database: ss.getName(), signedInEmail: email || '(unavailable)',
+    activeCounterReady: ready, sessionOpen: session.length === 1,
+    locationReady: location.length === 1, productReady: product.length === 1,
+    countRows: rows.CountEntries, journalRows: rows.PalletSubmissionJournal };
+  console.log(JSON.stringify(report));
+  if (!report.sessionOpen || !report.locationReady || !report.productReady ||
+      report.countRows !== 0 || report.journalRows !== 0)
+    throw new Error('BLOCKED: staging preflight failed');
+  if (!ready) console.log('AUTH SETUP PENDING: staging AppUsers must match signed-in email');
+}
+```
+
+Run only inside corrected staging Script ID. This is a preliminary safety preflight; it does not establish source-code isolation or authorize writer testing.

@@ -38,6 +38,14 @@ on:
       - 'src/LocationComparisonFixtureTests.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
+      - 'src/PalletChildPlanner.gs'
+      - 'src/PalletFamilyRecovery.gs'
+      - 'src/PalletFamilyPersistence.gs'
+      - 'src/PalletFamilyDiagnostics.gs'
+      - 'src/PalletIntentContract.gs'
+      - 'src/PalletIntentJournalProtocol.gs'
+      - 'src/PalletIntentJournalStorage.gs'
+      - 'staging/PalletTeamIsolationStaging.gs'
   workflow_dispatch:
 
 permissions:

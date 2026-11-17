@@ -1151,3 +1151,8 @@ Commits `e41b34c3` and `6aba2fcd` add `tests/staging-pallet-preflight.test.js` a
 ## Stage 87 — extended staging preflight regression (2026-11-17)
 
 Commit `26e2421b` adds in-memory regression cases for partial physical child persistence, duplicate journal parent IDs, and forged stored intent totals, followed by restoration of a valid complete journal before corrupt JSON/orphan checks. All unsafe states must block `readyForTwoAccountTest`. Changes are to tests only; no database writes or deployment. CI result and actual Apps Script staging execution have not been verified. Next obtain CI logs or run Node tests and staging preflight; do not report PASS without execution. Maintain main branch and manual-only production Web App deployment; employee pallet-family Save remains disabled.
+
+
+## Stage 88 — block staging readiness for uncompleted PREPARED intent (2026-11-17)
+
+Commits `c4e0dd94` and `6ffea225` add blocker `PALLET_PREPARED_INTENT_WITHOUT_CHILDREN` whenever journal integrity scan finds an immutable intent but no matching physical children, and regression asserts `readyForTwoAccountTest===false` for this condition. No automatic repair or deletion: administrator must reconcile interrupted intent first. This prevents declaring staging ready merely because an incomplete submission has no partial rows. No production deployment or DB writes. CI and actual staging preflight execution remain unverified; inspect GitHub Actions job output or run tests before claiming PASS. Continue toward authenticated Team A/B staging save, keep employee batch Save disabled until release gate.

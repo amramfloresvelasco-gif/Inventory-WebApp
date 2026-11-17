@@ -951,3 +951,8 @@ User executed `testStagingPalletTeamIsolation()` in isolated staging Apps Script
 ## Stage 71 — staging synchronization workflow PREPARED (2026-11-17)
 
 Created manual-only `.github/workflows/sync-inventory-staging.yml` in commit `6e1ff647`. It uses dedicated `INVENTORY_STAGING_CLASP_CREDENTIALS` and `INVENTORY_STAGING_SCRIPT_ID` secrets (not production secrets), asserts the known staging script ID, pulls existing remote staging source, checks staging Code.js contains the expected staging DB ID and that no production DB ID appears, overlays five staging-only test modules, and pushes only after preflight. It does not redeploy production. **NOT RUN OR VERIFIED**. Requires configuring secrets and manually dispatching first run; review resulting CLASP diff and remote-only file preservation before enabling any automatic trigger. Stage 70 PASS recorded previously. Do not claim Stage 71 complete.
+
+
+## Stage 71 — staging sync manual deployment reported successful; automatic trigger enabled (2026-11-17)
+
+User reported GitHub Actions `Sync Inventory Staging Tests` deployment successful after duplicate `.js`/`.gs` basename fix (commit `cfae1c1e`). Workflow pulls existing remote staging project, overlays five test modules, checks isolated staging script/database and production DB exclusion, then pushes to staging; no main Web App redeploy. Enabled automatic sync on changes to the five staging test modules or workflow itself on main in commit `d921a5ea`; manual dispatch retained. Note: success is user-reported; follow-up Actions run triggered by workflow edit has not yet been independently verified. Only listed test modules auto-sync, not every `staging/` file. No live employee pallet-family Save enabled.

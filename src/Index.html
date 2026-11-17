@@ -137,11 +137,14 @@ function updatePalletPreview(){
  const values=['palletCount','qty','partialCases','looseBottles'].map(id=>el(id).value);
  if(values.some(v=>!/^[0-9]+$/.test(v))){el('palletPreview').textContent='Enter whole-number quantities.';return;}
  const [n,c,partial,bottles]=values.map(Number);
- if(n>100||!Number.isSafeInteger(n*c+partial)||n*c+partial===0&&bottles===0){
-  el('palletPreview').textContent='Invalid or empty pallet plan.';return;
+ const totalCases=n*c+partial;
+ if([n,c,partial,bottles].some(v=>!Number.isSafeInteger(v))||
+    n>100||(n>0&&c===0)||(n===0&&c!==0)||
+    !Number.isSafeInteger(totalCases)||(totalCases===0&&bottles===0)){
+  el('palletPreview').textContent='Invalid pallet plan: enter a positive cases-per-pallet value for full pallets, or set full pallets and cases per pallet both to zero for partial cases or loose bottles only.';return;
  }
  el('palletPreview').textContent=(n+(partial>0?1:0)+(bottles>0?1:0))+
-  ' child records · '+(n*c+partial)+' cases · '+bottles+' loose bottles. Preview only.';
+  ' child records · '+totalCases+' cases · '+bottles+' loose bottles. Preview only.';
 }
 for(const id of ['palletCount','qty','partialCases','looseBottles'])
  el(id).addEventListener('input',updatePalletPreview);

@@ -147,6 +147,11 @@ function testStagingPalletIntegrationPreflight() {
   if(!journalReady)blockers.push('PALLET_JOURNAL_SCHEMA_MISSING_OR_INVALID');
   if(journalHealth.invalid||journalHealth.partial||journalHealth.blocked||journalHealth.orphan)
     blockers.push('PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW');
+  // A durable PREPARED intent with no physical children may be a
+  // recoverable interrupted submission. Do not approve new staging writes
+  // until its owner has reconciled or reviewed it.
+  if(journalHealth.empty)
+    blockers.push('PALLET_PREPARED_INTENT_WITHOUT_CHILDREN');
   if(!sessions.length)blockers.push('NO_OPEN_STAGING_SESSION');
   if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');
   if(!finishedGoods.length)blockers.push('NO_ELIGIBLE_STAGING_FINISHED_GOOD');

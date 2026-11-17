@@ -826,3 +826,8 @@ Verified Stage 48 `6b74bdd5` CI and deployment success. Added `tests/pallet-writ
 ## 2026-11-16 — Stage 50 durable PREPARED retry regression
 
 Verified Stage 49 `4735513e` CI and deployment success. Added `tests/pallet-writer-prepared-retry.test.js` (`714daafa`) loading real private pallet writer, real journal storage, canonical intent, recovery and protocol with simulated Sheets. Simulates journal PREPARED append succeeding, then CountEntries child write throwing before persistence; retry with identical parent/intent must reuse original journal, write all children once, then duplicate retry acknowledges without another write; changed intent blocks. Check CI/deployment. Isolated test only: no live journal or count writes, employee multi-pallet Save disabled. Next evaluate whether an authorized isolated staging spreadsheet is needed for true end-to-end Apps Script writer tests; do not run private writer against production without separate explicit approval.
+
+
+## 2026-11-16 — Stage 51 staging test plan (no writes)
+
+Verified Stage 50 `714daafa` CI and deployment success. Added `docs/PALLET_WRITER_STAGING_PLAN.md` (`1899b92a`) describing an isolated spreadsheet and Apps Script project, synthetic reference rows, exact writer/recovery test matrix, fail-closed checks and evidence requirements. No staging database/project created and no live journal or CountEntries records modified. Production `INV_DB_ID` and employee multi-pallet Save remain unchanged. **Explicit user approval is required** before creating the staging spreadsheet or writing staging test records; never repoint production script to staging. After approval, inspect actual `invReference_`/`invSession_` dependencies and build staging schema safely.

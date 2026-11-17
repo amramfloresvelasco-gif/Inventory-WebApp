@@ -741,3 +741,8 @@ Commit `21eddf7e` on main adds mock coverage for orphan family rejection after r
 ### 2026-11-16 — Stage 33 identity and collision tests
 
 Stage 32 `21eddf7e` CI/deploy verified successful. Commit `e90b5d20` adds mock negative-path coverage for changed authenticated creator, switched team, changed entry method, duplicate journal parent rows, and parent ID collision with physical count. No live data writes; Stage 33 CI/deploy pending check.
+
+
+## 2026-11-16 — Stage 34 journal storage negative-path tests
+
+Verified Stage 33 `e90b5d20` backend CI and deployment succeeded. Added `tests/pallet-intent-journal-storage.test.js` cases in `6b8c5828` for simulated Sheets append failure, duplicate parent journal rows, malformed stored IntentJSON, unknown journal status, and recovery to a valid PREPARED journal. Assertions ensure rejected writes and BLOCKED reconciliation on corrupt state. Stage 34 CI/deploy must be checked before declaring success. This is mocked storage testing only; live Google Sheets permissions and latency are not verified. No journal tab provisioned, no live inventory records changed, and employee multi-pallet Save remains disabled. Next: verify CI; inspect and test actual server authorization boundaries, and obtain administrator approval before provisioning PalletSubmissionJournal.

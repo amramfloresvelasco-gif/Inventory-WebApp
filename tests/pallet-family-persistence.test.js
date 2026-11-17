@@ -158,6 +158,39 @@ assert.equal(writes,writesAfterBothTeams);
 assert.equal(rows.length,8);
 assert.equal(rows.filter(x=>x.Team==='A'&&x.ParentEntryID===teamARequest.parentSubmissionId).length,4);
 assert.equal(rows.filter(x=>x.Team==='B'&&x.ParentEntryID===teamBRequest.parentSubmissionId).length,4);
+// Stage 74: a team-specific EMPTY must block only that team's family.
+// An interrupted Team B family must never affect Team A's separate family.
+rows=[];journal=[];activeTeam='A';activeEmail='counter-a@example.com';
+const emptyA={EntryID:'EMPTY-TEAM-A-001',SessionID:'SESSION1',LocationID:'L1',
+  Team:'A',EntryMethod:'EMPTY',Status:'ACTIVE'};
+rows.push(emptyA);
+const aBlocked={...teamARequest,parentSubmissionId:'PARENT-EMPTY-A-001'};
+const writesBeforeEmpty=writes;
+assert.throws(()=>save(aBlocked),/Remove your team EMPTY entry/);
+assert.equal(writes,writesBeforeEmpty);
+assert.equal(journal.length,0);
+activeTeam='B';activeEmail='counter-b@example.com';
+const bAllowed={...teamBRequest,parentSubmissionId:'PARENT-EMPTY-B-001'};
+assert.equal(save(bAllowed).childCount,4);
+assert.equal(rows.filter(x=>x.ParentEntryID===bAllowed.parentSubmissionId).length,4);
+assert.equal(journal.length,1);
+activeTeam='A';activeEmail='counter-a@example.com';
+rows=rows.filter(x=>x!==emptyA);
+const aAllowed={...teamARequest,parentSubmissionId:'PARENT-A-AFTER-EMPTY'};
+assert.equal(save(aAllowed).childCount,4);
+assert.equal(journal.length,2);
+assert.equal(rows.filter(x=>x.ParentEntryID===aAllowed.parentSubmissionId).length,4);
+// Simulate missing Team B child. A's complete family must remain idempotent.
+rows=rows.filter(x=>x.EntryID!==bAllowed.parentSubmissionId+'-B');
+const writesBeforePartial=writes;
+activeTeam='B';activeEmail='counter-b@example.com';
+assert.throws(()=>save(bAllowed),/PARTIAL/);
+assert.equal(writes,writesBeforePartial);
+activeTeam='A';activeEmail='counter-a@example.com';
+assert.equal(save(aAllowed).duplicate,true);
+assert.equal(writes,writesBeforePartial);
+assert.equal(journal.length,2);
+console.log('Stage 74: per-team EMPTY gating and partial-family isolation passed');
 console.log('Stage 73: independent Team A/B saves and cross-team retry isolation passed');
 console.log('Stage 35: locked-team and session authorization guards passed');
 console.log('Stage 33: ownership, team, method, duplicate journal and parent collision passed');

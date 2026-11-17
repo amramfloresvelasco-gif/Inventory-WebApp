@@ -855,3 +855,8 @@ Confirmed Stage 30 `87781cfb` CI passed and `5a6a20da` deployment succeeded. Int
 ### Stage 32 — pallet journal safety regression (2026-11-16)
 
 The private pallet writer requires an original server-side pallet intent journal. Mock regression commit `21eddf7e` checks that child records without their original journal cannot be acknowledged or re-created, and that failure preparing the journal creates no child rows. A retry using the original parent ID after a failed prepare is permitted. These tests do not prove live Sheets atomicity, latency, role isolation, or journal permissions. The journal tab is not provisioned; no public batch-save endpoint or UI activation is authorized. Check CI before treating this stage as verified.
+
+
+### Stage 33 — immutable journal ownership and collision tests
+
+Commit `e90b5d20` tests private pallet family retries against the original authenticated creator/team and method, rejects duplicate journal rows, and checks parent IDs cannot collide with physical count EntryIDs. All conflict paths assert zero additional child writes. These are mocked invariants, not live permissions testing. The journal tab is not provisioned, and employee batch Save remains disabled.

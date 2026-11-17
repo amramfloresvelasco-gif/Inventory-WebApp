@@ -862,3 +862,8 @@ Confirmed Stage 30 `87781cfb` CI passed and `5a6a20da` deployment succeeded. Int
 ## 2026-11-16 — Stage 32 orphan and journal-failure regression coverage
 
 Verified latest Stage 31 correction `c61ade15` backend CI and deployment succeeded. Added tests in `tests/pallet-family-persistence.test.js` commit `21eddf7e` for orphan child families whose journal disappeared, a simulated journal preparation failure preventing any physical child write, and successful retry with the same parent ID after the failure. These are mock regression assertions only; Stage 32 CI/deployment result must be checked before claiming tests passed. No live database changes, no journal tab provisioning, no ProductIndex import, no employee multi-pallet RPC/UI enablement. Next verify CI; test role/ownership boundaries and journal duplicate/collision scenarios; plan administrator-approved journal provisioning and device latency checks before activation.
+
+
+## 2026-11-16 — Stage 33 journal identity/collision regression
+
+Confirmed Stage 32 `21eddf7e` backend CI and deployment both succeeded. Added private-writer mocked tests `e90b5d20` for creator change, Team A/B switch, entry-method change, duplicate journal rows and parent ID collision with existing count entry. Tests assert no additional child writes on conflicts. Check Stage 33 CI/deploy before declaring success. No live count data changed or journal tab provisioned. Multi-pallet UI remains disabled. Next: verify CI, fix any failure, then test actual storage adapter and server permissions; provisioning requires explicit administrator approval.

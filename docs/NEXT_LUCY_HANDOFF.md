@@ -1176,3 +1176,8 @@ Commits `af1a0e0d` and `631c9915` add `activeAdministrators` and `NO_ACTIVE_STAG
 ## Stage 92 — counter-role-only staging team readiness (2026-11-17)
 
 Commits `15faa1fe` and `4a6dd9f6` tighten the read-only staging preflight: only active users with Role=counter and locked AssignedTeam A/B count toward Team A/B integration readiness. Administrator accounts, even with TeamLocked and AssignedTeam B, cannot masquerade as the second independent counter. Regression fixture assigns admin to B while removing actual Team B counter and expects NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT. No staging database mutations, no production deployment, no CI pass claimed. Outstanding: staging admin account, actual Team B counter, partial journal row 4 administrator review. Run/verify CI and staging preflight before end-to-end writes; employee pallet-family Save stays disabled.
+
+
+## Stage 93 — close pull-request CI path gaps (2026-11-17)
+
+Commit `dd47dfcd` expands `.github/workflows/inventory-tests.yml` `pull_request.paths` to include the same critical pallet planner/recovery/persistence/diagnostics/intent/journal files and staging preflight source already covered by push tests. Previously PRs changing these files could skip regression. This is CI wiring only: no runtime or database mutation. GitHub Actions run result still unverified; commit status API reported no legacy statuses and commit workflow-run endpoint only lists PR-triggered runs, so do not claim tests PASS. Stage 92 staging blockers persist (admin, Team B counter, partial journal row 4). Next verify actual CI logs/checks, fix failing tests if any, then authorized staging preflight. Production deploy manual and employee pallet Save disabled.

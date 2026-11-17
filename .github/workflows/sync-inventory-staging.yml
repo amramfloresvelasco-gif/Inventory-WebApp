@@ -1,9 +1,18 @@
 name: Sync Inventory Staging Tests
 
-# Intentionally manual until the staging credential and file-preservation
-# procedure have been verified. Never uses the production deployment secrets.
+# Staging-only synchronization. Never uses production deployment secrets.
+# Also supports manual dispatch for recovery or verification.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'staging/PalletAdminInspectionStaging.gs'
+      - 'staging/PalletInterruptedSaveStaging.gs'
+      - 'staging/PalletPartialFailClosedStaging.gs'
+      - 'staging/PalletRecoveryMatrixStaging.gs'
+      - 'staging/PalletTeamIsolationStaging.gs'
+      - '.github/workflows/sync-inventory-staging.yml'
 
 permissions:
   contents: read

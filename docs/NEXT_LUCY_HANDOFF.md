@@ -867,3 +867,8 @@ Verified latest Stage 31 correction `c61ade15` backend CI and deployment succeed
 ## 2026-11-16 — Stage 33 journal identity/collision regression
 
 Confirmed Stage 32 `21eddf7e` backend CI and deployment both succeeded. Added private-writer mocked tests `e90b5d20` for creator change, Team A/B switch, entry-method change, duplicate journal rows and parent ID collision with existing count entry. Tests assert no additional child writes on conflicts. Check Stage 33 CI/deploy before declaring success. No live count data changed or journal tab provisioned. Multi-pallet UI remains disabled. Next: verify CI, fix any failure, then test actual storage adapter and server permissions; provisioning requires explicit administrator approval.
+
+
+## 2026-11-16 — Stage 34 journal storage negative-path tests
+
+Verified Stage 33 `e90b5d20` backend CI and deployment succeeded. Added `tests/pallet-intent-journal-storage.test.js` cases in `6b8c5828` for simulated Sheets append failure, duplicate parent journal rows, malformed stored IntentJSON, unknown journal status, and recovery to a valid PREPARED journal. Assertions ensure rejected writes and BLOCKED reconciliation on corrupt state. Stage 34 CI/deploy must be checked before declaring success. This is mocked storage testing only; live Google Sheets permissions and latency are not verified. No journal tab provisioned, no live inventory records changed, and employee multi-pallet Save remains disabled. Next: verify CI; inspect and test actual server authorization boundaries, and obtain administrator approval before provisioning PalletSubmissionJournal.

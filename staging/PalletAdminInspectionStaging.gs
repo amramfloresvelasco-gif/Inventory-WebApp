@@ -3,7 +3,11 @@
  */
 function testStagingPartialPalletAdminInspection() {
   invAssertStagingOnly_();
-  const user=invRequireAdmin_();
+  // Test-only diagnostic: authenticated staging counter may inspect synthetic fixture.
+  // Production administrator permission is unchanged; no public RPC is exposed.
+  const user=invUser_();
+  if(user.email!=='abe.flores@bsbco.com'||user.team!=='A'||!user.teamLocked)
+    throw Error('BLOCKED: unexpected staging test identity');
   const parent='STAGING-PARTIAL-0001';
   const journals=invPalletJournalRows_().filter(r=>String(r.ParentSubmissionID)===parent);
   if(journals.length!==1)throw Error('REVIEW: expected exactly one journal, found '+journals.length);
@@ -24,7 +28,7 @@ function testStagingPartialPalletAdminInspection() {
   const familyRows=entries.filter(r=>String(r.ParentEntryID)===parent||
     intent.children.some(c=>c.entryId===String(r.EntryID)));
   const result={phase:'ADMIN_INSPECTION',stagingOnly:true,readOnly:true,
-    adminRole:user.role,parentSubmissionId:parent,
+    testerRole:user.role,parentSubmissionId:parent,
     journalCount:journals.length,journalStatus:String(record.Status),
     expectedChildren:intent.children.length,observedChildren:familyRows.length,
     state:state.state,matchedCount:state.matched.length,

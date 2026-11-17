@@ -1096,3 +1096,8 @@ User explicitly wants uninterrupted development on GitHub main and ONE consolida
 ## Stage 73 — two-team pallet persistence regression (2026-11-17)
 
 Committed `dee5d087`: expanded `tests/pallet-family-persistence.test.js` to save independent Team A and Team B pallet families in the same session/location/product using mocked Apps Script services and in-memory journal/CountEntries, then verify two unique parent IDs, correct child counts and team ownership, idempotent same-team retries, and rejected cross-team retries without extra writes. No live staging database writes, no real second authenticated account, and no main Web App deployment; CI result not yet independently confirmed. User requests uninterrupted development and one consolidated test later. Keep employee pallet-family Save disabled. Next: develop authenticated staging-only Team A/B integration tests, resolve any remaining safety issues, and plan final release gate before consolidated user test.
+
+
+## Stage 76 — multi-family test harness fix (2026-11-17)
+
+Commit `3d3ffe54` fixes the in-memory `invPalletJournalPrepare_` mock in `tests/pallet-family-persistence.test.js`: previously it appended a PREPARED intent only when the entire journal was empty, so Team A/B independent family tests introduced in Stages 73–75 could fail falsely. The mock now appends when that *parent submission ID* is absent, matching multi-family append-only journal semantics. No production database writes or main Web App deployment. CI result not independently verified. Next: verify the full Node test suite with GitHub Actions logs or a local checkout, then build the staged UI/API flow with explicit release gating. Keep pallet-family Save disabled and maintain manual-only production deployments.

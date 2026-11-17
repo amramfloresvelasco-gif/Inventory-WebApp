@@ -936,3 +936,8 @@ User confirmed corrected staging-only `testStagingPartialPalletAdminInspection()
 ## Stage 69 — Employee pallet-family UI integration, disabled control PREPARED
 
 Reviewed current `src/Index.html` and `src/Code.gs`. Existing `Save count` calls `apiInventorySaveCount` for one count and is separate from pallet-family private writer. Added disabled `Save pallet family — not enabled` control to existing finished-goods pallet preview in `src/Index.html` (commit b9c49359). Added explicit warning that normal Save count saves one count only. No new public RPC, no pallet-family backend exposure, no change to production DB or existing single-count behavior. **Not deployed or browser-tested**; UI remains inert. Next: review design and add safe staging-only end-to-end Team A/B tests, verify UI against staging before enabling family Save by explicit approval. Avoid claiming the full integration is complete.
+
+
+## Stage 70 — Team A/B isolation test PREPARED, NOT RUN
+
+Added `staging/PalletTeamIsolationStaging.gs` on main, commit 3ea6b6ec. Staging-only `testStagingPalletTeamIsolation()` checks locked authorized staging Team A tester, then exercises 10 **pure in-memory** synthetic family classification scenarios for A/B ownership and mismatched session, location, product, identity, partial/empty. No staging DB writes; no real Team B account or end-to-end RPC tested. Must not label this a real two-user integration test. User needs download via curl, `clasp push`, execute function once and share logs. Existing Stage 69 UI disabled control is committed but not deployed. Production and employee family Save unchanged.

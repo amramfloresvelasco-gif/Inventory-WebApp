@@ -101,9 +101,28 @@ function testStagingPalletIntegrationPreflight() {
         const intent=JSON.parse(String(values[2]||''));
         if(intent.parentSubmissionId!==parent||
            String(values[1])!==intent.sessionId||
-           String(values[3]).toUpperCase()!=='PREPARED'||
-           !Array.isArray(intent.children)||!intent.children.length)
+           !['PREPARED','COMMITTED'].includes(String(values[3]).toUpperCase())||
+           !Array.isArray(intent.children)||!intent.children.length||
+           String(values[5]).trim().toLowerCase()!==intent.email)
           throw Error('Invalid journal intent');
+        // Validate every stored child against the canonical planner rather
+        // than trusting an arbitrary JSON payload to define its own success.
+        const full=intent.children.filter(x=>x.kind==='full-pallet');
+        const partial=intent.children.filter(x=>x.kind==='partial-pallet');
+        const loose=intent.children.filter(x=>x.kind==='loose-bottles');
+        if(partial.length>1||loose.length>1||
+           full.some(x=>x.quantity!==full[0].quantity))
+          throw Error('Noncanonical pallet children');
+        const canonical=invPalletIntent_({
+          parentSubmissionId:parent,sessionId:intent.sessionId,
+          locationId:intent.locationId,productId:intent.productId,
+          entryMethod:intent.entryMethod,notes:intent.notes,
+          pallets:full.length,casesPerPallet:full.length?full[0].quantity:0,
+          partialCases:partial.length?partial[0].quantity:0,
+          looseBottles:loose.length?loose[0].quantity:0
+        },{email:intent.email,team:intent.team});
+        if(!invPalletIntentEqual_(canonical,intent))
+          throw Error('Noncanonical journal intent');
         const scope={sessionId:intent.sessionId,locationId:intent.locationId,
           productId:intent.productId,team:intent.team,email:intent.email,
           entryMethod:intent.entryMethod,notes:intent.notes};

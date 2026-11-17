@@ -976,3 +976,8 @@ Commit `13b49dc4` extends `tests/pallet-family-persistence.test.js` with in-memo
 ## Stage 75 — pallet retry requires independently verified journal (2026-11-17)
 
 Commit `04552b9c` strengthens `invSavePalletFamilyPrivate_`: a COMPLETE physical family on idempotent retry must also have original journal action INSPECT_CHILDREN and `invPalletJournalStatus_` COMPLETE; otherwise fail closed with administrator-review/error, never report duplicate success. Commit `e2a84782` adds mocked journal-reconciliation failure regression: after initial complete save, journal reconciliation error must reject retry without extra physical writes; restoring journal verification permits duplicate acknowledgement. CI result not yet independently checked. Private writer remains unexposed; employee pallet-family Save disabled; no main Web App deployment. Continue developing and use consolidated user testing per request.
+
+
+## Stage 79 — stale pallet preview cleared across product changes (2026-11-17)
+
+Commits `c6541269`, `aafc9f07`, `86037bbb` ensure the read-only finished-goods pallet breakdown clears old rows and totals before switching product context, including searches returning no product. `selectUom()` now refreshes the preview when no matching product is selected, and UI assertions protect this behavior. Employee pallet-family Save remains disabled; no public batch-save RPC and no main Web App deployment. Automated test execution has not yet been independently confirmed. Continue towards staging-only authenticated integration and one consolidated user acceptance test.

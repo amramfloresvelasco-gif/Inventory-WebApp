@@ -75,7 +75,10 @@ function testStagingPalletIntegrationPreflight() {
   users.forEach(x=>{
     const team=String(x.AssignedTeam).toUpperCase();
     const email=String(x.Email||'').trim().toLowerCase();
-    if((team==='A'||team==='B')&&email&&
+    // Only actual counter-role accounts qualify for Team A/B execution.
+    // An administrator's locked team is not a second independent counter.
+    if(String(x.Role||'').trim().toLowerCase()==='counter'&&
+       (team==='A'||team==='B')&&email&&
        String(x.TeamLocked).toLowerCase()==='true') {
       teams[team]++;
       teamEmails[team].add(email);

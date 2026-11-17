@@ -921,3 +921,8 @@ User executed `testStagingPartialPalletFailClosed` in staging. Actual log: `{"ph
 ## Stage 68 — read-only staging admin inspection PREPARED (not run)
 
 Added `staging/PalletAdminInspectionStaging.gs` commit `e0c2779f` on main. Function `testStagingPartialPalletAdminInspection()` is not a public RPC; it enforces staging-only script/database and administrator role, reads existing synthetic `STAGING-PARTIAL-0001` journal and children, validates immutable intent and reports safe summary of expected 4, observed 1, missing 3, state PARTIAL, journal PREPARED, requires admin review, with `databaseWrites:0`. No mutation or auto repair; production untouched and employee Save disabled. Next user curl downloads file into local staging clasp directory, pushes, executes read-only function once and shares logs. Following successful validation, design employee UI wiring behind explicit feature gate; do not activate production Save.
+
+
+## Stage 68 correction — staging counter role
+
+User ran `testStagingPartialPalletAdminInspection()` at 8:21:27 AM; it failed immediately `Administrator permission required` from `invRequireAdmin_` before any writes. Staging test identity is authorized locked Team A counter, not admin. Corrected only staging test function in commit 091217af: replace admin requirement with `invUser_()` plus exact authorized staging email and locked Team A guard. Test remains staging-script/database guarded, read-only, non-RPC, and verifies synthetic partial family. No changes to production administrator permissions or data. Test NOT YET rerun. Next user downloads updated file and `clasp push`, reruns inspection, shares log.

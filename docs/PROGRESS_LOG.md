@@ -956,3 +956,8 @@ Created manual-only `.github/workflows/sync-inventory-staging.yml` in commit `6e
 ## Stage 71 — staging sync manual deployment reported successful; automatic trigger enabled (2026-11-17)
 
 User reported GitHub Actions `Sync Inventory Staging Tests` deployment successful after duplicate `.js`/`.gs` basename fix (commit `cfae1c1e`). Workflow pulls existing remote staging project, overlays five test modules, checks isolated staging script/database and production DB exclusion, then pushes to staging; no main Web App redeploy. Enabled automatic sync on changes to the five staging test modules or workflow itself on main in commit `d921a5ea`; manual dispatch retained. Note: success is user-reported; follow-up Actions run triggered by workflow edit has not yet been independently verified. Only listed test modules auto-sync, not every `staging/` file. No live employee pallet-family Save enabled.
+
+
+## Stage 72 — pallet-family UI release gate added (2026-11-17)
+
+Added regression assertions to `tests/index-ui-syntax.test.js` commit `bee5d0e2`: employee `savePalletFamily` button must remain disabled and aria-disabled, no client `.apiInventorySavePalletFamily(` call or `Code.gs` public function may be exposed, and the separate single-count Save disclaimer remains visible. Existing CI runs this test through `inventory-tests.yml` and production deploy regression. This is a safety guard, NOT full end-to-end Team A/B staging testing or feature activation. Need verify CI green, then design staging-only authenticated Team A/B end-to-end test using two distinct accounts before enabling the button. Production Save remains disabled.

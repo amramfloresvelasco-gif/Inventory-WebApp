@@ -43,6 +43,27 @@ entries=[{EntryID:intent.children[0].entryId,ParentEntryID:intent.parentSubmissi
 assert.equal(preflight().journalHealth.complete,1);
 journal[0][3]='COMMITTED';
 assert.equal(preflight().journalHealth.complete,1);
+// A partially persisted family is never considered ready.
+const secondIntent=vm.runInContext('invPalletIntent_',context)({
+ parentSubmissionId:'PARENT-TEST-456',sessionId:'S1',locationId:'L1',
+ productId:'FG1',pallets:2,casesPerPallet:10,partialCases:0,looseBottles:0
+},{email:'a@example.com',team:'A'});
+journal=[[secondIntent.parentSubmissionId,'S1',JSON.stringify(secondIntent),'PREPARED','now',secondIntent.email]];
+entries=[{...entries[0],EntryID:secondIntent.children[0].entryId,
+ ParentEntryID:secondIntent.parentSubmissionId}];
+assert.equal(preflight().journalHealth.partial,1);
+assert.equal(preflight().readyForTwoAccountTest,false);
+// A duplicate journal parent or a forged child plan must block readiness.
+journal.push([...journal[0]]);
+assert.equal(preflight().journalHealth.invalid,1);
+journal.pop();
+journal[0][2]=JSON.stringify({...secondIntent,totalCases:999});
+assert.equal(preflight().journalHealth.invalid,1);
+// Restore one complete family before testing corrupt JSON and orphans.
+journal=[[intent.parentSubmissionId,'S1',JSON.stringify(intent),'PREPARED','now',intent.email]];
+entries=[{...entries[0],EntryID:intent.children[0].entryId,
+ ParentEntryID:intent.parentSubmissionId}];
+assert.equal(preflight().journalHealth.complete,1);
 journal[0][2]='invalid json';
 assert(preflight().blockers.includes('PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW'));
 journal=[];

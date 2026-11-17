@@ -1106,3 +1106,8 @@ Commit `3d3ffe54` fixes the in-memory `invPalletJournalPrepare_` mock in `tests/
 ## Stage 77 — retry journal mock fidelity (2026-11-17)
 
 Commit `8e8f1fa0` changes the private persistence Node test's mocked `invPalletJournalStatus_` to check the actual `invPalletJournalDecision_` first (same as production adapter), and adds missing/invalid journal retry scenarios with no extra child writes. No staging or main Web App deployment. Attempted GitHub commit combined status lookup for prior commit `3d3ffe54`: returned empty statuses, which does NOT establish passing CI. Do not claim tests passed until an actual CI job log or local Node run is obtained. User wants meaningful app progress and one consolidated acceptance test, not repeated micro-tests; prioritize actual staged UI/API integration next while keeping public pallet-family Save disabled pending approval.
+
+
+## Stage 78 — itemized pallet preview UI (2026-11-17)
+
+Commit `02c5765d` updates employee `src/Index.html` to show a detailed read-only child record breakdown for the current finished-goods pallet plan: each full pallet, one optional partial-pallet child, and one optional loose-bottles child, with case and bottle totals. Invalid edits clear stale breakdown; DOM elements use textContent rather than injecting HTML. Commit `1dcda9b3` adds UI syntax/guard checks. The separate pallet-family Save button remains disabled, no new public RPC is exposed, and no main Web App deployment was made. CI status has not been independently confirmed. Next prioritize actual staging-only authenticated integration and release gating; do not request user to test each commit. Production workflow is manual dispatch only.

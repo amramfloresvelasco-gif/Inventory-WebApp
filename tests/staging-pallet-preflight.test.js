@@ -54,6 +54,9 @@ journal=[[secondIntent.parentSubmissionId,'S1',JSON.stringify(secondIntent),'PRE
 entries=[{...entries[0],EntryID:secondIntent.children[0].entryId,
  ParentEntryID:secondIntent.parentSubmissionId}];
 assert.equal(preflight().journalHealth.partial,1);
+assert.equal(preflight().reviewRows[0].journalRow,2);
+assert.equal(preflight().reviewRows[0].missingChildren,1);
+assert.equal(preflight().reviewRows[0].matchedChildren,1);
 assert.equal(preflight().readyForTwoAccountTest,false);
 // A duplicate journal parent or a forged child plan must block readiness.
 journal.push([...journal[0]]);

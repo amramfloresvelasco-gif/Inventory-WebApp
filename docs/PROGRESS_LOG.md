@@ -971,3 +971,8 @@ Corrected `src/Index.html` in `9aa01411`: preview rejects full pallets without c
 ## Stage 74 — team EMPTY and interrupted-family isolation regression (2026-11-17)
 
 Commit `13b49dc4` extends `tests/pallet-family-persistence.test.js` with in-memory backend scenarios: Team A's active EMPTY blocks only Team A's pallet family; Team B can independently save in the same session/location; after removal of Team A EMPTY, Team A can save; simulated missing Team B child forces Team B retry to fail PARTIAL without new writes while Team A complete family remains idempotently acknowledged. No real authenticated two-account staging test or live Sheets write; CI not independently verified yet. Main Web App remains manual-deploy only and pallet-family Save disabled. Continue building and testing without requesting user test per commit; consolidate acceptance testing later.
+
+
+## Stage 75 — pallet retry requires independently verified journal (2026-11-17)
+
+Commit `04552b9c` strengthens `invSavePalletFamilyPrivate_`: a COMPLETE physical family on idempotent retry must also have original journal action INSPECT_CHILDREN and `invPalletJournalStatus_` COMPLETE; otherwise fail closed with administrator-review/error, never report duplicate success. Commit `e2a84782` adds mocked journal-reconciliation failure regression: after initial complete save, journal reconciliation error must reject retry without extra physical writes; restoring journal verification permits duplicate acknowledgement. CI result not yet independently checked. Private writer remains unexposed; employee pallet-family Save disabled; no main Web App deployment. Continue developing and use consolidated user testing per request.

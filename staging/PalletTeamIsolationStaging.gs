@@ -82,8 +82,40 @@ function testStagingPalletIntegrationPreflight() {
   // distinct authenticated Workspace identities.
   const distinctTeamAccounts=[...teamEmails.A].some(email=>!teamEmails.B.has(email))&&
     [...teamEmails.B].some(email=>!teamEmails.A.has(email));
+  // Inspect the real journal/child relationship without touching Sheets.
+  // A PREPARED journal with missing children requires manual review before
+  // enabling a write endpoint. Never log raw intent or employee identities.
+  const journalHealth={complete:0,empty:0,partial:0,blocked:0,invalid:0};
+  if(journalReady) {
+    const entries=invRows_('CountEntries');
+    const journalRows=journal.getLastRow()>1?
+      journal.getRange(2,1,journal.getLastRow()-1,expected.length).getValues():[];
+    const seenParents=new Set();
+    journalRows.forEach(values=>{
+      const parent=String(values[0]||'');
+      if(!parent||seenParents.has(parent)) {
+        journalHealth.invalid++;return;
+      }
+      seenParents.add(parent);
+      try {
+        const intent=JSON.parse(String(values[2]||''));
+        if(intent.parentSubmissionId!==parent||
+           String(values[1])!==intent.sessionId||
+           String(values[3]).toUpperCase()!=='PREPARED'||
+           !Array.isArray(intent.children)||!intent.children.length)
+          throw Error('Invalid journal intent');
+        const scope={sessionId:intent.sessionId,locationId:intent.locationId,
+          productId:intent.productId,team:intent.team,email:intent.email,
+          entryMethod:intent.entryMethod,notes:intent.notes};
+        const state=invClassifyPalletFamily_(intent,entries,scope).state;
+        journalHealth[state.toLowerCase()]++;
+      }catch(error){journalHealth.invalid++;}
+    });
+  }
   const blockers=[];
   if(!journalReady)blockers.push('PALLET_JOURNAL_SCHEMA_MISSING_OR_INVALID');
+  if(journalHealth.invalid||journalHealth.partial||journalHealth.blocked)
+    blockers.push('PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW');
   if(!sessions.length)blockers.push('NO_OPEN_STAGING_SESSION');
   if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');
   if(!finishedGoods.length)blockers.push('NO_ELIGIBLE_STAGING_FINISHED_GOOD');
@@ -94,7 +126,7 @@ function testStagingPalletIntegrationPreflight() {
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
     eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
-    distinctTeamAccounts,blockers,
+    distinctTeamAccounts,journalHealth,blockers,
     readyForTwoAccountTest:blockers.length===0};
   console.log(JSON.stringify(result));
   if(!result.readyForTwoAccountTest)

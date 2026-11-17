@@ -860,3 +860,8 @@ The private pallet writer requires an original server-side pallet intent journal
 ### Stage 33 — immutable journal ownership and collision tests
 
 Commit `e90b5d20` tests private pallet family retries against the original authenticated creator/team and method, rejects duplicate journal rows, and checks parent IDs cannot collide with physical count EntryIDs. All conflict paths assert zero additional child writes. These are mocked invariants, not live permissions testing. The journal tab is not provisioned, and employee batch Save remains disabled.
+
+
+## 2026-11-16 — Stage 34 journal storage negative-path tests
+
+Verified Stage 33 `e90b5d20` backend CI and deployment succeeded. Added `tests/pallet-intent-journal-storage.test.js` cases in `6b8c5828` for simulated Sheets append failure, duplicate parent journal rows, malformed stored IntentJSON, unknown journal status, and recovery to a valid PREPARED journal. Assertions ensure rejected writes and BLOCKED reconciliation on corrupt state. Stage 34 CI/deploy must be checked before declaring success. This is mocked storage testing only; live Google Sheets permissions and latency are not verified. No journal tab provisioned, no live inventory records changed, and employee multi-pallet Save remains disabled. Next: verify CI; inspect and test actual server authorization boundaries, and obtain administrator approval before provisioning PalletSubmissionJournal.

@@ -82,13 +82,20 @@ function testStagingPalletIntegrationPreflight() {
   // distinct authenticated Workspace identities.
   const distinctTeamAccounts=[...teamEmails.A].some(email=>!teamEmails.B.has(email))&&
     [...teamEmails.B].some(email=>!teamEmails.A.has(email));
+  const blockers=[];
+  if(!journalReady)blockers.push('PALLET_JOURNAL_SCHEMA_MISSING_OR_INVALID');
+  if(!sessions.length)blockers.push('NO_OPEN_STAGING_SESSION');
+  if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');
+  if(!finishedGoods.length)blockers.push('NO_ELIGIBLE_STAGING_FINISHED_GOOD');
+  if(!teams.A)blockers.push('NO_LOCKED_ACTIVE_TEAM_A_ACCOUNT');
+  if(!teams.B)blockers.push('NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT');
+  if(!distinctTeamAccounts)blockers.push('TEAM_ACCOUNTS_NOT_DISTINCT');
   const result={phase:'INTEGRATION_PREFLIGHT',stagingOnly:true,readOnly:true,
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
     eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
-    distinctTeamAccounts,
-    readyForTwoAccountTest:distinctTeamAccounts&&journalReady&&sessions.length>0&&
-      locations.length>0&&finishedGoods.length>0&&teams.A>0&&teams.B>0};
+    distinctTeamAccounts,blockers,
+    readyForTwoAccountTest:blockers.length===0};
   console.log(JSON.stringify(result));
   if(!result.readyForTwoAccountTest)
     console.log('NOT_READY: staging prerequisites missing; no changes made');

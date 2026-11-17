@@ -1,13 +1,13 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const headers=['ParentSubmissionID','SessionID','IntentJSON','Status','CreatedAt','CreatedBy'];
-let rows=[],writes=0,corrupt=false,partial=false;
+let rows=[],writes=0,corrupt=false,partial=false,throwWrite=false;
 const sheet={
  getLastRow:()=>rows.length+1,
  getRange:(start,col,count,width)=>({
   getDisplayValues:()=>[corrupt?['WRONG',...headers.slice(1)]:headers],
   getValues:()=>rows.map(r=>r.slice()),
-  setValues:values=>{writes++;if(!partial)rows.push(values[0].slice());}
+  setValues:values=>{writes++;if(throwWrite)throw Error('Simulated Sheets append failure');if(!partial)rows.push(values[0].slice());}
  })
 };
 const ctx=vm.createContext({JSON,Number,String,Error,Math,Set,Date,
@@ -46,4 +46,29 @@ assert.throws(()=>prepare(intent),/prepare not verified/);
 assert.equal(rows.length,0);
 partial=false;corrupt=true;
 assert.throws(()=>read(),/Unexpected PalletSubmissionJournal schema/);
+// Stage 34: test storage failures, duplicate records and corrupt durable intents.
+corrupt=false;rows=[];throwWrite=true;
+const beforeFailure=writes;
+assert.throws(()=>prepare(intent),/Simulated Sheets append failure/);
+assert.equal(writes,beforeFailure+1);
+assert.equal(rows.length,0);
+throwWrite=false;
+assert.equal(prepare(intent).prepared,true);
+assert.equal(rows.length,1);
+rows.push(rows[0].slice());
+const beforeDuplicate=writes;
+assert.throws(()=>prepare(intent),/DUPLICATE_JOURNAL/);
+assert.equal(status(intent,children,scope).status,'BLOCKED');
+assert.equal(writes,beforeDuplicate);
+rows.pop();
+rows[0][2]='{invalid-json';
+assert.throws(()=>prepare(intent),/INVALID_STORED_INTENT/);
+assert.equal(status(intent,children,scope).status,'BLOCKED');
+rows[0][2]=JSON.stringify(intent);
+rows[0][3]='UNKNOWN';
+assert.throws(()=>prepare(intent),/UNKNOWN_JOURNAL_STATUS/);
+assert.equal(status(intent,children,scope).status,'BLOCKED');
+rows[0][3]='PREPARED';
+assert.equal(status(intent,children,scope).status,'COMPLETE');
+console.log('Stage 34: storage failure, duplicate rows, corrupt intent and status passed');
 console.log('Pallet journal adapter: append-only, retries, schema, verification, reconciliation passed');

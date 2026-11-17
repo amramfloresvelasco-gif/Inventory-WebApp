@@ -37,6 +37,8 @@ const intent=vm.runInContext('invPalletIntent_',context)({
 },{email:'a@example.com',team:'A'});
 journal=[[intent.parentSubmissionId,'S1',JSON.stringify(intent),'PREPARED','now',intent.email]];
 assert.equal(preflight().journalHealth.empty,1);
+assert(preflight().blockers.includes('PALLET_PREPARED_INTENT_WITHOUT_CHILDREN'));
+assert.equal(preflight().readyForTwoAccountTest,false);
 entries=[{EntryID:intent.children[0].entryId,ParentEntryID:intent.parentSubmissionId,
  SessionID:'S1',LocationID:'L1',WSItemID:'FG1',Team:'A',EnteredBy:'a@example.com',
  EntryMethod:'Manual',Notes:'',UOM:'Case',Quantity:10,PalletMultiplier:1,Status:'ACTIVE'}];

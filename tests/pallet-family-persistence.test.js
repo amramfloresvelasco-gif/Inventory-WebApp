@@ -1,13 +1,13 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
-let activeEmail='counter@example.com',activeTeam='A';
+let activeEmail='counter@example.com',activeTeam='A',teamLocked=true,sessionAuthorized=true;
 let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
- invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked:true}),
+ invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked}),
  invTeam_:u=>u.teamLocked?u.team:(()=>{throw Error('Team unlocked')})(),
- invSession_:id=>{if(id!=='SESSION1')throw Error('Unknown session');},
+ invSession_:id=>{if(!sessionAuthorized)throw Error('Session access denied');if(id!=='SESSION1')throw Error('Unknown session');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
    products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
  invRows_:name=>{assert.equal(name,'CountEntries');return rows;},
@@ -116,6 +116,22 @@ const beforeCollisionWrites=writes;
 assert.throws(()=>save(collision),/Parent ID already used/);
 assert.equal(writes,beforeCollisionWrites);
 assert.equal(journal.length,0);
+// Stage 35: server-side team and session guards must fail before any journal or child write.
+rows=[];journal=[];
+const guarded={...request,parentSubmissionId:'PARENT-GUARDED'};
+const beforeGuardWrites=writes;
+teamLocked=false;
+assert.throws(()=>save(guarded),/Team unlocked/);
+assert.equal(rows.length,0);assert.equal(journal.length,0);
+assert.equal(writes,beforeGuardWrites);
+teamLocked=true;sessionAuthorized=false;
+assert.throws(()=>save(guarded),/Session access denied/);
+assert.equal(rows.length,0);assert.equal(journal.length,0);
+assert.equal(writes,beforeGuardWrites);
+sessionAuthorized=true;
+assert.equal(save(guarded).childCount,7);
+assert.equal(journal.length,1);
+console.log('Stage 35: locked-team and session authorization guards passed');
 console.log('Stage 33: ownership, team, method, duplicate journal and parent collision passed');
 console.log('Stage 32: orphan, journal failure and retry tests passed');
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

@@ -123,7 +123,7 @@ function updateLocations(){options('location',data.locations.filter(x=>x.Warehou
 function search(){const term=el('barcode').value.trim().toLowerCase();const matches=data.products.filter(p=>!term||p.barcode.toLowerCase()===term||p.id.toLowerCase()===term||p.name.toLowerCase().includes(term)).slice(0,60);
  const s=el('product');s.replaceChildren();for(const p of matches){const o=document.createElement('option');o.value=p.id;o.textContent=p.name+' ('+p.id+')';s.appendChild(o)}
  selectUom()}
-function selectUom(){const p=data.products.find(p=>p.id===el('product').value);if(!p)return;
+function selectUom(){const p=data.products.find(p=>p.id===el('product').value);if(!p){options('uom',[]);updatePalletPreview();return;}
  const units=p.className.toLowerCase()==='finished good'?['Case','Bottle']:(p.uom?[p.uom]:[]);
  options('uom',units);updatePalletPreview()}
 function updateLocationLock(){for(const id of ['warehouse','bay','location'])el(id).disabled=locationLocked;el('locationAction').textContent=locationLocked?'Unlock location':'Lock location';el('locationStatus').textContent=locationLocked?'Counting at '+el('location').value:'Location unlocked; select the next location.';}

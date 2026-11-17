@@ -86,15 +86,19 @@ function testStagingPalletIntegrationPreflight() {
   // A PREPARED journal with missing children requires manual review before
   // enabling a write endpoint. Never log raw intent or employee identities.
   const journalHealth={complete:0,empty:0,partial:0,blocked:0,invalid:0,orphan:0};
+  const reviewRows=[];
   if(journalReady) {
     const entries=invRows_('CountEntries');
     const journalRows=journal.getLastRow()>1?
       journal.getRange(2,1,journal.getLastRow()-1,expected.length).getValues():[];
     const seenParents=new Set();
-    journalRows.forEach(values=>{
+    journalRows.forEach((values,index)=>{
+      const journalRow=index+2;
       const parent=String(values[0]||'');
       if(!parent||seenParents.has(parent)) {
-        journalHealth.invalid++;return;
+        journalHealth.invalid++;
+        reviewRows.push({journalRow,reason:'DUPLICATE_OR_MISSING_PARENT'});
+        return;
       }
       seenParents.add(parent);
       try {
@@ -126,9 +130,18 @@ function testStagingPalletIntegrationPreflight() {
         const scope={sessionId:intent.sessionId,locationId:intent.locationId,
           productId:intent.productId,team:intent.team,email:intent.email,
           entryMethod:intent.entryMethod,notes:intent.notes};
-        const state=invClassifyPalletFamily_(intent,entries,scope).state;
+        const classification=invClassifyPalletFamily_(intent,entries,scope);
+        const state=classification.state;
         journalHealth[state.toLowerCase()]++;
-      }catch(error){journalHealth.invalid++;}
+        if(state!=='COMPLETE')reviewRows.push({journalRow,reason:state,
+          expectedChildren:intent.children.length,
+          matchedChildren:classification.matched.length,
+          missingChildren:classification.missing.length,
+          issueCount:classification.issues.length});
+      }catch(error){
+        journalHealth.invalid++;
+        reviewRows.push({journalRow,reason:'INVALID_JOURNAL_INTENT'});
+      }
     });
     // CountEntries can contain family children without a durable journal
     // (e.g. interrupted legacy writes). Detect these independently of the
@@ -162,7 +175,7 @@ function testStagingPalletIntegrationPreflight() {
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
     eligibleFinishedGoods:finishedGoods.length,lockedActiveCounters:teams,
-    distinctTeamAccounts,journalHealth,blockers,
+    distinctTeamAccounts,journalHealth,reviewRows,blockers,
     readyForTwoAccountTest:blockers.length===0};
   console.log(JSON.stringify(result));
   if(!result.readyForTwoAccountTest)

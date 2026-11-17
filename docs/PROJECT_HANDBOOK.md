@@ -985,3 +985,8 @@ Created `staging/PalletWriterStaging.gs` at commit `89ffce82` on main. Package c
 ## Stage 60 — Isolated staging writer code loaded, read-only test PASS
 
 User ran `testStagingWriterCodeLoaded()` at 9:02:26–9:02:29 PM in staging Apps Script project `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`. Execution completed successfully, logged `{stagingOnly:true,team:'A',sessionOpen:true,locations:1,products:1,journalRows:0,countRows:0,plannedChildren:4}`. This verifies staging-only source package installation and read-only dependency test; no live pallet write has occurred. Next controlled staging-only private writer test, with unique parent ID, expected journal/child counts and readback, preserving production untouched and employee Save disabled. User is on phone; minimize manual scripts.
+
+
+## Stage 61 — Guarded live staging writer test prepared; awaiting user execution
+
+Created `staging/PalletWriterFirstLiveTest.gs` on GitHub main (commit `c0bf043e`). A single test function `testStagingPalletWriterFirstSave()` enforces corrected staging Script ID and DB, signed-in authorized Team A user, synthetic session/location/product, and blocks unexpected pre-existing records. It invokes the real private writer once for parent `STAGING-LIVE-PALLET-0001` with 2 pallets x 10 cases, 3 partial cases, 2 loose bottles; verifies one immutable PREPARED journal, four children, IDs/quantities, then retries same request and checks idempotency. **Not yet executed or copied to staging project.** User on phone must create new `.gs` file and run function once. After logs, read staging journal and counts via connector. Do not modify production or enable employee Save.

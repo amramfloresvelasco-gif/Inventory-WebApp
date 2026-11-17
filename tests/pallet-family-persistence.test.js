@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
-let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true;
+let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
  invUser_:()=>({email:'counter@example.com',role:'counter',team:'A',teamLocked:true}),
@@ -11,7 +11,7 @@ const context=vm.createContext({
    products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
  invRows_:name=>{assert.equal(name,'CountEntries');return rows;},
  invPalletJournalRows_:()=>journal,
- invPalletJournalPrepare_:intent=>{if(!journal.length)journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
+ invPalletJournalPrepare_:intent=>{if(failJournal)throw Error('Simulated journal write failure');if(!journal.length)journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
  invPalletJournalStatus_:(intent,entries,scope)=>{
    const outcome=vm.runInContext('invPalletJournalReconcile_',context)(intent,entries,scope);
    return {status:outcome.action==='ACKNOWLEDGE'?'COMPLETE':outcome.action==='WRITE_CHILDREN'?'PREPARED':'REVIEW_REQUIRED'};
@@ -68,4 +68,26 @@ assert.throws(()=>save({...request,parentSubmissionId:'PARENT-FAIL456'}),/PARTIA
 assert.equal(rows.length,2);
 assert.equal(releases,10);
 assert.equal(journal.length,1);
+// Stage 32: orphan children cannot be acknowledged without their original intent.
+rows=[];journal=[];
+const orphanRequest={...request,parentSubmissionId:'PARENT-ORPHAN'};
+assert.equal(save(orphanRequest).childCount,7);
+assert.equal(rows.length,7);
+journal=[];
+const writesBeforeOrphan=writes;
+assert.throws(()=>save(orphanRequest),/Orphan pallet children/);
+assert.equal(writes,writesBeforeOrphan);
+assert.equal(journal.length,0);
+// A failed journal prepare must never create physical count children.
+rows=[];journal=[];failJournal=true;
+const writesBeforeJournal=writes;
+assert.throws(()=>save({...request,parentSubmissionId:'PARENT-JFAIL'}),/Simulated journal write failure/);
+assert.equal(rows.length,0);
+assert.equal(journal.length,0);
+assert.equal(writes,writesBeforeJournal);
+failJournal=false;
+// Retry with the original intent is permitted after the journal error.
+assert.equal(save({...request,parentSubmissionId:'PARENT-JFAIL'}).childCount,7);
+assert.equal(journal.length,1);
+console.log('Stage 32: orphan, journal failure and retry tests passed');
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

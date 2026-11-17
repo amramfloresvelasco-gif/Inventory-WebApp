@@ -132,10 +132,12 @@ el('locationAction').addEventListener('click',()=>{if(busy)return;if(!locationLo
 function updatePalletPreview(){
  const product=data&&data.products.find(p=>p.id===el('product').value);
  const fg=product&&product.className.toLowerCase()==='finished good';
+ const details=el('palletPreviewDetails');
+ // Clear the previous product's child breakdown before changing context.
+ details.replaceChildren();
+ el('palletPreview').textContent='';
  el('palletPreviewPanel').hidden=!fg;
  if(!fg)return;
- const details=el('palletPreviewDetails');
- details.replaceChildren();
  const values=['palletCount','qty','partialCases','looseBottles'].map(id=>el(id).value);
  if(values.some(v=>!/^[0-9]+$/.test(v))){el('palletPreview').textContent='Enter whole-number quantities.';return;}
  const [n,c,partial,bottles]=values.map(Number);

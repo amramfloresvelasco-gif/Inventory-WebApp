@@ -1086,3 +1086,8 @@ Stage 71: safely automate staging source sync. Before creating a workflow that i
 ## Stage 71 verified by user; proceed to Stage 72 (2026-11-17)
 
 User confirmed the automatic staging synchronization GitHub Actions run completed successfully ('done') after commit `d921a5ea` enabled push trigger. Stage 71 complete by user report; no additional staging project or credentials required. Next Stage 72: develop and test staged finished-goods pallet family end-to-end UI/API with real Team A/B isolation; existing `src/Index.html` pallet family Save button is intentionally disabled, and existing `apiInventorySaveCount` is separate single-count save. Keep employee pallet-family Save disabled until explicit approval and verified staging end-to-end testing. Use main branch and update handbooks as milestones progress. Avoid repeating Stage 70/71.
+
+
+## User-directed deployment policy — 2026-11-17
+
+User explicitly wants uninterrupted development on GitHub main and ONE consolidated browser acceptance test after substantial features are ready; do not ask them to test each commit. Changed `.github/workflows/deploy-inventory.yml` to `workflow_dispatch` ONLY in commit `07c9e1e7`; automatic backend regression tests remain active through `.github/workflows/inventory-tests.yml`. The main Web App must not be redeployed unless user requests a consolidated test/release. Staging test synchronization remains separate. Stage 72: continue developing pallet-family functionality and automated test coverage while employee pallet-family Save remains disabled pending real Team A/B staging verification and user approval. Keep handbooks up to date; do not claim a deployed feature when only GitHub source was modified.

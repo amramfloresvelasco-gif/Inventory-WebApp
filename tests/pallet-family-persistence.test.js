@@ -2,7 +2,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
 let activeEmail='counter@example.com',activeTeam='A',teamLocked=true,sessionAuthorized=true;
-let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false;
+let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false,failJournalReconcile=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
  invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked}),
@@ -14,6 +14,7 @@ const context=vm.createContext({
  invPalletJournalRows_:()=>journal,
  invPalletJournalPrepare_:intent=>{if(failJournal)throw Error('Simulated journal write failure');if(!journal.length)journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
  invPalletJournalStatus_:(intent,entries,scope)=>{
+   if(failJournalReconcile)return {status:'REVIEW_REQUIRED'};
    const outcome=vm.runInContext('invPalletJournalReconcile_',context)(intent,entries,scope);
    return {status:outcome.action==='ACKNOWLEDGE'?'COMPLETE':outcome.action==='WRITE_CHILDREN'?'PREPARED':'REVIEW_REQUIRED'};
  },
@@ -190,6 +191,19 @@ activeTeam='A';activeEmail='counter-a@example.com';
 assert.equal(save(aAllowed).duplicate,true);
 assert.equal(writes,writesBeforePartial);
 assert.equal(journal.length,2);
+// Stage 75: a previously complete family cannot be acknowledged if the
+// journal's independent reconciliation is unavailable or fails closed.
+rows=[];journal=[];activeTeam='A';activeEmail='counter-a@example.com';
+const journalCheckRequest={...teamARequest,parentSubmissionId:'PARENT-JOURNAL-CHECK'};
+assert.equal(save(journalCheckRequest).duplicate,false);
+const writesBeforeReconcile=writes;
+failJournalReconcile=true;
+assert.throws(()=>save(journalCheckRequest),/journal retry verification failed/);
+assert.equal(writes,writesBeforeReconcile);
+failJournalReconcile=false;
+assert.equal(save(journalCheckRequest).duplicate,true);
+assert.equal(writes,writesBeforeReconcile);
+console.log('Stage 75: completed family requires verified journal reconciliation');
 console.log('Stage 74: per-team EMPTY gating and partial-family isolation passed');
 console.log('Stage 73: independent Team A/B saves and cross-team retry isolation passed');
 console.log('Stage 35: locked-team and session authorization guards passed');

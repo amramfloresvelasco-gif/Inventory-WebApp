@@ -79,7 +79,7 @@ function testStagingSafetyPreflight() {
     Locations: ['LocationID','Warehouse','Bay','LocationType','Active','SortOrder'],
     ProductIndex: ['WSItemID','ItemName','ClassOfMaterial','Barcode','UnitsPerCase','DefaultUOM','Source','SourceUpdatedAt','Active'],
     CountEntries: ['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'],
-    PalletSubmissionJournal: ['ParentEntryID','SessionID','Team','PayloadHash','State','UpdatedAt']
+    PalletSubmissionJournal: ['ParentSubmissionID','SessionID','IntentJSON','Status','CreatedAt','CreatedBy']
   };
   const rows = {};
   for (const [name, expected] of Object.entries(headers)) {
@@ -117,3 +117,8 @@ function testStagingSafetyPreflight() {
 ```
 
 Run only inside corrected staging Script ID. This is a preliminary safety preflight; it does not establish source-code isolation or authorize writer testing.
+
+
+### Stage 56 correction — actual journal header verified
+
+Live staging read-only range `PalletSubmissionJournal!A1:F2` returned `ParentSubmissionID,SessionID,IntentJSON,Status,CreatedAt,CreatedBy`, with no data row. The initial phone preflight example used an incorrect journal header. Corrected the documented header. User must replace only the `PalletSubmissionJournal` header definition in their staging `Code.gs` and rerun read-only preflight. Do not change spreadsheet schema to fit erroneous test.

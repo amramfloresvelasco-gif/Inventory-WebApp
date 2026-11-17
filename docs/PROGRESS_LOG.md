@@ -736,3 +736,8 @@ Confirmed Stage 30 `87781cfb` CI passed and `5a6a20da` deployment succeeded. Int
 ### 2026-11-16 — Stage 32 private pallet journal negative-path tests
 
 Commit `21eddf7e` on main adds mock coverage for orphan family rejection after removal of original journal, failed journal prepare with zero child writes, and retry under same parent after failure. Existing Stage 31 correction `c61ade15` has successful backend CI and deployment. Stage 32 CI is not yet confirmed. No live count or journal writes were performed; employee multi-pallet Save stays disabled. Next: CI verification, ownership/permission and collision tests, explicit approval for journal-tab provisioning.
+
+
+### 2026-11-16 — Stage 33 identity and collision tests
+
+Stage 32 `21eddf7e` CI/deploy verified successful. Commit `e90b5d20` adds mock negative-path coverage for changed authenticated creator, switched team, changed entry method, duplicate journal parent rows, and parent ID collision with physical count. No live data writes; Stage 33 CI/deploy pending check.

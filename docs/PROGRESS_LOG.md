@@ -851,3 +851,8 @@ User explicitly corrected previous staging Script ID (DISREGARD `1EjNiYDkzurHcw0
 ## Stage 57 — Staging-only counter authorization configured
 
 Read-only safety preflight executed successfully at 8:39:51 PM: database staging, signedInEmail `abe.flores@bsbco.com`, session/location/product ready, CountEntries 0, PalletSubmissionJournal 0; only activeCounterReady false due to synthetic placeholder. Verified staging `AppUsers!A1:G2` and changed **only** `AppUsers!A2` in staging spreadsheet `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo` from `staging-counter@example.invalid` to `abe.flores@bsbco.com`, preserving counter/active/team A/locked TRUE and other cells. Connector write succeeded and read-back confirmed. Next user reruns `testStagingSafetyPreflight()` in corrected staging Script ID `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`; expect activeCounterReady true. No production writes, no pallet writer run, no employee Save activation.
+
+
+## Stage 58 — User-verified isolated staging preflight PASS
+
+At 8:41:15–8:41:17 PM, user ran `testStagingSafetyPreflight()` in corrected staging Apps Script project `1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP`. Execution completed with `{database:'BMD Inventory — Staging',signedInEmail:'abe.flores@bsbco.com',activeCounterReady:true,sessionOpen:true,locationReady:true,productReady:true,countRows:0,journalRows:0}`. Read-only staging preflight PASS. This does NOT yet prove that pallet writer code is installed or isolated. Next inspect actual private writer dependencies in GitHub and prepare staging-only source package; never copy production `INV_DB_ID` unchanged into staging. No production writes, no staging writer invocation, employee Save disabled.

@@ -15,6 +15,9 @@ const context=vm.createContext({
  invPalletJournalPrepare_:intent=>{if(failJournal)throw Error('Simulated journal write failure');if(!journal.some(r=>r.ParentSubmissionID===intent.parentSubmissionId))journal.push({ParentSubmissionID:intent.parentSubmissionId,IntentJSON:JSON.stringify(intent),Status:'PREPARED'});},
  invPalletJournalStatus_:(intent,entries,scope)=>{
    if(failJournalReconcile)return {status:'REVIEW_REQUIRED'};
+   const decision=vm.runInContext('invPalletJournalDecision_',context)(intent,journal);
+   if(decision.action!=='INSPECT_CHILDREN')
+     return {status:'BLOCKED',reason:decision.reason};
    const outcome=vm.runInContext('invPalletJournalReconcile_',context)(intent,entries,scope);
    return {status:outcome.action==='ACKNOWLEDGE'?'COMPLETE':outcome.action==='WRITE_CHILDREN'?'PREPARED':'REVIEW_REQUIRED'};
  },
@@ -203,6 +206,20 @@ assert.equal(writes,writesBeforeReconcile);
 failJournalReconcile=false;
 assert.equal(save(journalCheckRequest).duplicate,true);
 assert.equal(writes,writesBeforeReconcile);
+// Stage 77: if the journal disappears or becomes corrupt between the
+// first journal read and the retry reconciliation, never acknowledge success.
+const originalJournal=journal;
+journal=[];
+assert.throws(()=>save(journalCheckRequest),/Orphan pallet children/);
+assert.equal(writes,writesBeforeReconcile);
+journal=originalJournal;
+journal[0].Status='INVALID';
+assert.throws(()=>save(journalCheckRequest),/UNKNOWN_JOURNAL_STATUS/);
+assert.equal(writes,writesBeforeReconcile);
+journal[0].Status='PREPARED';
+assert.equal(save(journalCheckRequest).duplicate,true);
+assert.equal(writes,writesBeforeReconcile);
+console.log('Stage 77: missing and invalid retry journal fail closed');
 console.log('Stage 75: completed family requires verified journal reconciliation');
 console.log('Stage 74: per-team EMPTY gating and partial-family isolation passed');
 console.log('Stage 73: independent Team A/B saves and cross-team retry isolation passed');

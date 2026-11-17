@@ -85,7 +85,7 @@ function testStagingPalletIntegrationPreflight() {
   // Inspect the real journal/child relationship without touching Sheets.
   // A PREPARED journal with missing children requires manual review before
   // enabling a write endpoint. Never log raw intent or employee identities.
-  const journalHealth={complete:0,empty:0,partial:0,blocked:0,invalid:0};
+  const journalHealth={complete:0,empty:0,partial:0,blocked:0,invalid:0,orphan:0};
   if(journalReady) {
     const entries=invRows_('CountEntries');
     const journalRows=journal.getLastRow()>1?
@@ -130,10 +130,22 @@ function testStagingPalletIntegrationPreflight() {
         journalHealth[state.toLowerCase()]++;
       }catch(error){journalHealth.invalid++;}
     });
+    // CountEntries can contain family children without a durable journal
+    // (e.g. interrupted legacy writes). Detect these independently of the
+    // journal contents, without exposing parent IDs in the output.
+    const orphanParents=new Set();
+    entries.forEach(row=>{
+      const parent=String(row.ParentEntryID||'').trim();
+      const child=String(row.EntryID||'').trim();
+      if(parent&&child.startsWith(parent+'-')&&
+         /^[A-Z]{1,3}$/.test(child.slice(parent.length+1))&&
+         !seenParents.has(parent))orphanParents.add(parent);
+    });
+    journalHealth.orphan=orphanParents.size;
   }
   const blockers=[];
   if(!journalReady)blockers.push('PALLET_JOURNAL_SCHEMA_MISSING_OR_INVALID');
-  if(journalHealth.invalid||journalHealth.partial||journalHealth.blocked)
+  if(journalHealth.invalid||journalHealth.partial||journalHealth.blocked||journalHealth.orphan)
     blockers.push('PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW');
   if(!sessions.length)blockers.push('NO_OPEN_STAGING_SESSION');
   if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');

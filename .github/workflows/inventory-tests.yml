@@ -20,6 +20,7 @@ on:
       - 'src/PalletFamilyDiagnostics.gs'
       - 'src/PalletIntentContract.gs'
       - 'src/PalletIntentJournalProtocol.gs'
+      - 'src/PalletIntentJournalStorage.gs'
       - 'tests/**'
       - '.github/workflows/inventory-tests.yml'
   pull_request:
@@ -62,6 +63,8 @@ jobs:
         run: node tests/pallet-intent-contract.test.js
       - name: Write-ahead pallet intent protocol
         run: node tests/pallet-intent-journal-protocol.test.js
+      - name: Append-only pallet intent journal storage
+        run: node tests/pallet-intent-journal-storage.test.js
       - name: Counting, EMPTY and deletion workflow
         run: node tests/count-workflow.test.js
       - name: Location comparison rules and fixtures

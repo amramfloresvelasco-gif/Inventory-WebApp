@@ -1121,3 +1121,8 @@ Commit `71c8f6bc` adds `testStagingPalletIntegrationPreflight()` to `staging/Pal
 ## Stage 81 — require distinct authenticated Team A/B accounts (2026-11-17)
 
 Commit `6c75759f` tightens `testStagingPalletIntegrationPreflight()` in `staging/PalletTeamIsolationStaging.gs`: counts active, team-locked accounts with nonempty emails, tracks email sets for each team, and requires distinct Team A and Team B identities before `readyForTwoAccountTest` can be true. Confirmed the existing `.github/workflows/sync-inventory-staging.yml` includes this file in push triggers and staging-only overlay; no production Web App deployment. The actual staging preflight function and end-to-end two-account test have NOT been executed/confirmed here. Do not infer sync success from workflow configuration. Next obtain staging preflight execution output and address its blockers, then build authenticated end-to-end test; maintain one consolidated user acceptance test and keep employee batch Save disabled until release gate.
+
+
+## Stage 82 — actionable staging preflight blockers (2026-11-17)
+
+Commit `119a3f7e` changes `testStagingPalletIntegrationPreflight()` to report `blockers` as explicit non-sensitive codes for missing/invalid journal, open session, active location, eligible finished goods, locked active Team A/B accounts, or distinct identities. `readyForTwoAccountTest` is now derived solely from `blockers.length===0`. This is read-only staging-only source; workflow sync and function execution have NOT been independently confirmed. Do not enable employee pallet-family Save or deploy production. Next obtain actual preflight output (staging Apps Script run or CI job logs), resolve blockers, then test real authenticated Team A/B saves and idempotent retries in staging.

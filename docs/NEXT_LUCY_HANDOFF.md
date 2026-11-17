@@ -967,3 +967,8 @@ User explicitly authorized a separate staging Google Sheets database populated w
 ## 2026-11-16 — Stage 53 isolated Apps Script setup prepared
 
 Added `docs/PALLET_STAGING_APPS_SCRIPT_SETUP.md` (`a0452c0d`), with safe instructions to create a separate Apps Script project, staging-only DB ID, real Workspace identity in staging AppUsers, and a read-only `testStagingIsolationPreflight` verifying ID, sheet parents, identity, open session, synthetic references, and empty staging CountEntries/journal before any writer execution. Production `INV_DB_ID` remains unchanged. No Apps Script project creation tool is connected, so staging script project is NOT yet created and preflight NOT executed. User needs to create separate staging script project (or connect an appropriate Apps Script management capability). No production writes or employee Save activation.
+
+
+## Stage 54 — User-created staging Apps Script project
+
+User created a separate empty Apps Script project and supplied its Script ID: `1EjNiYDkzurHcw0x_qbjFh9WCsASVG2B5zGjG4g5BKbdKo12X04pwVG_k`. Staging spreadsheet remains `1EaaGTFahbAdS3QqywFh4yeuXntCjL8ik1kZcQvqq2zo`. **Do not confuse this with production**. No Apps Script management connector is available to push code to the new project directly; next prepare a staging-only clasp configuration or guide user to bind project locally. Keep production main and production `INV_DB_ID` unchanged; do not run writer until isolated project code and read-only preflight are verified. Employee multi-pallet Save disabled.

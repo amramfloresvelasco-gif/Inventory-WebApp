@@ -6,7 +6,6 @@ let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lo
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
  invUser_:()=>({email:activeEmail,role:'counter'}),
- invCountSelection_:request=>{const team=String(request&&request.team||'').trim().toUpperCase();if(!['A','B'].includes(team))throw Error('Select Count A or Count B.');return team;},
  invSession_:id=>{if(!sessionAuthorized)throw Error('Session access denied');if(id!=='SESSION1')throw Error('Unknown session');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
    products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
@@ -31,8 +30,16 @@ const context=vm.createContext({
  };},
  LockService:{getScriptLock:()=>({tryLock:()=>lockAvailable,releaseLock:()=>{releases++;}})}
 });
-for(const name of ['PalletChildPlanner','PalletIntentContract','PalletFamilyRecovery','PalletIntentJournalProtocol','PalletFamilyPersistence'])
+for(const name of ['Code','PalletChildPlanner','PalletIntentContract','PalletFamilyRecovery','PalletIntentJournalProtocol','PalletFamilyPersistence'])
  vm.runInContext(fs.readFileSync('src/'+name+'.gs','utf8'),context);
+// Code.gs supplies the production Count A/B validator; restore only the fake
+// database helpers that Code.gs redeclares in the test VM.
+Object.assign(context,{invUser_:()=>({email:activeEmail,role:'administrator'}),
+ invSession_:id=>{if(!sessionAuthorized)throw Error('Session access denied');if(id!=='SESSION1')throw Error('Unknown session');},
+ invReference_:()=>({locations:[{LocationID:'L1'}],products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
+ invRows_:name=>{assert.equal(name,'CountEntries');return rows;},
+ invSheet_:name=>{assert.equal(name,'CountEntries');return {getLastRow:()=>rows.length+1,getRange:(start,col,height,width)=>({setValues:values=>{assert.equal(width,14);assert.equal(height,values.length);writes++;if(failWrite)throw Error('Simulated write failure');(partialWrite?values.slice(0,2):values).forEach((v,i)=>{rows[start-2+i]=Object.fromEntries(keys.map((k,j)=>[k,v[j]]));});}})};}
+});
 const save=vm.runInContext('invSavePalletFamilyPrivate_',context);
 const request={team:'A',parentSubmissionId:'PARENT-123456',sessionId:'SESSION1',
  locationId:'L1',productId:'FG1',pallets:5,casesPerPallet:100,

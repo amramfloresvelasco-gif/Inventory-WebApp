@@ -90,7 +90,7 @@ assert.equal(entries.length,5);
 assert.equal(audit.length,3);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');
 
-// Stage 36: execute the actual production identity/team/session helpers, not mocks.
+// Stage 36: execute the actual production identity/count-selection/session helpers, not mocks.
 const authCtx=vm.createContext({Date,Map,Set,JSON,Number,String,Error,Math});
 vm.runInContext(code,authCtx,{filename:'Code.gs'});
 let authEmail='counter@example.com';
@@ -119,5 +119,5 @@ reject('production unknown session',()=>realSession('S-UNKNOWN'));
 authSessions.push({...authSessions[0]});
 reject('production duplicate session',()=>realSession('S-OPEN'));
 authSessions.pop();
-check('production authorization restored',()=>{assert.equal(realTeam(realUser()),'A');assert.equal(realSession('S-OPEN').Status,'OPEN');});
-console.log('Stage 36: production identity/team/session helper checks passed');
+check('production authorization restored',()=>{assert.equal(realUser().role,'counter');assert.equal(realSelection({team:'A'}),'A');assert.equal(realSession('S-OPEN').Status,'OPEN');});
+console.log('Stage 36: production identity/count-selection/session helper checks passed');

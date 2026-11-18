@@ -9,14 +9,13 @@ const vm=require('node:vm');
 const assert=require('node:assert/strict');
 const entries=[],audit=[];
 const reference={locations:[{LocationID:'L1'}],products:[{WSItemID:'P1',ClassOfMaterial:'Raw Material',DefaultUOM:'Each'}]};
-let user={email:'a@example.com',role:'counter',team:'A',teamLocked:true};
+let user={email:'a@example.com',role:'counter'};
 const countKeys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
 const auditKeys=['AuditID','EntryID','SessionID','Action','OldValue','NewValue','Reason','ChangedBy','ChangedAt'];
 const context=vm.createContext({
   Date,Map,Set,JSON,Number,String,Error,Math,
   INV_RAW_UOMS:['Each','Pounds','Gallons'],
   invUser_:()=>user,
-  invTeam_:u=>u.team,
   invSession_:id=>{if(id!=='S1')throw Error('Session missing');},
   invReference_:()=>reference,
   invRows_:name=>name==='CountEntries'?entries:name==='CountEntryAudit'?audit:(()=>{throw Error('Unexpected table '+name)})(),
@@ -34,7 +33,7 @@ const context=vm.createContext({
   LockService:{getScriptLock:()=>({tryLock:()=>true,releaseLock:()=>{}})},
   Utilities:{getUuid:()=> 'TEST-UUID'}
 });
-const mocks={invUser_:context.invUser_,invTeam_:context.invTeam_,invSession_:context.invSession_,
+const mocks={invUser_:context.invUser_,invSession_:context.invSession_,
   invReference_:context.invReference_,invRows_:context.invRows_,invSheet_:context.invSheet_};
 const code=fs.readFileSync(path.join(__dirname,'../src/Code.gs'),'utf8');
 vm.runInContext(code,context,{filename:'Code.gs'});

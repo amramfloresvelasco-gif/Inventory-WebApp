@@ -75,6 +75,6 @@ assert(script[1].includes("if(!p){options('uom',[]);updatePalletPreview();return
  'Empty product search must refresh and clear stale pallet preview');
 assert(/details\.replaceChildren\(\);\s*el\('palletPreview'\)\.textContent='';/.test(script[1]),
  'Every pallet preview refresh must clear old child rows and totals');
-assert(script[1].includes("el('palletPreviewPanel').hidden=!fg;\n if(!fg)return;"),
+assert(/el\('palletPreviewPanel'\)\.hidden=!fg;\s*if\(!fg\)return;/.test(script[1]),
  'Non-FG product must hide cleared pallet preview');
 console.log('Stage 79: stale pallet preview clearing guards passed');

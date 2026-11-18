@@ -1241,3 +1241,8 @@ Commits `7d19ef6e` and `8e804a9a`: `invSavePalletFamilyPrivate_` now derives `te
 ## Stage 104 — freeze count selection during in-flight writes (2026-11-18)
 
 Commits `88e5eda9` and `8b33eadb`: `updateTeamControls()` now disables Count A/B selection and both Save/EMPTY buttons while `busy`, re-enabling after callbacks. Both save and EMPTY paths call `updateTeamControls()` immediately after setting busy=true. Added UI syntax assertions for these guards. This prevents switching count selection and invalidating pending idempotency IDs mid-flight. No deployment or production/staging writes. **CI remains unverified**: GitHub connector has no workflow dispatch/list-runs action and container network cannot resolve github.com, so could not execute the full suite locally. Need check GitHub Actions push run manually or obtain logs via accessible run ID, then fix any failures. Continue backend engine cleanup without enabling pallet-family RPC.
+
+
+## Stage 105 — remove legacy team-lock API (2026-11-18)
+
+Commits `8116c33f`, `b6deeb8a`: removed obsolete `apiInventorySelectTeam` RPC and `invTeam_` helper from `src/Code.gs`; `invUser_` returns only email and role, and bootstrap returns role only. Count A/B is still validated from each request, including the private pallet writer. AppUsers `AssignedTeam` and `TeamLocked` columns remain for schema compatibility, but no longer control counting. Removed obsolete team mock from counting regression. No database writes, deployment, or CI verification. Need full test run; inspect any remaining tests or staging helpers that assumed the old invUser_ shape. **Do not enable pallet-family Save** until tests and staging readiness are confirmed.

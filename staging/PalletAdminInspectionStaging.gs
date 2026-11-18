@@ -3,11 +3,12 @@
  */
 function testStagingPartialPalletAdminInspection() {
   invAssertStagingOnly_();
-  // Test-only diagnostic: authenticated staging counter may inspect synthetic fixture.
-  // Production administrator permission is unchanged; no public RPC is exposed.
+  // Staging inspection requires an administrator; Count A/B is chosen per entry,
+  // never inferred from legacy user team assignment or team-lock columns.
+  // This diagnostic is read-only and exposes no public RPC.
   const user=invUser_();
-  if(user.email!=='abe.flores@bsbco.com'||user.team!=='A'||!user.teamLocked)
-    throw Error('BLOCKED: unexpected staging test identity');
+  if(user.role!=='administrator')
+    throw Error('BLOCKED: authorized staging administrator required');
   const parent='STAGING-PARTIAL-0001';
   const journals=invPalletJournalRows_().filter(r=>String(r.ParentSubmissionID)===parent);
   if(journals.length!==1)throw Error('REVIEW: expected exactly one journal, found '+journals.length);

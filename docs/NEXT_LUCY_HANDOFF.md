@@ -1266,3 +1266,8 @@ Commit `69d36d1d`: replaced the simplified `invCountSelection_` test mock in `te
 ## Stage 109 — invalid count rejection and same-author audit assertions (2026-11-18)
 
 Commit `28bdf1ba`: expanded private pallet persistence regression to reject missing, invalid, and null selected count before acquiring lock or creating journal/physical rows, and assert Count A and B children and journal intents preserve the same authenticated author's email. This is source-level test coverage, **not evidence of a passing test run**. No production/staging writes, no deployment, no public pallet Save RPC. Next obtain GitHub Actions results or run the Node suite in a verified environment; fix any failures before staging and enablement.
+
+
+## Stage 110 — Count A EMPTY versus Count B independence (2026-11-18)
+
+Commits `475701c7`, `eb15cdb1`: `tests/count-workflow.test.js` now verifies the same authenticated counter can save and idempotently retry a Count B item while an active Count A EMPTY exists for the same location/session; reusing the Count B ID under Count A must fail, and the owner may remove their Count B entry. Updated total row and audit expectations for the additional save/delete. **Tests have not been run or confirmed green.** No Apps Script deployment, staging writes, or production writes. Keep pallet-family Save disabled until verified CI and staging readiness.

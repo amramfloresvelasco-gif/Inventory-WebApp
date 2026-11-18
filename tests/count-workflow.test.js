@@ -91,35 +91,6 @@ assert.equal(entries.length,5);
 assert.equal(audit.length,3);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');
 
-const teamRows=[{Email:'a@example.com',Role:'Counter',Status:'Active',AssignedTeam:'',TeamLocked:false}];
-const teamChanges=[];
-context.invRows_=name=>name==='AppUsers'?teamRows:name==='CountEntries'?entries:name==='CountEntryAudit'?audit:[];
-context.invSheet_=name=>name==='AppUsers'?{
- getRange:(row,col)=>({setValue:v=>{teamRows[row-2].TeamLocked=v;teamChanges.push('unlock');},
- setValues:values=>{if(col===1){teamRows[row-2].Email=values[0][0];teamRows[row-2].Role=values[0][1];teamRows[row-2].Status=values[0][2];teamRows[row-2].AssignedTeam=values[0][3];teamRows[row-2].TeamLocked=values[0][4];}else{teamRows[row-2].AssignedTeam=values[0][0];teamRows[row-2].TeamLocked=values[0][1];}teamChanges.push('lock');}})
-}:mocks.invSheet_(name);
-context.invUser_=()=>({email:'a@example.com',role:'counter',team:teamRows[0].AssignedTeam,teamLocked:teamRows[0].TeamLocked});
-const chooseTeam=vm.runInContext('apiInventorySelectTeam',context);
-check('counter self-locks team A',()=>assert.equal(chooseTeam({team:'A'}).teamLocked,true));
-reject('cannot switch locked team',()=>chooseTeam({team:'B'}));
-check('counter unlocks team',()=>assert.equal(chooseTeam({unlock:true}).teamLocked,false));
-check('counter switches to B',()=>assert.equal(chooseTeam({team:'B'}).team,'B'));
-reject('cannot unlock with team payload',()=>chooseTeam({unlock:true,team:'A'}));
-reject('cannot lock invalid team',()=>chooseTeam({team:'C'}));
-check('team history is unchanged',()=>assert.equal(entries[0].Team,'A'));
-console.log('PASS self-service team selection tests; mock sheets only.');
-
-const adminUpsert=vm.runInContext('apiInventoryAdminUpsertUser',context);
-context.invRequireAdmin_=()=>({email:'admin@example.com',role:'administrator'});
-const originalTeam=teamRows[0].AssignedTeam;
-const originalLocked=teamRows[0].TeamLocked;
-check('admin user edit preserves self-selected team',()=>{
- adminUpsert({email:'a@example.com',role:'Counter',status:'Active',team:'A',teamLocked:false});
- assert.equal(teamRows[0].AssignedTeam,originalTeam);
- assert.equal(teamRows[0].TeamLocked,originalLocked);
-});
-
-
 // Stage 36: execute the actual production identity/team/session helpers, not mocks.
 const authCtx=vm.createContext({Date,Map,Set,JSON,Number,String,Error,Math});
 vm.runInContext(code,authCtx,{filename:'Code.gs'});
@@ -129,20 +100,19 @@ let authSessions=[{SessionID:'S-OPEN',Status:'OPEN'},{SessionID:'S-CLOSED',Statu
 authCtx.invEmail_=()=>authEmail;
 authCtx.invRows_=name=>name==='AppUsers'?authUsers:name==='InventorySessions'?authSessions:(()=>{throw Error('Unexpected auth table '+name)})();
 const realUser=()=>vm.runInContext('invUser_',authCtx)();
-const realTeam=u=>vm.runInContext('invTeam_',authCtx)(u);
+const realSelection=request=>vm.runInContext('invCountSelection_',authCtx)(request);
 const realSession=id=>vm.runInContext('invSession_',authCtx)(id);
 check('production active counter identity',()=>assert.equal(realUser().role,'counter'));
-check('production locked Team A',()=>assert.equal(realTeam(realUser()),'A'));
+check('Count A selection',()=>assert.equal(realSelection({team:'A'}),'A'));
 check('production open session',()=>assert.equal(realSession('S-OPEN').Status,'OPEN'));
 authUsers[0].Status='Inactive';
 reject('production inactive account',()=>realUser());
 authUsers[0].Status='Active';authUsers[0].Role='viewer';
 reject('production invalid role',()=>realUser());
 authUsers[0].Role='counter';authUsers[0].TeamLocked=false;
-reject('production unlocked team',()=>realTeam(realUser()));
-authUsers[0].TeamLocked=true;authUsers[0].AssignedTeam='C';
-reject('production invalid team',()=>realTeam(realUser()));
-authUsers[0].AssignedTeam='A';authUsers.push({...authUsers[0]});
+check('unlocked counter may choose Count B',()=>assert.equal(realSelection({team:'B'}),'B'));
+reject('invalid Count C',()=>realSelection({team:'C'}));
+reject('missing count selection',()=>realSelection({}));authUsers.push({...authUsers[0]});
 reject('production duplicate user account',()=>realUser());
 authUsers.pop();
 reject('production closed session',()=>realSession('S-CLOSED'));

@@ -1295,3 +1295,8 @@ User cloned the repository locally and executed from `C:\\Users\\amram\\Inventor
 - `node tests/pallet-family-persistence.test.js` — PASS; output confirms Stages 32, 33, 35, 73, 74, 75, 77 and private pallet batch writer regression checks.
 
 This is **confirmed local execution of two suites**, not confirmation of the entire 16-step GitHub Actions suite or a real staging integration. No Sheets writes, deployment, or pallet-family Save enablement. Next run the remaining Node tests (or the full workflow) and inspect staging read-only prerequisites before considering a controlled staging write test.
+
+
+## Stage 115 — full local suite failures identified and test harnesses corrected (2026-11-18)
+
+User ran `for %f in (tests\\*.test.js) do @node "%f" || echo FAILED: %f` from `C:\\Users\\amram\\Inventory-WebApp\\Inventory-WebApp`. All files reported success except three: `tests/index-ui-syntax.test.js` (preview reset assertion too whitespace-sensitive), `tests/pallet-writer-prepared-retry.test.js` and `tests/pallet-writer-storage-integration.test.js` (old `invTeam_` fixtures missing production `invCountSelection_`). Commits: `d07da599` changes the UI test to regex matching with flexible whitespace; `39220a8b` and `7bc7e04` update pallet writer fixtures to use request `team:'A'`, mocked `invCountSelection_`, and user identity without assigned team. No production code changed. **Await user's rerun of the full suite; do not claim green yet.** No deployment or Sheets writes; pallet-family Save remains disabled.

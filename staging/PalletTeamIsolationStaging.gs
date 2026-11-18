@@ -4,7 +4,7 @@
 function testStagingPalletTeamIsolation() {
   invAssertStagingOnly_();
   const user=invUser_();
-  if(user.email!=='abe.flores@bsbco.com'||user.team!=='A'||!user.teamLocked)
+  if(user.role!=='administrator')
     throw Error('BLOCKED: unauthorized staging test identity');
   const parent='STAGING-TEAM-ISOLATION-FIXTURE';
   const expected={parentSubmissionId:parent,children:[
@@ -17,7 +17,7 @@ function testStagingPalletTeamIsolation() {
   const a={sessionId:base.SessionID,locationId:base.LocationID,
     productId:base.WSItemID,team:'A',email:'counter-a@example.invalid',
     entryMethod:'Manual',notes:base.Notes};
-  const b={...a,team:'B',email:'counter-b@example.invalid'};
+  const b={...a,team:'B'};
   const rows=expected.children.map(child=>({...base,EntryID:child.entryId,
     UOM:child.uom,Quantity:child.quantity,Team:'A',EnteredBy:a.email}));
   const tests=[
@@ -30,7 +30,7 @@ function testStagingPalletTeamIsolation() {
     ['Wrong session',rows,{...a,sessionId:'OTHER'},'BLOCKED'],
     ['Wrong location',rows,{...a,locationId:'OTHER'},'BLOCKED'],
     ['Wrong product',rows,{...a,productId:'OTHER'},'BLOCKED'],
-    ['Wrong counter identity',rows,{...a,email:'other@example.invalid'},'BLOCKED']
+    ['Wrong entry author',rows,{...a,email:'other@example.invalid'},'BLOCKED']
   ];
   for(const [name,fixture,scope,want] of tests){
     const actual=invClassifyPalletFamily_(expected,fixture,scope).state;

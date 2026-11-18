@@ -34,13 +34,13 @@ console.log('Unsupported pallet batch Save guard passed');
 
 
 // Stage 72: fail closed until a real Team A/B staging end-to-end approval.
-assert(/<button\\b(?=[^>]*\\bid="savePalletFamily")(?=[^>]*\\bdisabled\\b)[^>]*>/.test(html),
+assert(/<button\b(?=[^>]*\bid="savePalletFamily")(?=[^>]*\bdisabled\b)[^>]*>/.test(html),
   'Pallet family Save must remain disabled in the rendered UI');
 assert(/id="savePalletFamily"[^>]*aria-disabled="true"/.test(html),
   'Pallet family Save must communicate its disabled state to assistive technology');
-assert(!/\\.apiInventorySavePalletFamily\\s*\\(/.test(script[1]),
+assert(!/\.apiInventorySavePalletFamily\s*\(/.test(script[1]),
   'Unapproved pallet-family RPC must not be called from the employee UI');
-assert(!/function\\s+apiInventorySavePalletFamily\\s*\\(/.test(
+assert(!/function\s+apiInventorySavePalletFamily\s*\(/.test(
   fs.readFileSync('src/Code.gs','utf8')),
   'Unapproved public pallet-family RPC must not be exposed by Code.gs');
 assert(html.includes('The separate Save count button records one count only.'),

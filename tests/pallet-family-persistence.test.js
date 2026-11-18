@@ -155,7 +155,7 @@ assert.throws(()=>save({...teamARequest,team:'B'}),/INTENT_CHANGED/);
 assert.equal(writes,writesAfterBothTeams);
 assert.equal(save(teamBRequest).duplicate,true);
 assert.equal(writes,writesAfterBothTeams);
-activeEmail='counter-a@example.com';
+activeEmail='same-admin@example.com';
 assert.throws(()=>save({...teamBRequest,team:'A'}),/INTENT_CHANGED/);
 assert.equal(save(teamARequest).duplicate,true);
 assert.equal(writes,writesAfterBothTeams);

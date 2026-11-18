@@ -5,6 +5,7 @@ for(const name of ['PalletChildPlanner','PalletIntentContract'])
  vm.runInContext(fs.readFileSync('src/'+name+'.gs','utf8'),ctx);
 const make=vm.runInContext('invPalletIntent_',ctx);
 const equal=vm.runInContext('invPalletIntentEqual_',ctx);
+const forUser=vm.runInContext('invPalletIntentForUser_',ctx);
 const request={parentSubmissionId:'PARENT-123456',sessionId:'S1',locationId:'L1',
  productId:'FG1',pallets:5,casesPerPallet:100,partialCases:50,looseBottles:4};
 const identity={email:'A@Example.com',team:'A'};
@@ -15,6 +16,15 @@ assert.equal(intent.totalLooseBottles,4);
 assert.equal(intent.children[0].entryId,'PARENT-123456-A');
 assert.equal(intent.children[6].entryId,'PARENT-123456-G');
 assert.equal(intent.email,'a@example.com');
+const account={email:'A@Example.com',role:'administrator',team:'A',teamLocked:false};
+assert.equal(equal(forUser({...request,team:'A',email:'forged@example.com'},account),intent),true);
+const countB=forUser({...request,team:'B'},account);
+assert.equal(countB.team,'B');
+assert.equal(countB.email,'a@example.com');
+assert.equal(equal(intent,countB),false);
+assert.throws(()=>forUser(request,account));
+assert.throws(()=>forUser({...request,team:'C'},account));
+assert.throws(()=>forUser({...request,team:'A'},{}));
 assert.equal(equal(intent,make({...request},identity)),true);
 for(const altered of [
  {...request,casesPerPallet:99},{...request,partialCases:49},

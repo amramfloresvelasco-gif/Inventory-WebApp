@@ -1256,3 +1256,8 @@ Commits `9ffabfd5`, `710e808c`: revised `tests/pallet-family-persistence.test.js
 ## Stage 107 — fix definite stale regression assertion (2026-11-18)
 
 Commit `9feab8a3`: `tests/count-workflow.test.js` still invoked undefined `realTeam(realUser())` in its final authorization-restored assertion after Stage 105 removed `invTeam_`. Replaced with checks for `realUser().role`, explicit `realSelection({team:'A'})`, and open-session authorization. This was a concrete test failure found by source inspection, not a verified test run. GitHub combined commit statuses returned no statuses, which does not establish Actions success/failure. **Full Node/Actions test suite still needs execution and confirmation.** Keep staging and production untouched and pallet-family Save disabled until tests pass.
+
+
+## Stage 108 — pallet persistence suite uses production count validator (2026-11-18)
+
+Commit `69d36d1d`: replaced the simplified `invCountSelection_` test mock in `tests/pallet-family-persistence.test.js` with loading the actual `src/Code.gs` implementation. Restores mocked user, session, reference, rows, and sheet adapters after VM source evaluation so the tests remain isolated from Apps Script and Sheets. The tests now exercise the real selected-count validation alongside the private journal writer. **Not yet executed**: this harness change must be checked by GitHub Actions before it can be considered passing. GitHub commit status endpoint reported no statuses; that does not establish CI outcome. Container GitHub network lookup failed. No database writes, deployment, or public pallet Save activation.

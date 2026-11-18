@@ -1,12 +1,12 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
-let activeEmail='counter@example.com',activeTeam='A',teamLocked=true,sessionAuthorized=true;
+let activeEmail='counter@example.com',activeTeam='A',teamLocked=false,sessionAuthorized=true;
 let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false,failJournalReconcile=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
  invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked}),
- invTeam_:u=>u.teamLocked?u.team:(()=>{throw Error('Team unlocked')})(),
+ invCountSelection_:request=>{const team=String(request&&request.team||'').trim().toUpperCase();if(!['A','B'].includes(team))throw Error('Select Count A or Count B.');return team;},
  invSession_:id=>{if(!sessionAuthorized)throw Error('Session access denied');if(id!=='SESSION1')throw Error('Unknown session');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
    products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
@@ -34,7 +34,7 @@ const context=vm.createContext({
 for(const name of ['PalletChildPlanner','PalletIntentContract','PalletFamilyRecovery','PalletIntentJournalProtocol','PalletFamilyPersistence'])
  vm.runInContext(fs.readFileSync('src/'+name+'.gs','utf8'),context);
 const save=vm.runInContext('invSavePalletFamilyPrivate_',context);
-const request={parentSubmissionId:'PARENT-123456',sessionId:'SESSION1',
+const request={team:'A',parentSubmissionId:'PARENT-123456',sessionId:'SESSION1',
  locationId:'L1',productId:'FG1',pallets:5,casesPerPallet:100,
  partialCases:50,looseBottles:4,entryMethod:'Manual',notes:'test'};
 const first=save(request);
@@ -103,7 +103,7 @@ activeEmail='other@example.com';
 assert.throws(()=>save(scoped),/INTENT_CHANGED/);
 assert.equal(writes,beforeScopeWrites);
 activeEmail='counter@example.com';activeTeam='B';
-assert.throws(()=>save(scoped),/INTENT_CHANGED/);
+assert.throws(()=>save({...scoped,team:'B'}),/INTENT_CHANGED/);
 assert.equal(writes,beforeScopeWrites);
 activeTeam='A';
 assert.throws(()=>save({...scoped,entryMethod:'Barcode'}),/INTENT_CHANGED/);
@@ -124,11 +124,10 @@ assert.equal(journal.length,0);
 rows=[];journal=[];
 const guarded={...request,parentSubmissionId:'PARENT-GUARDED'};
 const beforeGuardWrites=writes;
-teamLocked=false;
-assert.throws(()=>save(guarded),/Team unlocked/);
+assert.throws(()=>save({...guarded,team:'C'}),/Select Count A or Count B/);
 assert.equal(rows.length,0);assert.equal(journal.length,0);
 assert.equal(writes,beforeGuardWrites);
-teamLocked=true;sessionAuthorized=false;
+sessionAuthorized=false;
 assert.throws(()=>save(guarded),/Session access denied/);
 assert.equal(rows.length,0);assert.equal(journal.length,0);
 assert.equal(writes,beforeGuardWrites);
@@ -144,7 +143,7 @@ assert.equal(teamAResult.childCount,4);
 assert.equal(teamAResult.totalCases,203);
 assert.equal(rows.filter(x=>x.Team==='A').length,4);
 activeTeam='B';activeEmail='counter-b@example.com';
-const teamBRequest={...teamARequest,parentSubmissionId:'PARENT-TEAM-B-001'};
+const teamBRequest={...teamARequest,team:'B',parentSubmissionId:'PARENT-TEAM-B-001'};
 const teamBResult=save(teamBRequest);
 assert.equal(teamBResult.childCount,4);
 assert.equal(rows.filter(x=>x.Team==='B').length,4);
@@ -223,7 +222,7 @@ console.log('Stage 77: missing and invalid retry journal fail closed');
 console.log('Stage 75: completed family requires verified journal reconciliation');
 console.log('Stage 74: per-team EMPTY gating and partial-family isolation passed');
 console.log('Stage 73: independent Team A/B saves and cross-team retry isolation passed');
-console.log('Stage 35: locked-team and session authorization guards passed');
+console.log('Stage 35: explicit count selection and session authorization guards passed');
 console.log('Stage 33: ownership, team, method, duplicate journal and parent collision passed');
 console.log('Stage 32: orphan, journal failure and retry tests passed');
 console.log('Private pallet batch writer: one write, retry, conflict, partial, lock and failure tests passed');

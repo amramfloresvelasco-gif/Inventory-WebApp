@@ -1276,3 +1276,8 @@ Commits `475701c7`, `eb15cdb1`: `tests/count-workflow.test.js` now verifies the 
 ## Stage 111 — one administrator saves both counts (2026-11-18)
 
 Commit `c18d9e61`: expanded `tests/count-workflow.test.js` to exercise one administrator identity saving Count A and Count B without a permanent team assignment, independently retrying both entries, asserting their Team and EnteredBy values, and deleting both fixtures. Adjusted expected in-memory entry/audit totals. This is **unexecuted regression coverage**, not a confirmed green test run. No database changes or deployment. Next priority: obtain GitHub Actions results and fix any failures, then staging-only read-only preflight; employee pallet-family Save remains disabled.
+
+
+## Stage 112 — staging isolation fixtures use one administrator (2026-11-18)
+
+Commit `e78dddee`: updated `testStagingPalletTeamIsolation()` synthetic, pure in-memory fixture in `staging/PalletTeamIsolationStaging.gs` to use the currently authenticated administrator email for both Count A and Count B. The same email must not allow cross-count acknowledgement; wrong email, session, location and product still block. Added `sameAdministratorBothCounts:true` to the test summary. This was a code change only; staging test was not executed and CI remains unverified. No production/staging Sheets writes, deployment or pallet Save enablement. Next: confirm Node CI and staging readiness before enabling write endpoint.

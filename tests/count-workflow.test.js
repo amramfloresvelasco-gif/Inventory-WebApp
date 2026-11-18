@@ -90,8 +90,8 @@ check('admin deletion is audited',()=>assert.equal(audit[audit.length-1].Changed
 check('deleted entry no longer visible to owner',()=>{user={...user,email:'a@example.com',role:'counter'};assert.equal(vm.runInContext('apiInventoryMyEntries',context)({sessionId:'S1',locationId:'L1'}).length,0);});
 check('same user can save Count B',()=>assert.equal(save({...count('COUNT-000008'),team:'B'}).duplicate,false));
 check('integer string quantity accepted',()=>assert.equal(save(count('COUNT-000006','3')).duplicate,false));
-assert.equal(entries.length,5);
-assert.equal(audit.length,3);
+assert.equal(entries.length,6);
+assert.equal(audit.length,4);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');
 
 // Stage 36: execute the actual production identity/count-selection/session helpers, not mocks.

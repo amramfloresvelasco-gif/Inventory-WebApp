@@ -15,8 +15,8 @@ const journalSheet={getLastRow:()=>journal.length+1,getRange:(r,c,h,w)=>({
  setValues:values=>{assert.equal(w,6);journalWrites++;values.forEach(v=>journal.push(v.slice()));}
 })};
 const ctx=vm.createContext({Date,Number,String,Error,Set,Map,Math,JSON,
- invUser_:()=>({email:'counter@example.com',role:'counter',team:'A',teamLocked:true}),
- invTeam_:u=>u.team,
+ invUser_:()=>({email:'counter@example.com',role:'counter'}),
+ invCountSelection_:request=>{const team=String(request&&request.team||'').trim().toUpperCase();if(!['A','B'].includes(team))throw Error('Select Count A or Count B.');return team;},
  invSession_:id=>{assert.equal(id,'SESSION1');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
  products:[{WSItemID:'FG1',ClassOfMaterial:'Finished Good',UnitsPerCase:12}]}),
@@ -28,7 +28,7 @@ for(const name of ['PalletChildPlanner','PalletIntentContract','PalletFamilyReco
  'PalletIntentJournalProtocol','PalletIntentJournalStorage','PalletFamilyPersistence'])
  vm.runInContext(fs.readFileSync('src/'+name+'.gs','utf8'),ctx);
 const save=vm.runInContext('invSavePalletFamilyPrivate_',ctx);
-const request={parentSubmissionId:'STAGE49-PARENT-01',sessionId:'SESSION1',locationId:'L1',
+const request={team:'A',parentSubmissionId:'STAGE49-PARENT-01',sessionId:'SESSION1',locationId:'L1',
  productId:'FG1',pallets:2,casesPerPallet:24,partialCases:4,looseBottles:2,
  entryMethod:'QR',notes:'isolated test'};
 const result=save(request);

@@ -1281,3 +1281,8 @@ Commit `c18d9e61`: expanded `tests/count-workflow.test.js` to exercise one admin
 ## Stage 112 — staging isolation fixtures use one administrator (2026-11-18)
 
 Commit `e78dddee`: updated `testStagingPalletTeamIsolation()` synthetic, pure in-memory fixture in `staging/PalletTeamIsolationStaging.gs` to use the currently authenticated administrator email for both Count A and Count B. The same email must not allow cross-count acknowledgement; wrong email, session, location and product still block. Added `sameAdministratorBothCounts:true` to the test summary. This was a code change only; staging test was not executed and CI remains unverified. No production/staging Sheets writes, deployment or pallet Save enablement. Next: confirm Node CI and staging readiness before enabling write endpoint.
+
+
+## Stage 113 — independent Count A/B EMPTY assertions (2026-11-18)
+
+Commit `26076c74`: expanded isolated `tests/count-workflow.test.js` so one user can mark Count B EMPTY while Count A EMPTY is already active for the same location/session. Assert Count B retry idempotency, reject replaying Count B EMPTY ID as Count A, reject a Count B item while its EMPTY is active, and permit the same owner to delete Count B EMPTY. Adjusted expected rows/audit totals. **Not yet confirmed by executing tests.** GitHub commit-status endpoint returned no statuses, which does not verify GitHub Actions. No staging or production Sheets changes, deployment, or pallet-family Save enablement. Next run Node CI and resolve failures, then staging read-only preflight.

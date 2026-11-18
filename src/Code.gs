@@ -78,6 +78,11 @@ function apiInventorySelectTeam(input) {
     return {ok:true,team:requested,teamLocked:true};
   }finally{lock.releaseLock();}
 }
+function invCountSelection_(request) {
+  const team=String(request&&request.team||'').trim().toUpperCase();
+  if(!['A','B'].includes(team))throw new Error('Select Count A or Count B.');
+  return team;
+}
 function invTeam_(user) {
   if (!['A','B'].includes(user.team)) throw new Error('Team assignment is required.');
   if (!user.teamLocked) throw new Error('Lock your selected team before counting.');
@@ -113,7 +118,7 @@ function apiInventoryBootstrap() {
     sessions};
 }
 function apiInventorySaveCount(request) {
-  const started=Date.now(), user=invUser_(), team=invTeam_(user);
+  const started=Date.now(), user=invUser_(), team=invCountSelection_(request);
   if(!request || typeof request!=='object') throw new Error('Missing count.');
   const sessionId=String(request.sessionId||'').trim();
   const locationId=String(request.locationId||'').trim();
@@ -189,7 +194,7 @@ function apiInventorySaveCount(request) {
 }
 /** A team may mark a location EMPTY only when it has no active item entries there. */
 function apiInventoryMarkEmpty(request) {
-  const started=Date.now(),user=invUser_(),team=invTeam_(user);
+  const started=Date.now(),user=invUser_(),team=invCountSelection_(request);
   const sessionId=String(request&&request.sessionId||'').trim();
   const locationId=String(request&&request.locationId||'').trim();
   const entryId=String(request&&request.entryId||'').trim();

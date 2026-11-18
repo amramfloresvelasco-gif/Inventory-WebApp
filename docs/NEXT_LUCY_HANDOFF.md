@@ -1191,3 +1191,8 @@ Commit `d1448c06` adds `apiInventoryAdminPalletJournalInspect({parentSubmissionI
 ## Stage 95 — journal-aware administrator inspection regression (2026-11-17)
 
 Commit `c0dc8a26` adds `tests/pallet-journal-admin-inspect.test.js` covering journal not found, EMPTY, PARTIAL (including missing full-pallet and loose-bottles), COMPLETE, BLOCKED child mismatch, duplicate journal, invalid JSON, noncanonical intent, admin authorization and lock failure. Commit `db4dc654` adds the test to `.github/workflows/inventory-tests.yml`. No CI run result verified; tests added but not yet confirmed passing. No database writes, production deployment, or employee Save enablement. Remaining integration blockers: authorized staging administrator, distinct Team B counter, and journal row 4 partial family review. Next obtain actual test execution evidence, resolve any failures, then run authorized staging preflight and Team A/B end-to-end validation.
+
+
+## Stage 96 — GitHub Actions UI test regex syntax repair (2026-11-18)
+
+User ran `Inventory backend tests` in GitHub Actions and reported `tests/index-ui-syntax.test.js` line 41 SyntaxError: Invalid regular expression / Unterminated group (Node 22). Commit `08b4d3ec` fixes overescaped literal regexes in the Stage 72 employee pallet Save safety assertions (`\\b`, `\\s`, `\\(`, `\\.` -> proper regex escapes). This repairs the test syntax only; employee Save remains disabled and public pallet-family RPC remains prohibited. **No successful CI rerun confirmed yet**. Next verify GitHub Actions run; address any remaining failures before staging integration. User refreshed both clasp credential secrets; no deployment or staging database mutation was performed.

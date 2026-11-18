@@ -170,7 +170,7 @@ function updatePalletPreview(){
 for(const id of ['palletCount','qty','partialCases','looseBottles'])
  el(id).addEventListener('input',updatePalletPreview);
 function message(text,error=false){el('message').textContent=text;el('message').className=error?'error':''}
-function updateTeamControls(){if(!data)return;el('save').disabled=!data.sessions.length;el('markEmpty').disabled=!data.sessions.length;el('teamStatus').textContent='Each entry is saved under Count '+el('myTeam').value+'.';}
+function updateTeamControls(){if(!data)return;el('save').disabled=busy||!data.sessions.length;el('markEmpty').disabled=busy||!data.sessions.length;el('myTeam').disabled=busy;el('teamStatus').textContent='Each entry is saved under Count '+el('myTeam').value+'.';}
 el('myTeam').addEventListener('change',()=>{pendingId=null;pendingEmptyId=null;updateTeamControls();});
 function bootstrap(){invRun().withSuccessHandler(r=>{data=r;el('identity').textContent='Role: '+r.user.role;
  options('session',r.sessions.map(s=>s.id));options('warehouse',[...new Set(r.locations.map(x=>x.Warehouse))]);locations();search();updateLocationLock();el('app').hidden=false;if(r.user.role==='administrator'){el('admin').hidden=false;loadAdmin();}
@@ -192,7 +192,7 @@ function save(){if(busy)return;
      return;
    }
  }
- busy=true;el('save').disabled=true;
+ busy=true;updateTeamControls();
  if(!pendingId)pendingId='inv_'+crypto.randomUUID().replace(/-/g,'');
  const request={team:el('myTeam').value,entryId:pendingId,sessionId:el('session').value,locationId:el('location').value,
  productId:el('product').value,uom:el('uom').value,quantity:Number(qtyText),
@@ -238,7 +238,7 @@ el('markEmpty').addEventListener('click',()=>{
  if(!sessionId||!locationId){message('Select an open session and location.',true);return;}
  if(!confirm('Mark location '+locationId+' EMPTY for your team?'))return;
  if(!pendingEmptyId)pendingEmptyId='empty_'+crypto.randomUUID().replace(/-/g,'');
- busy=true;el('markEmpty').disabled=true;el('save').disabled=true;
+ busy=true;updateTeamControls();
  invRun().withSuccessHandler(r=>{
   busy=false;pendingEmptyId=null;updateTeamControls();
   message(r.alreadyEmpty?'Your team already marked this location EMPTY.':'Location marked EMPTY for your team.');

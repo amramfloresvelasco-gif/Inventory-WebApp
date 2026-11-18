@@ -42,3 +42,15 @@ function invPalletIntentEqual_(left,right) {
   if(!left||!right)return false;
   return JSON.stringify(left)===JSON.stringify(right);
 }
+
+/** Build a canonical intent for the authenticated user and their explicit
+ * Count A/B selection. Never accept an email or identity from the browser.
+ * This helper is pure and does not authorize writes or bypass the journal.
+ */
+function invPalletIntentForUser_(request,user) {
+  if(!user||typeof user.email!=='string'||!user.email.trim())
+    throw new Error('Authenticated user required.');
+  const team=String(request&&request.team||'').trim().toUpperCase();
+  if(!['A','B'].includes(team))throw new Error('Select Count A or Count B.');
+  return invPalletIntent_(request,{email:user.email,team});
+}

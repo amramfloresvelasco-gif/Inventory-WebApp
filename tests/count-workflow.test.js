@@ -87,11 +87,23 @@ reject('duplicate active product blocks count',()=>save(count('COUNT-000007')));
 reference.products.pop();
 check('admin can remove counter entry',()=>{user={...user,email:'admin@example.com',role:'administrator'};assert.equal(remove({sessionId:'S1',entryId:'COUNT-000004'}).ok,true);});
 check('admin deletion is audited',()=>assert.equal(audit[audit.length-1].ChangedBy,'admin@example.com'));
+check('administrator saves Count A without assigned team',()=>assert.equal(save({...count('ADMIN-COUNT-A-001'),team:'A'}).duplicate,false));
+check('same administrator saves Count B without assigned team',()=>assert.equal(save({...count('ADMIN-COUNT-B-001'),team:'B'}).duplicate,false));
+check('administrator Count A retry',()=>assert.equal(save({...count('ADMIN-COUNT-A-001'),team:'A'}).duplicate,true));
+check('administrator Count B retry',()=>assert.equal(save({...count('ADMIN-COUNT-B-001'),team:'B'}).duplicate,true));
+check('administrator entries retain independent count sides',()=>{
+ const a=entries.find(x=>x.EntryID==='ADMIN-COUNT-A-001');
+ const b=entries.find(x=>x.EntryID==='ADMIN-COUNT-B-001');
+ assert.equal(a.Team,'A');assert.equal(b.Team,'B');
+ assert.equal(a.EnteredBy,'admin@example.com');assert.equal(b.EnteredBy,'admin@example.com');
+});
+check('administrator removes Count A fixture',()=>assert.equal(remove({sessionId:'S1',entryId:'ADMIN-COUNT-A-001'}).ok,true));
+check('administrator removes Count B fixture',()=>assert.equal(remove({sessionId:'S1',entryId:'ADMIN-COUNT-B-001'}).ok,true));
 check('deleted entry no longer visible to owner',()=>{user={...user,email:'a@example.com',role:'counter'};assert.equal(vm.runInContext('apiInventoryMyEntries',context)({sessionId:'S1',locationId:'L1'}).length,0);});
 check('same user can save Count B',()=>assert.equal(save({...count('COUNT-000008'),team:'B'}).duplicate,false));
 check('integer string quantity accepted',()=>assert.equal(save(count('COUNT-000006','3')).duplicate,false));
-assert.equal(entries.length,6);
-assert.equal(audit.length,4);
+assert.equal(entries.length,8);
+assert.equal(audit.length,6);
 console.log('PASS '+passed+'/'+passed+' mocked workflow checks; no external services accessed.');
 
 // Stage 36: execute the actual production identity/count-selection/session helpers, not mocks.

@@ -22,6 +22,9 @@ assert(!html.includes('id="userLocked"'),'Admin must not override counter team l
 assert(script[1].includes("if(!/^[0-9]+$/.test(qtyText)"),'Client must reject blank or fractional quantities');
 assert(script[1].includes("team:el('myTeam').value"),'Each count must submit the selected A/B side');
 assert(script[1].includes("updateTeamControls();"),'Submission controls must restore availability');
+assert(script[1].includes("el('myTeam').disabled=busy"),'Count selection must be frozen while a submission is in flight');
+assert(script[1].includes("el('save').disabled=busy||!data.sessions.length"),'Save must stay disabled during pending RPC');
+assert(script[1].includes("el('markEmpty').disabled=busy||!data.sessions.length"),'EMPTY must stay disabled during pending RPC');
 assert(!html.includes('id="teamAction"'),'Count selection must not require locking');
 console.log('Inventory counting UI guard checks passed');
 

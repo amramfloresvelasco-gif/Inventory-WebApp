@@ -1271,3 +1271,8 @@ Commit `28bdf1ba`: expanded private pallet persistence regression to reject miss
 ## Stage 110 — Count A EMPTY versus Count B independence (2026-11-18)
 
 Commits `475701c7`, `eb15cdb1`: `tests/count-workflow.test.js` now verifies the same authenticated counter can save and idempotently retry a Count B item while an active Count A EMPTY exists for the same location/session; reusing the Count B ID under Count A must fail, and the owner may remove their Count B entry. Updated total row and audit expectations for the additional save/delete. **Tests have not been run or confirmed green.** No Apps Script deployment, staging writes, or production writes. Keep pallet-family Save disabled until verified CI and staging readiness.
+
+
+## Stage 111 — one administrator saves both counts (2026-11-18)
+
+Commit `c18d9e61`: expanded `tests/count-workflow.test.js` to exercise one administrator identity saving Count A and Count B without a permanent team assignment, independently retrying both entries, asserting their Team and EnteredBy values, and deleting both fixtures. Adjusted expected in-memory entry/audit totals. This is **unexecuted regression coverage**, not a confirmed green test run. No database changes or deployment. Next priority: obtain GitHub Actions results and fix any failures, then staging-only read-only preflight; employee pallet-family Save remains disabled.

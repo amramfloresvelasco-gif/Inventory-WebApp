@@ -57,3 +57,61 @@ function apiInventoryAdminPalletFamilyInspect(request) {
       team:String(first.Team),enteredBy:String(first.EnteredBy)};
   }finally{lock.releaseLock();}
 }
+
+/** Administrator-only journal-aware inspection. Unlike structural-only
+ * inspection, this verifies expected child count against the durable intent.
+ * Read-only; never repairs or enables employee pallet submission.
+ */
+function apiInventoryAdminPalletJournalInspect(request) {
+  invRequireAdmin_();
+  const parent=String(request&&request.parentSubmissionId||'').trim();
+  if(!/^[A-Za-z0-9_-]{12,90}$/.test(parent))
+    throw new Error('Valid parent submission ID required.');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw new Error('Inventory busy; retry inspection.');
+  try {
+    const journal=invPalletJournalRows_().filter(r=>
+      String(r.ParentSubmissionID)===parent);
+    if(journal.length!==1)return {status:'REVIEW_REQUIRED',
+      reason:journal.length?'DUPLICATE_JOURNAL':'JOURNAL_NOT_FOUND',
+      journalCount:journal.length,readOnly:true};
+    const record=journal[0];
+    let intent;
+    try {intent=JSON.parse(String(record.IntentJSON||''));}
+    catch(_) {return {status:'REVIEW_REQUIRED',reason:'INVALID_INTENT_JSON',readOnly:true};}
+    if(!intent||intent.parentSubmissionId!==parent||
+       String(record.SessionID)!==intent.sessionId||
+       String(record.CreatedBy).trim().toLowerCase()!==intent.email||
+       !['PREPARED','COMMITTED'].includes(String(record.Status).toUpperCase())||
+       !Array.isArray(intent.children)||!intent.children.length)
+      return {status:'REVIEW_REQUIRED',reason:'INVALID_JOURNAL_RECORD',readOnly:true};
+    const full=intent.children.filter(x=>x.kind==='full-pallet');
+    const partial=intent.children.filter(x=>x.kind==='partial-pallet');
+    const loose=intent.children.filter(x=>x.kind==='loose-bottles');
+    if(partial.length>1||loose.length>1||
+       full.some(x=>x.quantity!==full[0].quantity))
+      return {status:'REVIEW_REQUIRED',reason:'INVALID_CHILD_PLAN',readOnly:true};
+    let canonical;
+    try {
+      canonical=invPalletIntent_({
+        parentSubmissionId:parent,sessionId:intent.sessionId,
+        locationId:intent.locationId,productId:intent.productId,
+        entryMethod:intent.entryMethod,notes:intent.notes,
+        pallets:full.length,casesPerPallet:full.length?full[0].quantity:0,
+        partialCases:partial.length?partial[0].quantity:0,
+        looseBottles:loose.length?loose[0].quantity:0
+      },{email:intent.email,team:intent.team});
+    }catch(_) {return {status:'REVIEW_REQUIRED',reason:'INVALID_CHILD_PLAN',readOnly:true};}
+    if(!invPalletIntentEqual_(canonical,intent))
+      return {status:'REVIEW_REQUIRED',reason:'NONCANONICAL_INTENT',readOnly:true};
+    const entries=invRows_('CountEntries');
+    const scope={sessionId:intent.sessionId,locationId:intent.locationId,
+      productId:intent.productId,team:intent.team,email:intent.email,
+      entryMethod:intent.entryMethod,notes:intent.notes};
+    const outcome=invClassifyPalletFamily_(intent,entries,scope);
+    return {status:outcome.state,readOnly:true,adminReviewRequired:outcome.state!=='COMPLETE',
+      expectedChildren:intent.children.length,matchedChildren:outcome.matched.length,
+      missingChildren:outcome.missing.length,issueCount:outcome.issues.length,
+      missingKinds:outcome.missing.map(c=>c.kind),journalStatus:String(record.Status)};
+  }finally {lock.releaseLock();}
+}

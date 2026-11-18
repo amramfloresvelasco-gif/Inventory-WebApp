@@ -15,16 +15,16 @@ function testStagingPalletTeamIsolation() {
     WSItemID:'STAGING-FG-001',EntryMethod:'Manual',Notes:'team isolation fixture',
     Status:'ACTIVE',PalletMultiplier:1,ParentEntryID:parent};
   const a={sessionId:base.SessionID,locationId:base.LocationID,
-    productId:base.WSItemID,team:'A',email:'counter-a@example.invalid',
+    productId:base.WSItemID,team:'A',email:user.email,
     entryMethod:'Manual',notes:base.Notes};
   const b={...a,team:'B'};
   const rows=expected.children.map(child=>({...base,EntryID:child.entryId,
     UOM:child.uom,Quantity:child.quantity,Team:'A',EnteredBy:a.email}));
   const tests=[
-    ['Team A complete',rows,a,'COMPLETE'],
-    ['Team B cannot acknowledge A',rows,b,'BLOCKED'],
-    ['Team B own complete',rows.map(x=>({...x,Team:'B',EnteredBy:b.email})),b,'COMPLETE'],
-    ['Team A cannot acknowledge B',rows.map(x=>({...x,Team:'B',EnteredBy:b.email})),a,'BLOCKED'],
+    ['Count A complete for administrator',rows,a,'COMPLETE'],
+    ['Count B cannot acknowledge A',rows,b,'BLOCKED'],
+    ['Count B complete for same administrator',rows.map(x=>({...x,Team:'B',EnteredBy:b.email})),b,'COMPLETE'],
+    ['Count A cannot acknowledge B',rows.map(x=>({...x,Team:'B',EnteredBy:b.email})),a,'BLOCKED'],
     ['One missing child',rows.slice(0,1),a,'PARTIAL'],
     ['No children',[],a,'EMPTY'],
     ['Wrong session',rows,{...a,sessionId:'OTHER'},'BLOCKED'],
@@ -38,7 +38,8 @@ function testStagingPalletTeamIsolation() {
     console.log('PASS '+name+' => '+actual);
   }
   console.log(JSON.stringify({phase:'PASS',stagingOnly:true,pureInMemory:true,
-    testCases:tests.length,databaseWrites:0,teamAandBIsolation:true}));
+    testCases:tests.length,databaseWrites:0,teamAandBIsolation:true,
+    sameAdministratorBothCounts:true}));
 }
 
 /** Stage 80: real staging database preflight, strictly read-only.

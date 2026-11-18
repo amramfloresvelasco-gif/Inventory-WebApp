@@ -1261,3 +1261,8 @@ Commit `9feab8a3`: `tests/count-workflow.test.js` still invoked undefined `realT
 ## Stage 108 — pallet persistence suite uses production count validator (2026-11-18)
 
 Commit `69d36d1d`: replaced the simplified `invCountSelection_` test mock in `tests/pallet-family-persistence.test.js` with loading the actual `src/Code.gs` implementation. Restores mocked user, session, reference, rows, and sheet adapters after VM source evaluation so the tests remain isolated from Apps Script and Sheets. The tests now exercise the real selected-count validation alongside the private journal writer. **Not yet executed**: this harness change must be checked by GitHub Actions before it can be considered passing. GitHub commit status endpoint reported no statuses; that does not establish CI outcome. Container GitHub network lookup failed. No database writes, deployment, or public pallet Save activation.
+
+
+## Stage 109 — invalid count rejection and same-author audit assertions (2026-11-18)
+
+Commit `28bdf1ba`: expanded private pallet persistence regression to reject missing, invalid, and null selected count before acquiring lock or creating journal/physical rows, and assert Count A and B children and journal intents preserve the same authenticated author's email. This is source-level test coverage, **not evidence of a passing test run**. No production/staging writes, no deployment, no public pallet Save RPC. Next obtain GitHub Actions results or run the Node suite in a verified environment; fix any failures before staging and enablement.

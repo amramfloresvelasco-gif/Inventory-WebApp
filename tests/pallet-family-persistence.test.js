@@ -44,6 +44,15 @@ const save=vm.runInContext('invSavePalletFamilyPrivate_',context);
 const request={team:'A',parentSubmissionId:'PARENT-123456',sessionId:'SESSION1',
  locationId:'L1',productId:'FG1',pallets:5,casesPerPallet:100,
  partialCases:50,looseBottles:4,entryMethod:'Manual',notes:'test'};
+// Count selection is required and bound to the authenticated user before writes.
+const beforeInvalidWrites=writes, beforeInvalidReleases=releases;
+for(const team of ['', 'C', null]){
+ assert.throws(()=>save({...request,team}),/Select Count A or Count B/);
+}
+assert.equal(rows.length,0);
+assert.equal(journal.length,0);
+assert.equal(writes,beforeInvalidWrites);
+assert.equal(releases,beforeInvalidReleases);
 const first=save(request);
 assert.equal(first.childCount,7);
 assert.equal(first.totalCases,550);
@@ -154,6 +163,9 @@ const teamBRequest={...teamARequest,team:'B',parentSubmissionId:'PARENT-TEAM-B-0
 const teamBResult=save(teamBRequest);
 assert.equal(teamBResult.childCount,4);
 assert.equal(rows.filter(x=>x.Team==='B').length,4);
+assert(rows.filter(x=>x.Team==='A').every(x=>x.EnteredBy==='same-admin@example.com'));
+assert(rows.filter(x=>x.Team==='B').every(x=>x.EnteredBy==='same-admin@example.com'));
+assert(journal.every(x=>JSON.parse(x.IntentJSON).email==='same-admin@example.com'));
 assert.equal(rows.length,8);
 assert.equal(journal.length,2);
 const writesAfterBothTeams=writes;

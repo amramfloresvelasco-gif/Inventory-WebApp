@@ -4,7 +4,7 @@
  */
 function invSavePalletFamilyPrivate_(request) {
   if(!request||typeof request!=='object')throw new Error('Missing pallet submission.');
-  const user=invUser_(),team=invTeam_(user);
+  const user=invUser_(),team=invCountSelection_(request);
   const sessionId=String(request.sessionId||'').trim();
   const locationId=String(request.locationId||'').trim();
   const productId=String(request.productId||'').trim();
@@ -38,7 +38,7 @@ function invSavePalletFamilyPrivate_(request) {
     const scope={sessionId,locationId,productId,team,email:user.email,entryMethod,notes};
     // Journal intent must be durable before any physical child record is written.
     // An unjournaled existing family is an orphan and must never be acknowledged.
-    const intent=invPalletIntent_(request,{email:user.email,team});
+    const intent=invPalletIntentForUser_(request,user);
     const journalDecision=invPalletJournalDecision_(intent,invPalletJournalRows_());
     if(journalDecision.action==='BLOCK')
       throw new Error('Pallet journal '+journalDecision.reason+'; administrator review required.');

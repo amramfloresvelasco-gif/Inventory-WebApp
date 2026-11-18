@@ -1310,3 +1310,8 @@ User reran three previously failing suites. `tests/pallet-writer-prepared-retry.
 ## Stage 117 — user-confirmed UI test green (2026-11-18)
 
 After pulling `af51b48`, user ran `node tests/index-ui-syntax.test.js` and all checks passed: UI syntax/CSV, counting controls, pallet preview, unsupported batch guard, Stage 72 disabled Save/public RPC guard, Stage 78 breakdown, Stage 79 stale preview clearing. The other two formerly failing suites were confirmed green in Stage 116. **Full suite has not yet been rerun after fixes.** No staging or production writes, no deployment, pallet-family Save still disabled. Next: one final full-suite local test run, then staging readiness review.
+
+
+## Stage 118 — full local Node regression suite confirmed green (2026-11-18)
+
+User pulled main through commit `9589966` and ran `for %f in (tests\\*.test.js) do @node "%f" || echo FAILED: %f` in Windows CMD. Entire reported test run completed with **zero `FAILED:` lines**. Confirmed counting/EMPTY/deletion (50/50), UI Stage 79, pallet writer persistence/retry/storage, pallet journal recovery/diagnostics, ProductIndex, staging preflight mocks, comparison, and extended reports. This confirms local Node regression tests, **not** real staging Apps Script/Sheets integration. No deployment, staging or production Sheets writes, or pallet-family Save activation. Next step: inspect current staging readiness and administrator authorization using read-only tools, then plan controlled staging integration only with explicit approval.

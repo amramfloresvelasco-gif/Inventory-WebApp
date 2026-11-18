@@ -1286,3 +1286,12 @@ Commit `e78dddee`: updated `testStagingPalletTeamIsolation()` synthetic, pure in
 ## Stage 113 — independent Count A/B EMPTY assertions (2026-11-18)
 
 Commit `26076c74`: expanded isolated `tests/count-workflow.test.js` so one user can mark Count B EMPTY while Count A EMPTY is already active for the same location/session. Assert Count B retry idempotency, reject replaying Count B EMPTY ID as Count A, reject a Count B item while its EMPTY is active, and permit the same owner to delete Count B EMPTY. Adjusted expected rows/audit totals. **Not yet confirmed by executing tests.** GitHub commit-status endpoint returned no statuses, which does not verify GitHub Actions. No staging or production Sheets changes, deployment, or pallet-family Save enablement. Next run Node CI and resolve failures, then staging read-only preflight.
+
+
+## Stage 114 — user-confirmed local Node test results (2026-11-18)
+
+User cloned the repository locally and executed from `C:\\Users\\amram\\Inventory-WebApp\\Inventory-WebApp`:
+- `node tests/count-workflow.test.js` — PASS 50/50 mocked workflow checks, plus all Stage 36 production identity/count-selection/session helper checks.
+- `node tests/pallet-family-persistence.test.js` — PASS; output confirms Stages 32, 33, 35, 73, 74, 75, 77 and private pallet batch writer regression checks.
+
+This is **confirmed local execution of two suites**, not confirmation of the entire 16-step GitHub Actions suite or a real staging integration. No Sheets writes, deployment, or pallet-family Save enablement. Next run the remaining Node tests (or the full workflow) and inspect staging read-only prerequisites before considering a controlled staging write test.

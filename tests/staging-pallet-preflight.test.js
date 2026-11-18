@@ -1,11 +1,11 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const HEADERS=['ParentSubmissionID','SessionID','IntentJSON','Status','CreatedAt','CreatedBy'];
-let journal=[],entries=[],teamB=true,adminAccount=true,adminAssignedTeam='',scriptAuthorized=true;
+let journal=[],entries=[],teamB=true,adminAccount=true,adminAssignedTeam='',userRole='administrator',scriptAuthorized=true;
 const context=vm.createContext({
   console:{log:()=>{}},Set,Number,String,JSON,
   invAssertStagingOnly_:()=>{if(!scriptAuthorized)throw Error('Wrong staging project')},
-  invUser_:()=>({email:'abe.flores@bsbco.com',role:'administrator'}),
+  invUser_:()=>({email:'staging-admin@example.com',role:userRole}),
   invRows_:name=>({
     AppUsers:[...(adminAccount?[{Email:'admin@example.com',Role:'administrator',Status:'Active',AssignedTeam:adminAssignedTeam,TeamLocked:!!adminAssignedTeam}]:[]),
       {Email:'a@example.com',Role:'counter',Status:'Active',AssignedTeam:'A',TeamLocked:true},
@@ -29,6 +29,9 @@ for(const file of ['PalletChildPlanner','PalletIntentContract','PalletFamilyReco
 vm.runInContext(fs.readFileSync('staging/PalletTeamIsolationStaging.gs','utf8'),context);
 const preflight=vm.runInContext('testStagingPalletIntegrationPreflight',context);
 assert.equal(preflight().readyForTwoAccountTest,true);
+userRole='counter';
+assert.throws(()=>preflight(),/authorized staging administrator/);
+userRole='administrator';
 adminAccount=false;
 assert(preflight().blockers.includes('NO_ACTIVE_STAGING_ADMINISTRATOR'));
 assert.equal(preflight().readyForTwoAccountTest,false);

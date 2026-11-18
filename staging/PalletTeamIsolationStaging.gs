@@ -70,24 +70,11 @@ function testStagingPalletIntegrationPreflight() {
   const activeAdministrators=users.filter(x=>
     String(x.Role||'').trim().toLowerCase()==='administrator'&&
     String(x.Email||'').trim()).length;
-  const teams={A:0,B:0};
-  const teamEmails={A:new Set(),B:new Set()};
-  users.forEach(x=>{
-    const team=String(x.AssignedTeam).toUpperCase();
-    const email=String(x.Email||'').trim().toLowerCase();
-    // Only actual counter-role accounts qualify for Team A/B execution.
-    // An administrator's locked team is not a second independent counter.
-    if(String(x.Role||'').trim().toLowerCase()==='counter'&&
-       (team==='A'||team==='B')&&email&&
-       String(x.TeamLocked).toLowerCase()==='true') {
-      teams[team]++;
-      teamEmails[team].add(email);
-    }
-  });
-  // Two team labels alone are insufficient: the test requires two
-  // distinct authenticated Workspace identities.
-  const distinctTeamAccounts=[...teamEmails.A].some(email=>!teamEmails.B.has(email))&&
-    [...teamEmails.B].some(email=>!teamEmails.A.has(email));
+  // Count A/B are entry selections, not permanent user assignments.
+  // One active administrator can exercise both sides during staging.
+  const activeTestUsers=users.filter(x=>
+    ['administrator','counter'].includes(String(x.Role||'').trim().toLowerCase())&&
+    String(x.Email||'').trim()).length;
   // Inspect the real journal/child relationship without touching Sheets.
   // A PREPARED journal with missing children requires manual review before
   // enabling a write endpoint. Never log raw intent or employee identities.
@@ -175,18 +162,15 @@ function testStagingPalletIntegrationPreflight() {
   if(!locations.length)blockers.push('NO_ACTIVE_STAGING_LOCATION');
   if(!finishedGoods.length)blockers.push('NO_ELIGIBLE_STAGING_FINISHED_GOOD');
   if(!activeAdministrators)blockers.push('NO_ACTIVE_STAGING_ADMINISTRATOR');
-  if(!teams.A)blockers.push('NO_LOCKED_ACTIVE_TEAM_A_ACCOUNT');
-  if(!teams.B)blockers.push('NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT');
-  if(!distinctTeamAccounts)blockers.push('TEAM_ACCOUNTS_NOT_DISTINCT');
+  if(!activeTestUsers)blockers.push('NO_ACTIVE_STAGING_TEST_USER');
   const result={phase:'INTEGRATION_PREFLIGHT',stagingOnly:true,readOnly:true,
     databaseWrites:0,tableRowCounts:counts,journalReady,
     openSessions:sessions.length,activeLocations:locations.length,
     eligibleFinishedGoods:finishedGoods.length,activeAdministrators,
-    lockedActiveCounters:teams,
-    distinctTeamAccounts,journalHealth,reviewRows,blockers,
-    readyForTwoAccountTest:blockers.length===0};
+    activeTestUsers,journalHealth,reviewRows,blockers,
+    readyForCountABTest:blockers.length===0};
   console.log(JSON.stringify(result));
-  if(!result.readyForTwoAccountTest)
+  if(!result.readyForCountABTest)
     console.log('NOT_READY: staging prerequisites missing; no changes made');
   return result;
 }

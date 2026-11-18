@@ -1246,3 +1246,8 @@ Commits `88e5eda9` and `8b33eadb`: `updateTeamControls()` now disables Count A/B
 ## Stage 105 — remove legacy team-lock API (2026-11-18)
 
 Commits `8116c33f`, `b6deeb8a`: removed obsolete `apiInventorySelectTeam` RPC and `invTeam_` helper from `src/Code.gs`; `invUser_` returns only email and role, and bootstrap returns role only. Count A/B is still validated from each request, including the private pallet writer. AppUsers `AssignedTeam` and `TeamLocked` columns remain for schema compatibility, but no longer control counting. Removed obsolete team mock from counting regression. No database writes, deployment, or CI verification. Need full test run; inspect any remaining tests or staging helpers that assumed the old invUser_ shape. **Do not enable pallet-family Save** until tests and staging readiness are confirmed.
+
+
+## Stage 106 — one-account A/B pallet family regression (2026-11-18)
+
+Commits `9ffabfd5`, `710e808c`: revised `tests/pallet-family-persistence.test.js` to remove mock AssignedTeam/TeamLocked, exercise two distinct immutable family intents on Count A and B using the same authenticated email, verify independent idempotent retries and reject attempts to reuse a parent ID under the opposite count. Corrected stale identity in cross-count retry test. No staging or production writes, no deployment. **CI/test execution remains unverified**; GitHub connector cannot list/dispatch push workflow runs and container cannot resolve github.com. Next obtain actual Actions results (user can paste failing step if needed) or fetch all required files into runnable environment, then fix failures. Keep employee pallet Save disabled and staging partial journal untouched.

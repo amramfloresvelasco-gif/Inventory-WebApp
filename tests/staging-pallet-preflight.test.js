@@ -28,18 +28,19 @@ for(const file of ['PalletChildPlanner','PalletIntentContract','PalletFamilyReco
  vm.runInContext(fs.readFileSync('src/'+file+'.gs','utf8'),context);
 vm.runInContext(fs.readFileSync('staging/PalletTeamIsolationStaging.gs','utf8'),context);
 const preflight=vm.runInContext('testStagingPalletIntegrationPreflight',context);
-assert.equal(preflight().readyForTwoAccountTest,true);
+assert.equal(preflight().readyForCountABTest,true);
 userRole='counter';
 assert.throws(()=>preflight(),/authorized staging administrator/);
 userRole='administrator';
 adminAccount=false;
 assert(preflight().blockers.includes('NO_ACTIVE_STAGING_ADMINISTRATOR'));
-assert.equal(preflight().readyForTwoAccountTest,false);
+assert.equal(preflight().readyForCountABTest,false);
 adminAccount=true;
 teamB=false;
 adminAssignedTeam='B';
-assert(preflight().blockers.includes('NO_LOCKED_ACTIVE_TEAM_B_ACCOUNT'));
-assert.equal(preflight().lockedActiveCounters.B,0);
+// Administrator alone is sufficient to test Count A and Count B.
+assert.equal(preflight().readyForCountABTest,true);
+assert.equal(preflight().activeTestUsers,2);
 adminAssignedTeam='';
 teamB=true;
 const intent=vm.runInContext('invPalletIntent_',context)({
@@ -49,7 +50,7 @@ const intent=vm.runInContext('invPalletIntent_',context)({
 journal=[[intent.parentSubmissionId,'S1',JSON.stringify(intent),'PREPARED','now',intent.email]];
 assert.equal(preflight().journalHealth.empty,1);
 assert(preflight().blockers.includes('PALLET_PREPARED_INTENT_WITHOUT_CHILDREN'));
-assert.equal(preflight().readyForTwoAccountTest,false);
+assert.equal(preflight().readyForCountABTest,false);
 entries=[{EntryID:intent.children[0].entryId,ParentEntryID:intent.parentSubmissionId,
  SessionID:'S1',LocationID:'L1',WSItemID:'FG1',Team:'A',EnteredBy:'a@example.com',
  EntryMethod:'Manual',Notes:'',UOM:'Case',Quantity:10,PalletMultiplier:1,Status:'ACTIVE'}];
@@ -68,7 +69,7 @@ assert.equal(preflight().journalHealth.partial,1);
 assert.equal(preflight().reviewRows[0].journalRow,2);
 assert.equal(preflight().reviewRows[0].missingChildren,1);
 assert.equal(preflight().reviewRows[0].matchedChildren,1);
-assert.equal(preflight().readyForTwoAccountTest,false);
+assert.equal(preflight().readyForCountABTest,false);
 // A duplicate journal parent or a forged child plan must block readiness.
 journal.push([...journal[0]]);
 assert.equal(preflight().journalHealth.invalid,1);
@@ -84,7 +85,7 @@ journal[0][2]='invalid json';
 assert(preflight().blockers.includes('PALLET_JOURNAL_REQUIRES_ADMIN_REVIEW'));
 journal=[];
 assert.equal(preflight().journalHealth.orphan,1);
-assert.equal(preflight().readyForTwoAccountTest,false);
+assert.equal(preflight().readyForCountABTest,false);
 scriptAuthorized=false;
 assert.throws(()=>preflight(),/Wrong staging project/);
 console.log('Staging preflight: readiness, team isolation, journal integrity, orphan and staging guard passed');

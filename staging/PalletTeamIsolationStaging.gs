@@ -48,7 +48,7 @@ function testStagingPalletTeamIsolation() {
 function testStagingPalletIntegrationPreflight() {
   invAssertStagingOnly_();
   const user=invUser_();
-  if(user.email!=='abe.flores@bsbco.com'||user.role!=='administrator')
+  if(user.role!=='administrator')
     throw Error('BLOCKED: authorized staging administrator required');
   const sheets=['AppUsers','InventorySessions','Locations','ProductIndex','CountEntries'];
   const counts={};

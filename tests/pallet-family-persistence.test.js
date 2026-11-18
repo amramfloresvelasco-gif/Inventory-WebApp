@@ -1,11 +1,11 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const keys=['EntryID','SessionID','Team','LocationID','WSItemID','UOM','Quantity','ParentEntryID','PalletMultiplier','EnteredBy','EnteredAt','EntryMethod','Notes','Status'];
-let activeEmail='counter@example.com',activeTeam='A',teamLocked=false,sessionAuthorized=true;
+let activeEmail='counter@example.com',sessionAuthorized=true;
 let rows=[],journal=[],writes=0,releases=0,failWrite=false,partialWrite=false,lockAvailable=true,failJournal=false,failJournalReconcile=false;
 const context=vm.createContext({
  Date,Number,String,Error,Set,Map,Math,
- invUser_:()=>({email:activeEmail,role:'counter',team:activeTeam,teamLocked}),
+ invUser_:()=>({email:activeEmail,role:'counter'}),
  invCountSelection_:request=>{const team=String(request&&request.team||'').trim().toUpperCase();if(!['A','B'].includes(team))throw Error('Select Count A or Count B.');return team;},
  invSession_:id=>{if(!sessionAuthorized)throw Error('Session access denied');if(id!=='SESSION1')throw Error('Unknown session');},
  invReference_:()=>({locations:[{LocationID:'L1'}],
@@ -102,10 +102,10 @@ const beforeScopeWrites=writes;
 activeEmail='other@example.com';
 assert.throws(()=>save(scoped),/INTENT_CHANGED/);
 assert.equal(writes,beforeScopeWrites);
-activeEmail='counter@example.com';activeTeam='B';
+activeEmail='counter@example.com';
 assert.throws(()=>save({...scoped,team:'B'}),/INTENT_CHANGED/);
 assert.equal(writes,beforeScopeWrites);
-activeTeam='A';
+
 assert.throws(()=>save({...scoped,entryMethod:'Barcode'}),/INTENT_CHANGED/);
 assert.equal(writes,beforeScopeWrites);
 // Two journal rows for the same parent are never silently deduplicated.
@@ -136,13 +136,13 @@ assert.equal(save(guarded).childCount,7);
 assert.equal(journal.length,1);
 // Stage 73: two independent Team A/B family saves in one location/session.
 // Each team must own its own immutable parent ID and may retry only its own.
-rows=[];journal=[];activeTeam='A';activeEmail='counter-a@example.com';
+rows=[];journal=[];activeEmail='same-admin@example.com';
 const teamARequest={...request,parentSubmissionId:'PARENT-TEAM-A-001',pallets:2,partialCases:3,looseBottles:1};
 const teamAResult=save(teamARequest);
 assert.equal(teamAResult.childCount,4);
 assert.equal(teamAResult.totalCases,203);
 assert.equal(rows.filter(x=>x.Team==='A').length,4);
-activeTeam='B';activeEmail='counter-b@example.com';
+activeEmail='same-admin@example.com';
 const teamBRequest={...teamARequest,team:'B',parentSubmissionId:'PARENT-TEAM-B-001'};
 const teamBResult=save(teamBRequest);
 assert.equal(teamBResult.childCount,4);
@@ -150,12 +150,13 @@ assert.equal(rows.filter(x=>x.Team==='B').length,4);
 assert.equal(rows.length,8);
 assert.equal(journal.length,2);
 const writesAfterBothTeams=writes;
-assert.throws(()=>save(teamARequest),/INTENT_CHANGED/);
+assert.equal(save(teamARequest).duplicate,true);
+assert.throws(()=>save({...teamARequest,team:'B'}),/INTENT_CHANGED/);
 assert.equal(writes,writesAfterBothTeams);
 assert.equal(save(teamBRequest).duplicate,true);
 assert.equal(writes,writesAfterBothTeams);
-activeTeam='A';activeEmail='counter-a@example.com';
-assert.throws(()=>save(teamBRequest),/INTENT_CHANGED/);
+activeEmail='counter-a@example.com';
+assert.throws(()=>save({...teamBRequest,team:'A'}),/INTENT_CHANGED/);
 assert.equal(save(teamARequest).duplicate,true);
 assert.equal(writes,writesAfterBothTeams);
 assert.equal(rows.length,8);
@@ -163,7 +164,7 @@ assert.equal(rows.filter(x=>x.Team==='A'&&x.ParentEntryID===teamARequest.parentS
 assert.equal(rows.filter(x=>x.Team==='B'&&x.ParentEntryID===teamBRequest.parentSubmissionId).length,4);
 // Stage 74: a team-specific EMPTY must block only that team's family.
 // An interrupted Team B family must never affect Team A's separate family.
-rows=[];journal=[];activeTeam='A';activeEmail='counter-a@example.com';
+rows=[];journal=[];activeEmail='counter-a@example.com';
 const emptyA={EntryID:'EMPTY-TEAM-A-001',SessionID:'SESSION1',LocationID:'L1',
   Team:'A',EntryMethod:'EMPTY',Status:'ACTIVE'};
 rows.push(emptyA);
@@ -172,12 +173,12 @@ const writesBeforeEmpty=writes;
 assert.throws(()=>save(aBlocked),/Remove your team EMPTY entry/);
 assert.equal(writes,writesBeforeEmpty);
 assert.equal(journal.length,0);
-activeTeam='B';activeEmail='counter-b@example.com';
+activeEmail='counter-b@example.com';
 const bAllowed={...teamBRequest,parentSubmissionId:'PARENT-EMPTY-B-001'};
 assert.equal(save(bAllowed).childCount,4);
 assert.equal(rows.filter(x=>x.ParentEntryID===bAllowed.parentSubmissionId).length,4);
 assert.equal(journal.length,1);
-activeTeam='A';activeEmail='counter-a@example.com';
+activeEmail='counter-a@example.com';
 rows=rows.filter(x=>x!==emptyA);
 const aAllowed={...teamARequest,parentSubmissionId:'PARENT-A-AFTER-EMPTY'};
 assert.equal(save(aAllowed).childCount,4);
@@ -186,16 +187,16 @@ assert.equal(rows.filter(x=>x.ParentEntryID===aAllowed.parentSubmissionId).lengt
 // Simulate missing Team B child. A's complete family must remain idempotent.
 rows=rows.filter(x=>x.EntryID!==bAllowed.parentSubmissionId+'-B');
 const writesBeforePartial=writes;
-activeTeam='B';activeEmail='counter-b@example.com';
+activeEmail='counter-b@example.com';
 assert.throws(()=>save(bAllowed),/PARTIAL/);
 assert.equal(writes,writesBeforePartial);
-activeTeam='A';activeEmail='counter-a@example.com';
+activeEmail='counter-a@example.com';
 assert.equal(save(aAllowed).duplicate,true);
 assert.equal(writes,writesBeforePartial);
 assert.equal(journal.length,2);
 // Stage 75: a previously complete family cannot be acknowledged if the
 // journal's independent reconciliation is unavailable or fails closed.
-rows=[];journal=[];activeTeam='A';activeEmail='counter-a@example.com';
+rows=[];journal=[];activeEmail='counter-a@example.com';
 const journalCheckRequest={...teamARequest,parentSubmissionId:'PARENT-JOURNAL-CHECK'};
 assert.equal(save(journalCheckRequest).duplicate,false);
 const writesBeforeReconcile=writes;
@@ -221,7 +222,7 @@ assert.equal(writes,writesBeforeReconcile);
 console.log('Stage 77: missing and invalid retry journal fail closed');
 console.log('Stage 75: completed family requires verified journal reconciliation');
 console.log('Stage 74: per-team EMPTY gating and partial-family isolation passed');
-console.log('Stage 73: independent Team A/B saves and cross-team retry isolation passed');
+console.log('Stage 73: same-account Count A/B saves and cross-count retry isolation passed');
 console.log('Stage 35: explicit count selection and session authorization guards passed');
 console.log('Stage 33: ownership, team, method, duplicate journal and parent collision passed');
 console.log('Stage 32: orphan, journal failure and retry tests passed');

@@ -1305,3 +1305,8 @@ User ran `for %f in (tests\\*.test.js) do @node "%f" || echo FAILED: %f` from `C
 ## Stage 116 — two pallet integration tests green; remaining UI assertion corrected (2026-11-18)
 
 User reran three previously failing suites. `tests/pallet-writer-prepared-retry.test.js` PASS (Stage 50), `tests/pallet-writer-storage-integration.test.js` PASS (Stage 49). `tests/index-ui-syntax.test.js` advanced past the previous preview reset assertion, then failed on a second whitespace-sensitive `Non-FG product must hide cleared pallet preview` assertion. Production `src/Index.html` already contains `el('palletPreviewPanel').hidden=!fg;` followed by `if(!fg)return;`. Commit `785a0a55` changes only the UI test to a whitespace-tolerant regex for that guard. **UI test and full suite must be rerun; not yet confirmed passing.** No deployment, staging/production Sheets writes, or pallet-family Save activation.
+
+
+## Stage 117 — user-confirmed UI test green (2026-11-18)
+
+After pulling `af51b48`, user ran `node tests/index-ui-syntax.test.js` and all checks passed: UI syntax/CSV, counting controls, pallet preview, unsupported batch guard, Stage 72 disabled Save/public RPC guard, Stage 78 breakdown, Stage 79 stale preview clearing. The other two formerly failing suites were confirmed green in Stage 116. **Full suite has not yet been rerun after fixes.** No staging or production writes, no deployment, pallet-family Save still disabled. Next: one final full-suite local test run, then staging readiness review.

@@ -68,6 +68,8 @@ jobs:
         run: node tests/pallet-family-persistence.test.js
       - name: Admin pallet family diagnostics
         run: node tests/pallet-family-diagnostics.test.js
+      - name: Journal-aware administrator pallet inspection
+        run: node tests/pallet-journal-admin-inspect.test.js
       - name: Canonical pallet submission intent
         run: node tests/pallet-intent-contract.test.js
       - name: Write-ahead pallet intent protocol

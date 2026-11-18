@@ -1251,3 +1251,8 @@ Commits `8116c33f`, `b6deeb8a`: removed obsolete `apiInventorySelectTeam` RPC an
 ## Stage 106 — one-account A/B pallet family regression (2026-11-18)
 
 Commits `9ffabfd5`, `710e808c`: revised `tests/pallet-family-persistence.test.js` to remove mock AssignedTeam/TeamLocked, exercise two distinct immutable family intents on Count A and B using the same authenticated email, verify independent idempotent retries and reject attempts to reuse a parent ID under the opposite count. Corrected stale identity in cross-count retry test. No staging or production writes, no deployment. **CI/test execution remains unverified**; GitHub connector cannot list/dispatch push workflow runs and container cannot resolve github.com. Next obtain actual Actions results (user can paste failing step if needed) or fetch all required files into runnable environment, then fix failures. Keep employee pallet Save disabled and staging partial journal untouched.
+
+
+## Stage 107 — fix definite stale regression assertion (2026-11-18)
+
+Commit `9feab8a3`: `tests/count-workflow.test.js` still invoked undefined `realTeam(realUser())` in its final authorization-restored assertion after Stage 105 removed `invTeam_`. Replaced with checks for `realUser().role`, explicit `realSelection({team:'A'})`, and open-session authorization. This was a concrete test failure found by source inspection, not a verified test run. GitHub combined commit statuses returned no statuses, which does not establish Actions success/failure. **Full Node/Actions test suite still needs execution and confirmation.** Keep staging and production untouched and pallet-family Save disabled until tests pass.

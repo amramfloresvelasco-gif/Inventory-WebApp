@@ -352,3 +352,53 @@ function invStagingAbandonPartialPallet_(input) {
     return outcome;
   }finally{lock.releaseLock();}
 }
+
+
+/** Stage 131: check required staging audit infrastructure without creating it. */
+function testStagingAbandonmentAuditPreflight() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const db=SpreadsheetApp.openById(INV_DB_ID);
+  const sheet=db.getSheetByName('CountEntryAudit');
+  const headers=['AuditID','EntryID','SessionID','Action','OldValue',
+    'NewValue','Reason','ChangedBy','ChangedAt'];
+  const actual=sheet?sheet.getRange(1,1,1,9).getDisplayValues()[0]:[];
+  const ready=actual.join('|')===headers.join('|');
+  const result={phase:'ABANDONMENT_AUDIT_PREFLIGHT',stagingOnly:true,
+    readOnly:true,databaseWrites:0,auditTabExists:!!sheet,
+    auditSchemaValid:ready,readyForAbandonment:ready,
+    blocker:ready?null:'COUNT_ENTRY_AUDIT_TAB_MISSING_OR_INVALID'};
+  console.log(JSON.stringify(result));
+  return result;
+}
+
+/** Stage 131: detect interrupted abandonment writes without modifying data. */
+function testStagingAbandonmentRecoveryInspection() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const parent='STAGING-PARTIAL-0001';
+  const journal=invPalletJournalRows_().filter(r=>
+    String(r.ParentSubmissionID)===parent);
+  if(journal.length!==1)throw Error('BLOCKED: unexpected journal count');
+  const entries=invRows_('CountEntries').filter(r=>
+    String(r.ParentEntryID)===parent);
+  const auditSheet=SpreadsheetApp.openById(INV_DB_ID)
+    .getSheetByName('CountEntryAudit');
+  const auditRows=auditSheet&&auditSheet.getLastRow()>1?
+    auditSheet.getRange(2,1,auditSheet.getLastRow()-1,9).getValues():[];
+  const abandonmentAudit=auditRows.filter(r=>
+    String(r[3])==='ABANDON_PARTIAL_PALLET'&&
+    entries.some(e=>String(e.EntryID)===String(r[1])));
+  const status=String(journal[0].Status).toUpperCase();
+  const active=entries.filter(r=>String(r.Status).toUpperCase()==='ACTIVE').length;
+  const deleted=entries.filter(r=>String(r.Status).toUpperCase()==='DELETED').length;
+  const phase=status==='PREPARED'&&active===1&&deleted===0&&abandonmentAudit.length===0?
+    'AWAITING_APPROVAL':status==='ABANDONED'&&active===0&&deleted===1&&
+    abandonmentAudit.length===1?'ABANDONED_WITH_AUDIT':'MANUAL_RECOVERY_REQUIRED';
+  const result={phase:'ABANDONMENT_RECOVERY_INSPECTION',stagingOnly:true,
+    readOnly:true,databaseWrites:0,state:phase,journalStatus:status,
+    activeChildren:active,deletedChildren:deleted,
+    abandonmentAuditRows:abandonmentAudit.length};
+  console.log(JSON.stringify(result));
+  return result;
+}

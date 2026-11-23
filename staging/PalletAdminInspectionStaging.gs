@@ -193,3 +193,78 @@ function testStagingPartialPalletResolutionPlan() {
     pureInMemory:true,passed:blocked+1,blockedUnsafeScenarios:blocked,
     databaseWrites:0,executable:false}));
 }
+
+
+/** Stage 127: pure transition contract for future audited admin abandonment.
+ * This is a dry-run state machine, NOT a Sheets mutation or public endpoint.
+ */
+function invStagingAbandonmentTransition_(plan,journal,child,audit) {
+  if(!plan||plan.action!=='ABANDON_WITH_AUDIT'||
+     plan.approved!==false||plan.executable!==false||
+     plan.journalFrom!=='PREPARED'||plan.journalTo!=='ABANDONED'||
+     plan.childFrom!=='ACTIVE'||plan.childTo!=='DELETED'||
+     plan.auditAction!=='ABANDON_PARTIAL_PALLET')
+    throw Error('BLOCKED: invalid abandonment plan');
+  if(String(journal.ParentSubmissionID)!==plan.parentSubmissionId||
+     String(journal.Status).toUpperCase()!=='PREPARED'||
+     String(child.EntryID)!==plan.childEntryId||
+     String(child.ParentEntryID)!==plan.parentSubmissionId||
+     String(child.Status).toUpperCase()!=='ACTIVE')
+    throw Error('BLOCKED: concurrent change or wrong record');
+  if(!audit||audit.action!==plan.auditAction||
+     audit.entryId!==plan.childEntryId||
+     audit.reason!==plan.reason||!audit.changedBy||
+     !audit.changedAt)
+    throw Error('BLOCKED: immutable audit details required');
+  return {
+    journal:{...journal,Status:'ABANDONED'},
+    child:{...child,Status:'DELETED'},
+    audit:{...audit},
+    retryDecision:{action:'BLOCK',reason:'ABANDONED_JOURNAL'},
+    dryRun:true,databaseWrites:0
+  };
+}
+
+/** Stage 127: in-memory contract matrix, zero writes. */
+function testStagingPartialPalletTransitionContract() {
+  invAssertStagingOnly_();
+  const admin=invRequireAdmin_(),parent='STAGING-TRANSITION-FIXTURE';
+  const plan={parentSubmissionId:parent,action:'ABANDON_WITH_AUDIT',
+    journalFrom:'PREPARED',journalTo:'ABANDONED',
+    childEntryId:parent+'-001',childFrom:'ACTIVE',childTo:'DELETED',
+    auditAction:'ABANDON_PARTIAL_PALLET',
+    reason:'Administrator reviewed interrupted synthetic test',
+    approved:false,executable:false};
+  const journal={ParentSubmissionID:parent,Status:'PREPARED'};
+  const child={EntryID:plan.childEntryId,ParentEntryID:parent,Status:'ACTIVE'};
+  const audit={action:plan.auditAction,entryId:plan.childEntryId,
+    reason:plan.reason,changedBy:admin.email,changedAt:'2026-11-23T00:00:00Z'};
+  const next=invStagingAbandonmentTransition_(plan,journal,child,audit);
+  if(next.journal.Status!=='ABANDONED'||next.child.Status!=='DELETED'||
+     next.retryDecision.action!=='BLOCK'||next.databaseWrites!==0||
+     journal.Status!=='PREPARED'||child.Status!=='ACTIVE')
+    throw Error('FAIL: state transition contract');
+  let blocked=0;
+  const reject=(label,fn)=>{
+    try {fn();}catch(_){blocked++;return;}
+    throw Error('FAIL: unsafe '+label+' accepted');
+  };
+  reject('missing audit',()=>invStagingAbandonmentTransition_(plan,journal,child,null));
+  reject('wrong reason',()=>invStagingAbandonmentTransition_(plan,journal,child,
+    {...audit,reason:'different'}));
+  reject('wrong author',()=>invStagingAbandonmentTransition_(plan,journal,child,
+    {...audit,changedBy:''}));
+  reject('wrong journal',()=>invStagingAbandonmentTransition_(plan,
+    {...journal,Status:'COMMITTED'},child,audit));
+  reject('already abandoned',()=>invStagingAbandonmentTransition_(plan,
+    {...journal,Status:'ABANDONED'},child,audit));
+  reject('deleted child',()=>invStagingAbandonmentTransition_(plan,journal,
+    {...child,Status:'DELETED'},audit));
+  reject('wrong child',()=>invStagingAbandonmentTransition_(plan,journal,
+    {...child,EntryID:'OTHER'},audit));
+  reject('executable plan',()=>invStagingAbandonmentTransition_(
+    {...plan,executable:true},journal,child,audit));
+  console.log(JSON.stringify({phase:'TRANSITION_CONTRACT_PASS',
+    stagingOnly:true,pureInMemory:true,tests:blocked+1,
+    unsafeCasesRejected:blocked,databaseWrites:0}));
+}

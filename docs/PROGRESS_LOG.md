@@ -981,3 +981,8 @@ Commit `04552b9c` strengthens `invSavePalletFamilyPrivate_`: a COMPLETE physical
 ## Stage 79 — stale pallet preview cleared across product changes (2026-11-17)
 
 Commits `c6541269`, `aafc9f07`, `86037bbb` ensure the read-only finished-goods pallet breakdown clears old rows and totals before switching product context, including searches returning no product. `selectUom()` now refreshes the preview when no matching product is selected, and UI assertions protect this behavior. Employee pallet-family Save remains disabled; no public batch-save RPC and no main Web App deployment. Automated test execution has not yet been independently confirmed. Continue towards staging-only authenticated integration and one consolidated user acceptance test.
+
+
+## Stage 137 — read-only Count B transition preview prepared (2026-11-23)
+
+Commit `e9b90a4` adds `testStagingCountABTransitionPreview()` in `staging/PalletTeamIsolationStaging.gs`. This administrator-only, staging-only read-only diagnostic checks the actual Team A-only baseline and simulates four A/B states in memory: A-only IN_PROGRESS, B one bottle lower MISMATCH, B equal MATCHED, B one bottle higher MISMATCH. It rejects changed live Team B data or unexpected Team A fixtures, never writes CountEntries, and does not enable employee family Save. **Not yet executed in Apps Script; no real Team B write performed.** Next: batch-test the preview after staging sync, then design a separately authorized, idempotent guarded real Team B staging write with clear audit/cleanup rules. Do not modify production or re-run one-time synthetic cleanup.

@@ -1415,3 +1415,8 @@ Commit `bccabdb0` adds `invStagingCompareCountAB_` and `testStagingCountABIntegr
 ## Stage 136 PASS — live Count A/B baseline (2026-11-23)
 
 User ran `testStagingCountABIntegrationBaseline()` in `PalletTeamIsolationStaging.gs` at 4:57:20–21 PM. `COUNT_AB_BASELINE` reported `stagingOnly:true`, `readOnly:true`, `databaseWrites:0`, `pureScenariosPassed:10`, `activeTeamAEntries:7`, `activeTeamBEntries:0`, `currentLocationState:IN_PROGRESS`, `teamAStarted:true`, `teamBStarted:false`, `mismatchCount:0`, `readyForLiveBCount:true`. No staging DB changes. Next develop guarded real staging Count B submission and verify mismatch/match transitions. Use distinct submission IDs and never mutate production or enable employee Save without authorization.
+
+
+## Stage 137 — read-only Count B transition preview prepared (2026-11-23)
+
+Commit `e9b90a4` adds `testStagingCountABTransitionPreview()` in `staging/PalletTeamIsolationStaging.gs`. This administrator-only, staging-only read-only diagnostic checks the actual Team A-only baseline and simulates four A/B states in memory: A-only IN_PROGRESS, B one bottle lower MISMATCH, B equal MATCHED, B one bottle higher MISMATCH. It rejects changed live Team B data or unexpected Team A fixtures, never writes CountEntries, and does not enable employee family Save. **Not yet executed in Apps Script; no real Team B write performed.** Next: batch-test the preview after staging sync, then design a separately authorized, idempotent guarded real Team B staging write with clear audit/cleanup rules. Do not modify production or re-run one-time synthetic cleanup.

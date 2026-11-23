@@ -223,3 +223,95 @@ function testStagingAbandonedFamilyValidation() {
   console.log(JSON.stringify({phase:'ABANDONED_VALIDATION_PASS',
     stagingOnly:true,pureInMemory:true,testCases:scenarios.length,databaseWrites:0}));
 }
+
+
+/** Stage 136: pure, side-independent location comparison for staging tests.
+ * All finished-good counts are normalized to bottles before comparison.
+ * A single team's counts must never be treated as a matched inventory.
+ */
+function invStagingCompareCountAB_(rows,unitsPerCase) {
+  if(!Number.isSafeInteger(unitsPerCase)||unitsPerCase<=0)
+    throw Error('Invalid units per case');
+  const teams={A:new Map(),B:new Map()};
+  const started={A:false,B:false};
+  for(const r of rows) {
+    if(String(r.Status).toUpperCase()!=='ACTIVE')continue;
+    const team=String(r.Team).toUpperCase();
+    if(!teams[team])throw Error('Invalid team');
+    const method=String(r.EntryMethod).toUpperCase();
+    const item=String(r.WSItemID||'');
+    if(method==='EMPTY') {
+      if([...teams[team].keys()].some(k=>k!=='__EMPTY__'))
+        throw Error('EMPTY conflicts with active counts');
+      teams[team].set('__EMPTY__',0);
+      started[team]=true;
+      continue;
+    }
+    if(!item||!['CASE','BOTTLE'].includes(String(r.UOM).toUpperCase())||
+      !Number.isSafeInteger(Number(r.Quantity))||Number(r.Quantity)<0)
+      throw Error('Invalid finished-good count');
+    if(teams[team].has('__EMPTY__'))throw Error('Count conflicts with EMPTY');
+    const bottles=Number(r.Quantity)*(String(r.UOM).toUpperCase()==='CASE'?unitsPerCase:1);
+    if(!Number.isSafeInteger(bottles))throw Error('Count overflow');
+    const next=(teams[team].get(item)||0)+bottles;
+    if(!Number.isSafeInteger(next))throw Error('Count overflow');
+    teams[team].set(item,next);
+    started[team]=true;
+  }
+  const keys=new Set([...teams.A.keys(),...teams.B.keys()]);
+  keys.delete('__EMPTY__');
+  const mismatches=[...keys].filter(k=>(teams.A.get(k)||0)!==(teams.B.get(k)||0)).length;
+  const oneStarted=started.A||started.B;
+  const status=!oneStarted?'NOT_STARTED':!started.A||!started.B?'IN_PROGRESS':
+    mismatches?'MISMATCH':'MATCHED';
+  return {status,teamAStarted:started.A,teamBStarted:started.B,
+    mismatchCount:started.A&&started.B?mismatches:0};
+}
+
+/** Stage 136: read-only live baseline plus in-memory A/B scenarios. */
+function testStagingCountABIntegrationBaseline() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const session='STAGING-SESSION-001',location='STAGING-LOC-001',
+    item='STAGING-FG-001';
+  const product=invRows_('ProductIndex').filter(x=>String(x.WSItemID)===item);
+  if(product.length!==1)throw Error('BLOCKED: staging product not unique');
+  const units=Number(product[0].UnitsPerCase);
+  const rows=invRows_('CountEntries').filter(x=>
+    String(x.SessionID)===session&&String(x.LocationID)===location);
+  const base=invStagingCompareCountAB_(rows,units);
+  const active=rows.filter(x=>String(x.Status).toUpperCase()==='ACTIVE');
+  const A=active.filter(x=>String(x.Team).toUpperCase()==='A');
+  const B=active.filter(x=>String(x.Team).toUpperCase()==='B');
+  const cases=(team,n)=>({Team:team,WSItemID:item,UOM:'Case',
+    Quantity:n,Status:'ACTIVE',EntryMethod:'Manual'});
+  const bottles=(team,n)=>({...cases(team,n),UOM:'Bottle'});
+  const empty=team=>({Team:team,Status:'ACTIVE',EntryMethod:'EMPTY'});
+  const scenarios=[
+    ['unstarted',[],'NOT_STARTED',0],
+    ['A only',[cases('A',2)],'IN_PROGRESS',0],
+    ['B only',[cases('B',2)],'IN_PROGRESS',0],
+    ['matching cases',[cases('A',2),cases('B',2)],'MATCHED',0],
+    ['case bottle equivalent',[cases('A',1),bottles('B',units)],'MATCHED',0],
+    ['different totals',[cases('A',2),cases('B',3)],'MISMATCH',1],
+    ['one missing product',[cases('A',1),bottles('B',0)],'MISMATCH',1],
+    ['both empty',[empty('A'),empty('B')],'MATCHED',0],
+    ['one empty',[empty('A'),cases('B',1)],'MISMATCH',1],
+    ['deleted ignored',[cases('A',1),cases('B',1),
+      {...cases('B',5),Status:'DELETED'}],'MATCHED',0]
+  ];
+  for(const [label,fixture,want,count] of scenarios){
+    const actual=invStagingCompareCountAB_(fixture,units);
+    if(actual.status!==want||actual.mismatchCount!==count)
+      throw Error('FAIL '+label+': '+JSON.stringify(actual));
+  }
+  const result={phase:'COUNT_AB_BASELINE',stagingOnly:true,readOnly:true,
+    databaseWrites:0,pureScenariosPassed:scenarios.length,
+    activeTeamAEntries:A.length,activeTeamBEntries:B.length,
+    currentLocationState:base.status,teamAStarted:base.teamAStarted,
+    teamBStarted:base.teamBStarted,mismatchCount:base.mismatchCount,
+    readyForLiveBCount:base.status==='IN_PROGRESS'&&
+      base.teamAStarted&&!base.teamBStarted};
+  console.log(JSON.stringify(result));
+  return result;
+}

@@ -175,6 +175,13 @@ function testStagingPartialPalletResolutionPlan() {
     [...journals,...journals],entries,parent,reason,admin));
   reject('wrong journal status',()=>invStagingPlanPartialAbandonment_(
     [{...journals[0],Status:'COMMITTED'}],entries,parent,reason,admin));
+  reject('already abandoned',()=>invStagingPlanPartialAbandonment_(
+    [{...journals[0],Status:'ABANDONED'}],entries,parent,reason,admin));
+  reject('changed intent',()=>invStagingPlanPartialAbandonment_(
+    [{...journals[0],IntentJSON:JSON.stringify({...intent,parentSubmissionId:'OTHER'})}],
+    entries,parent,reason,admin));
+  reject('unexpected extra child',()=>invStagingPlanPartialAbandonment_(journals,
+    [...entries,{...entries[0],EntryID:'UNEXPECTED-CHILD',ParentEntryID:parent}],parent,reason,admin));
   reject('missing child',()=>invStagingPlanPartialAbandonment_(journals,[],parent,reason,admin));
   reject('extra child',()=>invStagingPlanPartialAbandonment_(journals,
     [...entries,{...entries[0]}],parent,reason,admin));

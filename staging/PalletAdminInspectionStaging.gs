@@ -268,3 +268,87 @@ function testStagingPartialPalletTransitionContract() {
     stagingOnly:true,pureInMemory:true,tests:blocked+1,
     unsafeCasesRejected:blocked,databaseWrites:0}));
 }
+
+
+/** Stage 130 — staging-only guarded administrator resolution.
+ * NEVER call without separate explicit approval for the named staging record.
+ * No public RPC, no production use. Requires audit tab to already exist.
+ * Journal transition is last, so any interruption remains fail-closed.
+ */
+function invStagingAbandonPartialPallet_(input) {
+  invAssertStagingOnly_();
+  const admin=invRequireAdmin_();
+  const parent=String(input&&input.parentSubmissionId||'').trim();
+  const reason=String(input&&input.reason||'').trim();
+  const confirmation=String(input&&input.confirmation||'').trim();
+  if(parent!=='STAGING-PARTIAL-0001'||
+     confirmation!=='ABANDON STAGING-PARTIAL-0001')
+    throw Error('BLOCKED: exact staging parent and explicit confirmation required');
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw Error('BLOCKED: staging database busy');
+  try {
+    invAssertStagingOnly_();
+    const journalSheet=SpreadsheetApp.openById(INV_DB_ID)
+      .getSheetByName('PalletSubmissionJournal');
+    const entrySheet=invSheet_('CountEntries');
+    const auditSheet=SpreadsheetApp.openById(INV_DB_ID)
+      .getSheetByName('CountEntryAudit');
+    if(!journalSheet||!auditSheet)
+      throw Error('BLOCKED: journal or immutable audit tab missing');
+    const auditHeaders=['AuditID','EntryID','SessionID','Action','OldValue',
+      'NewValue','Reason','ChangedBy','ChangedAt'];
+    const actualAudit=auditSheet.getRange(1,1,1,9).getDisplayValues()[0];
+    if(actualAudit.join('|')!==auditHeaders.join('|'))
+      throw Error('BLOCKED: audit schema mismatch');
+    const journalHeaders=['ParentSubmissionID','SessionID','IntentJSON',
+      'Status','CreatedAt','CreatedBy'];
+    if(journalSheet.getRange(1,1,1,6).getDisplayValues()[0].join('|')!==
+       journalHeaders.join('|'))
+      throw Error('BLOCKED: journal schema mismatch');
+    const rawJournal=journalSheet.getLastRow()>1?
+      journalSheet.getRange(2,1,journalSheet.getLastRow()-1,6).getValues():[];
+    const journals=rawJournal.map(row=>Object.fromEntries(
+      journalHeaders.map((name,i)=>[name,row[i]])));
+    const entries=invRows_('CountEntries');
+    const plan=invStagingPlanPartialAbandonment_(
+      journals,entries,parent,reason,admin);
+    const journalIndex=journals.findIndex(r=>
+      String(r.ParentSubmissionID)===parent);
+    const childIndex=entries.findIndex(r=>
+      String(r.EntryID)===plan.childEntryId);
+    if(journalIndex<0||childIndex<0)
+      throw Error('BLOCKED: row lookup changed');
+    const journal=journals[journalIndex],child=entries[childIndex];
+    const now=new Date();
+    const audit={
+      action:plan.auditAction,entryId:plan.childEntryId,
+      reason:plan.reason,changedBy:admin.email,changedAt:now
+    };
+    invStagingAbandonmentTransition_(plan,journal,child,audit);
+    // Guard against a repeated or interrupted attempt: do not append a
+    // second audit or overwrite an existing historical decision.
+    const priorAudit=auditSheet.getLastRow()>1?
+      auditSheet.getRange(2,1,auditSheet.getLastRow()-1,9).getValues():[];
+    if(priorAudit.some(row=>String(row[1])===plan.childEntryId&&
+       String(row[3])===plan.auditAction))
+      throw Error('BLOCKED: prior abandonment audit exists');
+    // Ordered, append-only audit first. If any subsequent write fails,
+    // PREPARED or ACTIVE remains visible and preflight stays blocked.
+    auditSheet.getRange(auditSheet.getLastRow()+1,1,1,9).setValues([[
+      'AUD-'+Utilities.getUuid(),plan.childEntryId,String(child.SessionID),
+      plan.auditAction,
+      JSON.stringify({status:'ACTIVE',parentSubmissionId:parent,
+        itemId:String(child.WSItemID),quantity:child.Quantity,
+        team:String(child.Team),locationId:String(child.LocationID)}),
+      JSON.stringify({status:'DELETED',journalStatus:'ABANDONED'}),
+      plan.reason,admin.email,now
+    ]]);
+    entrySheet.getRange(childIndex+2,14).setValue('DELETED');
+    journalSheet.getRange(journalIndex+2,4).setValue('ABANDONED');
+    const outcome={phase:'ADMIN_ABANDONED',stagingOnly:true,
+      parentSubmissionId:parent,childEntryId:plan.childEntryId,
+      journalStatus:'ABANDONED',childStatus:'DELETED',auditAppended:1};
+    console.log(JSON.stringify(outcome));
+    return outcome;
+  }finally{lock.releaseLock();}
+}

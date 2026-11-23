@@ -130,14 +130,7 @@ function testStagingPalletIntegrationPreflight() {
         if(status==='ABANDONED') {
           // Terminal abandoned families are historical, not active counts.
           // Require all matching children to be deactivated and no conflicts.
-          const family=entries.filter(r=>String(r.ParentEntryID||'')===parent||
-            intent.children.some(x=>x.entryId===String(r.EntryID)));
-          const expectedIds=new Set(intent.children.map(x=>String(x.entryId)));
-          if(family.some(r=>String(r.Status).toUpperCase()!=='DELETED')||
-             family.some(r=>String(r.ParentEntryID)!==parent)||
-             family.some(r=>!expectedIds.has(String(r.EntryID)))||
-             new Set(family.map(r=>String(r.EntryID))).size!==family.length||
-             family.length>=intent.children.length)
+          if(!invStagingAbandonedFamilyValid_(intent,entries,parent))
             throw Error('Abandoned family has active, duplicate or unexpected children');
           journalHealth.abandoned=(journalHealth.abandoned||0)+1;
           return;
@@ -190,4 +183,43 @@ function testStagingPalletIntegrationPreflight() {
   if(!result.readyForCountABTest)
     console.log('NOT_READY: staging prerequisites missing; no changes made');
   return result;
+}
+
+
+/** Pure terminal-family validator: an abandoned journal never makes a count active. */
+function invStagingAbandonedFamilyValid_(intent,entries,parent) {
+  if(!intent||!Array.isArray(intent.children)||!intent.children.length||
+     intent.parentSubmissionId!==parent)return false;
+  const expectedIds=new Set(intent.children.map(x=>String(x.entryId)));
+  if(expectedIds.size!==intent.children.length)return false;
+  const family=entries.filter(r=>String(r.ParentEntryID||'')===parent||
+    expectedIds.has(String(r.EntryID)));
+  return family.length<intent.children.length&&
+    new Set(family.map(r=>String(r.EntryID))).size===family.length&&
+    family.every(r=>String(r.Status).toUpperCase()==='DELETED'&&
+      String(r.ParentEntryID)===parent&&expectedIds.has(String(r.EntryID)));
+}
+
+/** Staging-only pure terminal-state matrix; does not access or change Sheets. */
+function testStagingAbandonedFamilyValidation() {
+  invAssertStagingOnly_();
+  const parent='STAGING-ABANDONED-FIXTURE';
+  const intent={parentSubmissionId:parent,children:[
+    {entryId:parent+'-001'},{entryId:parent+'-002'}]};
+  const one={EntryID:parent+'-001',ParentEntryID:parent,Status:'DELETED'};
+  const scenarios=[
+    ['valid abandoned one-child history',[one],true],
+    ['valid empty history',[],true],
+    ['active child',[{...one,Status:'ACTIVE'}],false],
+    ['duplicate child',[one,{...one}],false],
+    ['unknown child',[one,{...one,EntryID:'OTHER'}],false],
+    ['wrong parent',[{...one,ParentEntryID:'OTHER'}],false],
+    ['complete family',[one,{...one,EntryID:parent+'-002'}],false]
+  ];
+  scenarios.forEach(([label,rows,expected])=>{
+    if(invStagingAbandonedFamilyValid_(intent,rows,parent)!==expected)
+      throw Error('FAIL: '+label);
+  });
+  console.log(JSON.stringify({phase:'ABANDONED_VALIDATION_PASS',
+    stagingOnly:true,pureInMemory:true,testCases:scenarios.length,databaseWrites:0}));
 }

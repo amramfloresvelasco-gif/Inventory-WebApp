@@ -43,3 +43,56 @@ function testStagingPartialPalletAdminInspection() {
   console.log(JSON.stringify({phase:'PASS',stagingOnly:true,readOnly:true,
     partialFamilyConfirmed:true,databaseWrites:0,adminReviewRequired:true}));
 }
+
+
+/** Stage 124: preview a safe administrator resolution, without changing Sheets.
+ * The incomplete synthetic family must never be silently completed or deleted.
+ * This checks that a future explicit, audited abandonment could deactivate
+ * the single child while retaining the immutable PREPARED journal.
+ */
+function testStagingPartialPalletResolutionPreview() {
+  invAssertStagingOnly_();
+  const user=invRequireAdmin_();
+  const parent='STAGING-PARTIAL-0001';
+  const journals=invPalletJournalRows_().filter(r=>String(r.ParentSubmissionID)===parent);
+  if(journals.length!==1)throw Error('BLOCKED: expected one original journal');
+  const record=journals[0];
+  if(String(record.Status).trim().toUpperCase()!=='PREPARED')
+    throw Error('BLOCKED: original journal status changed');
+  let intent;
+  try {intent=JSON.parse(String(record.IntentJSON||''));}
+  catch(_) {throw Error('BLOCKED: journal JSON invalid');}
+  if(!intent||intent.parentSubmissionId!==parent||!Array.isArray(intent.children)||
+     intent.children.length!==4)throw Error('BLOCKED: unexpected intent');
+  const entries=invRows_('CountEntries');
+  const scope={sessionId:intent.sessionId,locationId:intent.locationId,
+    productId:intent.productId,team:intent.team,email:intent.email,
+    entryMethod:intent.entryMethod,notes:intent.notes};
+  const state=invClassifyPalletFamily_(intent,entries,scope);
+  const familyRows=entries.filter(r=>String(r.ParentEntryID||'')===parent||
+    intent.children.some(c=>c.entryId===String(r.EntryID)));
+  if(state.state!=='PARTIAL'||state.matched.length!==1||
+     state.missing.length!==3||state.issues.length!==0||
+     familyRows.length!==1||
+     String(familyRows[0].Status).trim().toUpperCase()!=='ACTIVE')
+    throw Error('BLOCKED: family changed since administrator inspection');
+  // Do not execute this proposal. Journal status cannot be repurposed to
+  // COMMITTED: that means a fully saved family in existing retry semantics.
+  const preview={
+    phase:'ADMIN_RESOLUTION_PREVIEW',stagingOnly:true,readOnly:true,
+    databaseWrites:0,parentSubmissionId:parent,
+    currentState:'PARTIAL',expectedChildren:4,existingActiveChildren:1,
+    missingChildren:3,administratorRole:user.role,
+    proposedAction:'ABANDON_WITH_AUDIT',approved:false,
+    requiredDesign:[
+      'Explicit administrator confirmation and reason',
+      'Dedicated terminal ABANDONED journal state and retry rejection',
+      'Deactivate existing child with immutable audit record',
+      'Atomic lock and revalidation before any mutation',
+      'Keep original journal intent and child history'
+    ],
+    changesPerformed:0,readyToExecute:false
+  };
+  console.log(JSON.stringify(preview));
+  return preview;
+}

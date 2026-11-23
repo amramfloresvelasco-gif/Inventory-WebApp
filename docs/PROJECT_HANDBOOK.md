@@ -1060,3 +1060,8 @@ Reviewed current `src/Index.html` and `src/Code.gs`. Existing `Save count` calls
 ## Stage 70 — Team A/B isolation test PREPARED, NOT RUN
 
 Added `staging/PalletTeamIsolationStaging.gs` on main, commit 3ea6b6ec. Staging-only `testStagingPalletTeamIsolation()` checks locked authorized staging Team A tester, then exercises 10 **pure in-memory** synthetic family classification scenarios for A/B ownership and mismatched session, location, product, identity, partial/empty. No staging DB writes; no real Team B account or end-to-end RPC tested. Must not label this a real two-user integration test. User needs download via curl, `clasp push`, execute function once and share logs. Existing Stage 69 UI disabled control is committed but not deployed. Production and employee family Save unchanged.
+
+
+## Stage 137 — read-only Count B transition preview prepared (2026-11-23)
+
+Commit `e9b90a4` adds `testStagingCountABTransitionPreview()` in `staging/PalletTeamIsolationStaging.gs`. This administrator-only, staging-only read-only diagnostic checks the actual Team A-only baseline and simulates four A/B states in memory: A-only IN_PROGRESS, B one bottle lower MISMATCH, B equal MATCHED, B one bottle higher MISMATCH. It rejects changed live Team B data or unexpected Team A fixtures, never writes CountEntries, and does not enable employee family Save. **Not yet executed in Apps Script; no real Team B write performed.** Next: batch-test the preview after staging sync, then design a separately authorized, idempotent guarded real Team B staging write with clear audit/cleanup rules. Do not modify production or re-run one-time synthetic cleanup.

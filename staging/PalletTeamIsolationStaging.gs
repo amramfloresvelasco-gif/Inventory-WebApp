@@ -315,3 +315,63 @@ function testStagingCountABIntegrationBaseline() {
   console.log(JSON.stringify(result));
   return result;
 }
+
+
+/** Stage 137: read-only rehearsal of live Team B mismatch/match transitions.
+ * Uses the actual active staging Team A totals, but never writes Team B rows.
+ * Real Team B writes require a separately approved, guarded staging action.
+ */
+function testStagingCountABTransitionPreview() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const session='STAGING-SESSION-001',location='STAGING-LOC-001',
+    item='STAGING-FG-001';
+  const products=invRows_('ProductIndex').filter(x=>String(x.WSItemID)===item);
+  if(products.length!==1)throw Error('BLOCKED: staging product not unique');
+  const units=Number(products[0].UnitsPerCase);
+  if(!Number.isSafeInteger(units)||units<=0)
+    throw Error('BLOCKED: invalid staging pack size');
+  const rows=invRows_('CountEntries').filter(x=>
+    String(x.SessionID)===session&&String(x.LocationID)===location);
+  const active=rows.filter(x=>String(x.Status).toUpperCase()==='ACTIVE');
+  const A=active.filter(x=>String(x.Team).toUpperCase()==='A');
+  const B=active.filter(x=>String(x.Team).toUpperCase()==='B');
+  if(!A.length||B.length)
+    throw Error('BLOCKED: expected Team A only; live state changed');
+  if(A.some(x=>String(x.WSItemID)!==item||
+    !['CASE','BOTTLE'].includes(String(x.UOM).toUpperCase())||
+    !Number.isSafeInteger(Number(x.Quantity))||Number(x.Quantity)<0))
+    throw Error('BLOCKED: unexpected Team A fixture');
+  const baseline=invStagingCompareCountAB_(rows,units);
+  if(baseline.status!=='IN_PROGRESS'||!baseline.teamAStarted||baseline.teamBStarted)
+    throw Error('BLOCKED: baseline is no longer A-only');
+  let totalBottles=0;
+  A.forEach(x=>{
+    const n=Number(x.Quantity)*(String(x.UOM).toUpperCase()==='CASE'?units:1);
+    if(!Number.isSafeInteger(n)||!Number.isSafeInteger(totalBottles+n))
+      throw Error('BLOCKED: count overflow');
+    totalBottles+=n;
+  });
+  if(totalBottles<1)throw Error('BLOCKED: cannot simulate a lower Team B total');
+  const synthetic=(qty)=>({SessionID:session,LocationID:location,
+    Team:'B',WSItemID:item,UOM:'Bottle',Quantity:qty,
+    Status:'ACTIVE',EntryMethod:'Manual'});
+  const checks=[
+    ['A_ONLY',rows,'IN_PROGRESS',0],
+    ['B_LESS',rows.concat(synthetic(totalBottles-1)),'MISMATCH',1],
+    ['B_EQUAL',rows.concat(synthetic(totalBottles)),'MATCHED',0],
+    ['B_MORE',rows.concat(synthetic(totalBottles+1)),'MISMATCH',1]
+  ];
+  checks.forEach(([label,fixture,want,count])=>{
+    const result=invStagingCompareCountAB_(fixture,units);
+    if(result.status!==want||result.mismatchCount!==count)
+      throw Error('FAIL '+label+': '+JSON.stringify(result));
+  });
+  const result={phase:'COUNT_AB_TRANSITION_PREVIEW',stagingOnly:true,
+    readOnly:true,databaseWrites:0,scenariosPassed:checks.length,
+    activeTeamAEntries:A.length,activeTeamBEntries:B.length,
+    teamATotalBottles:totalBottles,readyForGuardedLiveB:true,
+    realTeamBWriteExecuted:false};
+  console.log(JSON.stringify(result));
+  return result;
+}

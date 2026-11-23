@@ -132,10 +132,13 @@ function testStagingPalletIntegrationPreflight() {
           // Require all matching children to be deactivated and no conflicts.
           const family=entries.filter(r=>String(r.ParentEntryID||'')===parent||
             intent.children.some(x=>x.entryId===String(r.EntryID)));
+          const expectedIds=new Set(intent.children.map(x=>String(x.entryId)));
           if(family.some(r=>String(r.Status).toUpperCase()!=='DELETED')||
              family.some(r=>String(r.ParentEntryID)!==parent)||
+             family.some(r=>!expectedIds.has(String(r.EntryID)))||
+             new Set(family.map(r=>String(r.EntryID))).size!==family.length||
              family.length>=intent.children.length)
-            throw Error('Abandoned family has active or unexpected children');
+            throw Error('Abandoned family has active, duplicate or unexpected children');
           journalHealth.abandoned=(journalHealth.abandoned||0)+1;
           return;
         }

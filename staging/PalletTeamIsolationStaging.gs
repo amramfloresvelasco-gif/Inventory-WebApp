@@ -99,7 +99,7 @@ function testStagingPalletIntegrationPreflight() {
         const intent=JSON.parse(String(values[2]||''));
         if(intent.parentSubmissionId!==parent||
            String(values[1])!==intent.sessionId||
-           !['PREPARED','COMMITTED'].includes(String(values[3]).toUpperCase())||
+           !['PREPARED','COMMITTED','ABANDONED'].includes(String(values[3]).toUpperCase())||
            !Array.isArray(intent.children)||!intent.children.length||
            String(values[5]).trim().toLowerCase()!==intent.email)
           throw Error('Invalid journal intent');
@@ -125,7 +125,20 @@ function testStagingPalletIntegrationPreflight() {
           productId:intent.productId,team:intent.team,email:intent.email,
           entryMethod:intent.entryMethod,notes:intent.notes};
         const classification=invClassifyPalletFamily_(intent,entries,scope);
+        const status=String(values[3]).toUpperCase();
         const state=classification.state;
+        if(status==='ABANDONED') {
+          // Terminal abandoned families are historical, not active counts.
+          // Require all matching children to be deactivated and no conflicts.
+          const family=entries.filter(r=>String(r.ParentEntryID||'')===parent||
+            intent.children.some(x=>x.entryId===String(r.EntryID)));
+          if(family.some(r=>String(r.Status).toUpperCase()!=='DELETED')||
+             family.some(r=>String(r.ParentEntryID)!==parent)||
+             family.length>=intent.children.length)
+            throw Error('Abandoned family has active or unexpected children');
+          journalHealth.abandoned=(journalHealth.abandoned||0)+1;
+          return;
+        }
         journalHealth[state.toLowerCase()]++;
         if(state!=='COMPLETE')reviewRows.push({journalRow,reason:state,
           expectedChildren:intent.children.length,

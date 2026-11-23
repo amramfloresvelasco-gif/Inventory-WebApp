@@ -402,3 +402,37 @@ function testStagingAbandonmentRecoveryInspection() {
   console.log(JSON.stringify(result));
   return result;
 }
+
+
+/** Stage 132 — ONE-TIME STAGING-ONLY audit schema installer.
+ * Explicitly run by an administrator; never runs automatically.
+ * Creates ONLY the missing CountEntryAudit tab, never overwrites existing data.
+ */
+function installStagingCountEntryAuditSchema() {
+  invAssertStagingOnly_();
+  const admin=invRequireAdmin_();
+  const db=SpreadsheetApp.openById(INV_DB_ID);
+  const headers=['AuditID','EntryID','SessionID','Action','OldValue',
+    'NewValue','Reason','ChangedBy','ChangedAt'];
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw Error('BLOCKED: staging database busy');
+  try {
+    invAssertStagingOnly_();
+    let sheet=db.getSheetByName('CountEntryAudit');
+    if(sheet) {
+      const actual=sheet.getRange(1,1,1,headers.length).getDisplayValues()[0];
+      if(actual.join('|')!==headers.join('|'))
+        throw Error('BLOCKED: existing audit tab has unexpected schema');
+      console.log(JSON.stringify({phase:'AUDIT_SCHEMA_READY',stagingOnly:true,
+        alreadyExists:true,databaseWrites:0}));
+      return {ok:true,alreadyExists:true};
+    }
+    sheet=db.insertSheet('CountEntryAudit');
+    sheet.getRange(1,1,1,headers.length).setValues([headers]);
+    sheet.setFrozenRows(1);
+    console.log(JSON.stringify({phase:'AUDIT_SCHEMA_CREATED',stagingOnly:true,
+      createdBy:admin.role,tab:'CountEntryAudit',columns:headers.length,
+      existingDataOverwritten:false}));
+    return {ok:true,created:true};
+  }finally{lock.releaseLock();}
+}

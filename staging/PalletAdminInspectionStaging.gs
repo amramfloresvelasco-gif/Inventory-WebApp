@@ -436,3 +436,22 @@ function installStagingCountEntryAuditSchema() {
     return {ok:true,created:true};
   }finally{lock.releaseLock();}
 }
+
+
+/** Stage 134 — explicitly authorized staging synthetic-fixture cleanup.
+ * Operator invokes this once in the staging Apps Script editor.
+ * No production access, no public endpoint, no automatic trigger.
+ */
+function runStagingApprovedPartialPalletAbandonment() {
+  invAssertStagingOnly_();
+  const result=invStagingAbandonPartialPallet_({
+    parentSubmissionId:'STAGING-PARTIAL-0001',
+    confirmation:'ABANDON STAGING-PARTIAL-0001',
+    reason:'Administrator approved cleanup of synthetic interrupted pallet test'
+  });
+  const after=testStagingAbandonmentRecoveryInspection();
+  if(after.state!=='ABANDONED_WITH_AUDIT')
+    throw Error('REVIEW REQUIRED: staging abandonment postflight did not pass');
+  console.log(JSON.stringify({phase:'APPROVED_STAGING_CLEANUP_PASS',
+    stagingOnly:true,verified:true,parentSubmissionId:result.parentSubmissionId}));
+}

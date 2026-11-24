@@ -375,3 +375,96 @@ function testStagingCountABTransitionPreview() {
   console.log(JSON.stringify(result));
   return result;
 }
+
+
+/** Stage 138: pure approval gate for a future one-time Team B staging write.
+ * This function returns a proposed test plan, never a permission to write.
+ */
+function invStagingPlanLiveCountB_(input) {
+  if(!input||input.stagingOnly!==true||input.role!=='administrator')
+    throw Error('BLOCKED: staging administrator required');
+  if(input.approved!==true)
+    throw Error('BLOCKED: explicit approval required before staging writes');
+  if(input.sessionId!=='STAGING-SESSION-001'||
+     input.locationId!=='STAGING-LOC-001'||
+     input.productId!=='STAGING-FG-001')
+    throw Error('BLOCKED: unexpected staging scope');
+  if(!Array.isArray(input.entries)||!input.entries.length)
+    throw Error('BLOCKED: missing baseline');
+  if(input.entries.some(x=>String(x.Status).toUpperCase()==='ACTIVE'&&
+    String(x.Team).toUpperCase()==='B'))
+    throw Error('BLOCKED: Team B already has active entries');
+  if(input.entries.some(x=>String(x.Status).toUpperCase()==='ACTIVE'&&
+    String(x.Team).toUpperCase()==='A'&&
+    (String(x.WSItemID)!==input.productId||
+     !['CASE','BOTTLE'].includes(String(x.UOM).toUpperCase()))))
+    throw Error('BLOCKED: unexpected Team A baseline');
+  const units=Number(input.unitsPerCase);
+  if(!Number.isSafeInteger(units)||units<=0)
+    throw Error('BLOCKED: invalid units per case');
+  const activeA=input.entries.filter(x=>String(x.Status).toUpperCase()==='ACTIVE'&&
+    String(x.Team).toUpperCase()==='A');
+  if(!activeA.length)throw Error('BLOCKED: Team A baseline missing');
+  let bottles=0;
+  activeA.forEach(x=>{
+    const quantity=Number(x.Quantity);
+    if(!Number.isSafeInteger(quantity)||quantity<0)
+      throw Error('BLOCKED: invalid Team A quantity');
+    const amount=quantity*(String(x.UOM).toUpperCase()==='CASE'?units:1);
+    if(!Number.isSafeInteger(amount)||!Number.isSafeInteger(bottles+amount))
+      throw Error('BLOCKED: Team A total overflow');
+    bottles+=amount;
+  });
+  if(bottles<1||bottles>=Number.MAX_SAFE_INTEGER)
+    throw Error('BLOCKED: unsafe Team B mismatch fixture');
+  const state=invStagingCompareCountAB_(input.entries,units);
+  if(state.status!=='IN_PROGRESS'||!state.teamAStarted||state.teamBStarted)
+    throw Error('BLOCKED: expected A-only baseline');
+  return {stagingOnly:true,writeEnabled:false,approvalRequiredAtExecution:true,
+    expectedTeamAEntries:activeA.length,expectedTeamABottles:bottles,
+    proposedTeamBMismatchBottles:bottles-1,
+    proposedTeamBMatchBottles:bottles,
+    expectedSequence:['IN_PROGRESS','MISMATCH','MATCHED'],
+    productionWritesAllowed:false};
+}
+
+/** Stage 138: pure planner regression plus live read-only gate preview. */
+function testStagingLiveCountBWritePlan() {
+  invAssertStagingOnly_();
+  const admin=invRequireAdmin_();
+  const sessionId='STAGING-SESSION-001',locationId='STAGING-LOC-001',
+    productId='STAGING-FG-001';
+  const products=invRows_('ProductIndex').filter(x=>String(x.WSItemID)===productId);
+  if(products.length!==1)throw Error('BLOCKED: product not unique');
+  const entries=invRows_('CountEntries').filter(x=>
+    String(x.SessionID)===sessionId&&String(x.LocationID)===locationId);
+  const base={stagingOnly:true,role:admin.role,approved:true,
+    sessionId,locationId,productId,unitsPerCase:Number(products[0].UnitsPerCase),
+    entries};
+  const plan=invStagingPlanLiveCountB_(base);
+  const blocked=[
+    {...base,approved:false},
+    {...base,stagingOnly:false},
+    {...base,role:'counter'},
+    {...base,locationId:'OTHER'},
+    {...base,unitsPerCase:0},
+    {...base,entries:[]},
+    {...base,entries:entries.concat({Team:'B',Status:'ACTIVE'})},
+    {...base,entries:entries.concat({Team:'A',Status:'ACTIVE',
+      WSItemID:'OTHER',UOM:'Case',Quantity:1})}
+  ];
+  blocked.forEach((fixture,index)=>{
+    let rejected=false;
+    try {invStagingPlanLiveCountB_(fixture);}
+    catch(e){rejected=String(e.message).startsWith('BLOCKED:');}
+    if(!rejected)throw Error('FAIL: unsafe plan '+(index+1)+' accepted');
+  });
+  const result={phase:'COUNT_B_WRITE_PLAN',stagingOnly:true,readOnly:true,
+    databaseWrites:0,negativeCasesPassed:blocked.length,
+    activeTeamAEntries:plan.expectedTeamAEntries,
+    proposedMismatchBottles:plan.proposedTeamBMismatchBottles,
+    proposedMatchBottles:plan.proposedTeamBMatchBottles,
+    writeEnabled:false,realTeamBWriteExecuted:false};
+  console.log(JSON.stringify(result));
+  return result;
+}

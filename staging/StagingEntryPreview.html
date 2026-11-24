@@ -26,7 +26,7 @@ small{color:#4a5870}a{color:#1755a5}
 <div class="row"><div><label for="pallets">Full pallets</label><input id="pallets" type="number" min="0" step="1" value="0"></div>
 <div><label for="casesPerPallet">Cases per full pallet</label><input id="casesPerPallet" type="number" min="0" step="1" value="0"></div>
 <div><label for="partialCases">Partial pallet cases</label><input id="partialCases" type="number" min="0" step="1" value="0"></div>
-<div><label for="directCases">Additional cases</label><input id="directCases" type="number" min="0" step="1" value="0"></div>
+
 <div><label for="bottles">Loose bottles</label><input id="bottles" type="number" min="0" step="1" value="0"></div></div>
 <label for="notes">Notes</label><textarea id="notes" rows="2"></textarea>
 </section>
@@ -35,19 +35,19 @@ small{color:#4a5870}a{color:#1755a5}
 <p><button type="button" disabled>Submit &amp; Change Location — disabled</button></p>
 <small>No backend write method is called from this page.</small></section>
 </main><script>
-const ids=['team','location','product','category','empty','pallets','casesPerPallet','partialCases','directCases','bottles'];
+const ids=['team','location','product','category','empty','pallets','casesPerPallet','partialCases','bottles'];
 function update(){
  const get=id=>document.getElementById(id).value.trim();
  const n=id=>{const v=Number(get(id));return Number.isSafeInteger(v)&&v>=0?v:null;};
- const qty=['pallets','casesPerPallet','partialCases','directCases','bottles'].map(n);
+ const qty=['pallets','casesPerPallet','partialCases','bottles'].map(n);
  const invalid=qty.includes(null);
- const cases=invalid?'Invalid quantity':qty[0]*qty[1]+qty[2]+qty[3];
+ const cases=invalid?'Invalid quantity':qty[0]*qty[1]+qty[2];
  const mode=get('empty');
  document.getElementById('preview').textContent=
  'Team: '+(get('team')||'Not selected')+'\nLocation: '+(get('location')||'Not selected')+
  '\nProduct: '+(get('product')||'Not selected')+'\nCategory: '+(get('category')||'Not selected')+
  '\nCondition: '+mode+'\nCases: '+(mode==='COUNT'?cases:'Not applicable')+
- '\nLoose bottles: '+(mode==='COUNT'?(invalid?'Invalid quantity':qty[4]):'Not applicable')+
+ '\nLoose bottles: '+(mode==='COUNT'?(invalid?'Invalid quantity':qty[3]):'Not applicable')+
  '\nStatus: PREVIEW ONLY — NOT SAVED';
 }
 for(const id of ids)document.getElementById(id).addEventListener('input',update);

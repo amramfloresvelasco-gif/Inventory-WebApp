@@ -17,6 +17,7 @@ function refresh(){
  google.script.run.withSuccessHandler(r=>{
   btn.disabled=false;
   if(!r.stagingOnly||!r.readOnly||r.databaseWrites!==0){status.textContent='Blocked: invalid staging response';return;}
+  if(!r.integrity||!r.integrity.ok){status.textContent='INTEGRITY WARNING — map withheld. Duplicate locations: '+(r.integrity?.duplicateLocationIds?.length||0)+'; invalid active entries: '+(r.integrity?.invalidEntries?.length||0)+'. Contact administrator.';return;}
   const counts={neutral:0,yellow:0,red:0,green:0};
   for(const x of r.cards){
    if(!(x.color in counts)){status.textContent='Invalid map color';return;}

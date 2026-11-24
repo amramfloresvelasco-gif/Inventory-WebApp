@@ -1105,3 +1105,8 @@ User executed `testStagingWriteCountB139MatchApproved()` in staging Apps Script 
 ## Stage 140 — live location-map status read-only check prepared (2026-11-24)
 
 Commit `db39eebc` adds `invStagingLocationMapStatus140_()` and `testStagingLocationMapLive140()` in `staging/PalletTeamIsolationStaging.gs`. It reads actual active CountEntries and ProductIndex, normalizes finished-good cases to bottles per product, computes map-facing A/B status, reads twice to detect instability, and expects the Stage 139 fixture to be MATCHED, 0 mismatches, both teams started, 9 active rows, 1 active product, expected GREEN. No writes. **Not yet executed in Apps Script**. This verifies the data derivation, not the actual HTML map rendering; the existing web app map still needs separate wiring/visual verification. Do not rerun A-only tests. Keep employee Save gated and production untouched.
+
+
+## Stage 140 live map status verification PASS (2026-11-24, 8:16 AM)
+
+User ran `testStagingLocationMapLive140()` in staging Apps Script, execution 8:16:28–30 AM. Actual log: `{"phase":"LOCATION_MAP_LIVE_140","stagingOnly":true,"readOnly":true,"databaseWrites":0,"locationId":"STAGING-LOC-001","status":"MATCHED","teamAStarted":true,"teamBStarted":true,"mismatchCount":0,"activeEntries":9,"repeatReadStable":true,"expectedMapColor":"GREEN","actualWebMapRendered":false}`. Stage 140 read-only backend status derivation PASS. **The HTML web map has not been rendered or visually verified**; next is implement/wire actual map UI and test refresh. Preserve staging A/B counts, no more writes required. Employee pallet-family Save remains gated; production unchanged.

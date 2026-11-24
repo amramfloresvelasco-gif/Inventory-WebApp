@@ -1,9 +1,10 @@
 /** Isolated staging web map. Read-only; never deploy to production. */
-function doGet() {
+function doGet(e) {
   invAssertStagingOnly_();
   invRequireAdmin_();
-  return HtmlService.createHtmlOutputFromFile('StagingMap')
-    .setTitle('BMD Inventory — STAGING Map');
+  const preview=Boolean(e&&e.parameter&&e.parameter.view==='entry');
+  return HtmlService.createHtmlOutputFromFile(preview?'StagingEntryPreview':'StagingMap')
+    .setTitle(preview?'BMD Inventory — STAGING Entry Preview':'BMD Inventory — STAGING Map');
 }
 /** Stage 143: pure, fail-closed integrity gate for map locations. */
 function invStagingMapIntegrity143_(locations,entries,sessionId) {

@@ -1495,3 +1495,8 @@ User provided screenshot showing actual `BMD Inventory — STAGING Map` page wit
 ## Stage 142 COMPLETE — browser refresh retains green map (2026-11-24)
 
 After actual staging map visual PASS, user confirmed a full browser reload leaves the `STAGING-LOC-001` card green ('hulk colored'). Thus Stage 142 isolated staging read-only HTML map render and refresh-persistence acceptance PASS, with Team A 7 entries, Team B 2 entries, 0 mismatches. Stage 139/140/141 and 142 complete. No further rerun of completed tests; next development step should be selected from handoff priorities. Preserve isolated staging, no production deployment, and employee pallet-family Save gate.
+
+
+## Stage 143 — staging map integrity fail-closed safeguards prepared (2026-11-24)
+
+Commits `b550a41b` and `62ef80ea` update `staging/StagingWebMap.gs` and `staging/StagingMap.html`: active count rows referencing unknown/inactive locations, duplicate active location IDs and blank location IDs trigger `integrity.ok=false`, suppress map cards and display an integrity warning instead of misleading green. Deleted rows and rows from other sessions do not trigger orphan checks. Added `testStagingMapIntegrity143()` with six pure read-only scenarios. **Not yet executed in Apps Script, not yet deployed to `/exec`**. Next verify staging sync and run the test; then deploy staging-only new version and confirm valid live green map remains. No DB writes, production deployment, or employee Save activation.

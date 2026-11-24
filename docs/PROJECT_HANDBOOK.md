@@ -1135,3 +1135,8 @@ User screenshot of isolated staging Apps Script editor shows neither `StagingWeb
 ## Stage 142 — isolated staging web map visually rendered PASS (2026-11-24)
 
 User provided screenshot showing actual `BMD Inventory — STAGING Map` page with `ISOLATED STAGING — READ ONLY`, session `STAGING-SESSION-001`, summary `Neutral 0 · Yellow 0 · Red 0 · Green 1`, and a green card `TEST-BAY · STAGING-LOC-001 · GREEN`, Team A 7 entries, Team B 2 entries, Mismatches 0. This confirms deployed staging `doGet`/HTML map renders successfully and matches live staging count comparison. **Full browser refresh persistence has not yet been separately confirmed.** Next ask for/verify browser reload with card still green; no new writes or production deployment. Keep employee pallet-family Save gated.
+
+
+## Stage 142 COMPLETE — browser refresh retains green map (2026-11-24)
+
+After actual staging map visual PASS, user confirmed a full browser reload leaves the `STAGING-LOC-001` card green ('hulk colored'). Thus Stage 142 isolated staging read-only HTML map render and refresh-persistence acceptance PASS, with Team A 7 entries, Team B 2 entries, 0 mismatches. Stage 139/140/141 and 142 complete. No further rerun of completed tests; next development step should be selected from handoff priorities. Preserve isolated staging, no production deployment, and employee pallet-family Save gate.

@@ -1066,3 +1066,8 @@ After actual staging map visual PASS, user confirmed a full browser reload leave
 ## Stage 143 — staging map integrity fail-closed safeguards prepared (2026-11-24)
 
 Commits `b550a41b` and `62ef80ea` update `staging/StagingWebMap.gs` and `staging/StagingMap.html`: active count rows referencing unknown/inactive locations, duplicate active location IDs and blank location IDs trigger `integrity.ok=false`, suppress map cards and display an integrity warning instead of misleading green. Deleted rows and rows from other sessions do not trigger orphan checks. Added `testStagingMapIntegrity143()` with six pure read-only scenarios. **Not yet executed in Apps Script, not yet deployed to `/exec`**. Next verify staging sync and run the test; then deploy staging-only new version and confirm valid live green map remains. No DB writes, production deployment, or employee Save activation.
+
+
+## Stage 143 pure integrity tests PASS (2026-11-24, 8:27 AM)
+
+User executed `testStagingMapIntegrity143()` in isolated staging Apps Script at 8:27:40–41 AM. Actual log: `{"phase":"STAGING_MAP_INTEGRITY_143","stagingOnly":true,"readOnly":true,"databaseWrites":0,"pureScenariosPassed":6}`; execution completed. Stage 143 pure validation PASS. **Updated `/exec` deployment and real web-map display not yet verified**. Next deploy a new version of the isolated staging web app, then refresh and verify `STAGING-LOC-001` remains green with Team A 7, Team B 2, zero mismatches. Do not mutate counts or deploy production; employee pallet-family Save remains gated.

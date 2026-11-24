@@ -468,3 +468,118 @@ function testStagingLiveCountBWritePlan() {
   console.log(JSON.stringify(result));
   return result;
 }
+
+
+/** Stage 139: fixed, opt-in, administrator-only staging B count writer.
+ * NEVER run without separate user approval of the named staging write.
+ * Writes exactly one B entry, with a deterministic ID and idempotent retry.
+ * The correction phase adds one bottle; it never edits existing counts.
+ */
+function invStagingWriteCountB139_(input) {
+  invAssertStagingOnly_();
+  const admin=invRequireAdmin_();
+  const phase=String(input&&input.phase||'');
+  const confirmations={
+    MISMATCH:'APPROVE STAGING TEAM B 386 MISMATCH',
+    MATCH:'APPROVE STAGING TEAM B PLUS ONE MATCH'
+  };
+  if(!Object.prototype.hasOwnProperty.call(confirmations,phase)||
+     String(input&&input.confirmation||'')!==confirmations[phase])
+    throw Error('BLOCKED: exact one-time staging write approval required');
+  const ids={MISMATCH:'STAGING-COUNT-B-139-MISMATCH',
+    MATCH:'STAGING-COUNT-B-139-CORRECTION'};
+  const entryId=ids[phase],sessionId='STAGING-SESSION-001',
+    locationId='STAGING-LOC-001',productId='STAGING-FG-001';
+  const lock=LockService.getScriptLock();
+  if(!lock.tryLock(15000))throw Error('BLOCKED: staging count busy');
+  try {
+    invAssertStagingOnly_();
+    invSession_(sessionId);
+    const ref=invReference_();
+    if(ref.locations.filter(x=>String(x.LocationID)===locationId).length!==1)
+      throw Error('BLOCKED: location unavailable');
+    const products=ref.products.filter(x=>String(x.WSItemID)===productId);
+    if(products.length!==1||
+       String(products[0].ClassOfMaterial).trim().toLowerCase()!=='finished good')
+      throw Error('BLOCKED: finished good unavailable');
+    const units=Number(products[0].UnitsPerCase);
+    const all=invRows_('CountEntries');
+    const scope=all.filter(x=>String(x.SessionID)===sessionId&&
+      String(x.LocationID)===locationId);
+    const A=scope.filter(x=>String(x.Status).toUpperCase()==='ACTIVE'&&
+      String(x.Team).toUpperCase()==='A');
+    if(A.length!==7)throw Error('BLOCKED: Team A baseline entry count changed');
+    let total=0;
+    A.forEach(x=>{
+      if(String(x.WSItemID)!==productId||
+         !['CASE','BOTTLE'].includes(String(x.UOM).toUpperCase())||
+         !Number.isSafeInteger(Number(x.Quantity))||Number(x.Quantity)<0)
+        throw Error('BLOCKED: invalid Team A baseline');
+      total+=Number(x.Quantity)*
+        (String(x.UOM).toUpperCase()==='CASE'?units:1);
+    });
+    if(!Number.isSafeInteger(total)||total!==387)
+      throw Error('BLOCKED: Team A baseline no longer 387 bottles');
+    const existing=all.filter(x=>String(x.EntryID)===entryId);
+    if(existing.length>1)throw Error('BLOCKED: duplicate submission ID');
+    const expectedQty=phase==='MISMATCH'?386:1;
+    const note='STAGING Stage 139 Team B '+phase;
+    const validExisting=x=>String(x.SessionID)===sessionId&&
+      String(x.LocationID)===locationId&&String(x.Team).toUpperCase()==='B'&&
+      String(x.WSItemID)===productId&&String(x.UOM)==='Bottle'&&
+      Number(x.Quantity)===expectedQty&&String(x.EntryMethod)==='Manual'&&
+      String(x.EnteredBy).trim().toLowerCase()===admin.email&&
+      String(x.Notes)===note&&String(x.Status).toUpperCase()==='ACTIVE';
+    if(existing.length&&!validExisting(existing[0]))
+      throw Error('BLOCKED: submission ID collision or modified entry');
+    const B=scope.filter(x=>String(x.Status).toUpperCase()==='ACTIVE'&&
+      String(x.Team).toUpperCase()==='B');
+    const mismatch=all.find(x=>String(x.EntryID)===ids.MISMATCH);
+    if(phase==='MISMATCH') {
+      if(B.some(x=>String(x.EntryID)!==entryId)||
+         (B.length!==0&&!(B.length===1&&existing.length===1)))
+        throw Error('BLOCKED: unexpected existing Team B count');
+    } else {
+      if(!mismatch||!validExistingMismatch139_(mismatch,admin.email)||
+         B.some(x=>![ids.MISMATCH,ids.MATCH].includes(String(x.EntryID)))||
+         B.filter(x=>String(x.EntryID)===ids.MISMATCH).length!==1)
+        throw Error('BLOCKED: missing or changed mismatch entry');
+    }
+    const before=invStagingCompareCountAB_(scope,units);
+    if(existing.length) {
+      const want=phase==='MISMATCH'?'MISMATCH':'MATCHED';
+      if(before.status!==want)
+        throw Error('BLOCKED: retry state differs from expected');
+      return {phase:'COUNT_B_LIVE_'+phase,stagingOnly:true,
+        duplicate:true,databaseWrites:0,status:before.status,entryId};
+    }
+    if(before.status!==(phase==='MISMATCH'?'IN_PROGRESS':'MISMATCH'))
+      throw Error('BLOCKED: unexpected prior comparison state');
+    const sheet=invSheet_('CountEntries');
+    sheet.getRange(sheet.getLastRow()+1,1,1,14).setValues([[
+      entryId,sessionId,'B',locationId,productId,'Bottle',expectedQty,
+      '',1,admin.email,new Date(),'Manual',note,'ACTIVE'
+    ]]);
+    const afterRows=invRows_('CountEntries').filter(x=>
+      String(x.SessionID)===sessionId&&String(x.LocationID)===locationId);
+    const after=invStagingCompareCountAB_(afterRows,units);
+    const expected=phase==='MISMATCH'?'MISMATCH':'MATCHED';
+    if(after.status!==expected)
+      throw Error('BLOCKED: write persisted but comparison unexpected; administrator review required');
+    const result={phase:'COUNT_B_LIVE_'+phase,stagingOnly:true,
+      duplicate:false,databaseWrites:1,status:after.status,entryId};
+    console.log(JSON.stringify(result));
+    return result;
+  }finally{lock.releaseLock();}
+}
+function validExistingMismatch139_(x,email) {
+  return String(x.SessionID)==='STAGING-SESSION-001'&&
+    String(x.LocationID)==='STAGING-LOC-001'&&
+    String(x.Team).toUpperCase()==='B'&&
+    String(x.WSItemID)==='STAGING-FG-001'&&
+    String(x.UOM)==='Bottle'&&Number(x.Quantity)===386&&
+    String(x.EntryMethod)==='Manual'&&
+    String(x.EnteredBy).trim().toLowerCase()===email&&
+    String(x.Notes)==='STAGING Stage 139 Team B MISMATCH'&&
+    String(x.Status).toUpperCase()==='ACTIVE';
+}

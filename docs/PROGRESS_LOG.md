@@ -1011,3 +1011,8 @@ User explicitly approved **one** staging Team B 386-bottle MISMATCH entry, not t
 ## Stage 139 first live Team B staging write PASS (2026-11-24, 7:46 AM)
 
 User executed `testStagingWriteCountB139MismatchApproved()` in staging Apps Script. Log 7:46:29–34 AM: `{"phase":"COUNT_B_LIVE_MISMATCH","stagingOnly":true,"duplicate":false,"databaseWrites":1,"status":"MISMATCH","entryId":"STAGING-COUNT-B-139-MISMATCH"}`; execution completed. The approved Team B 386-bottle row was appended and comparison reports MISMATCH versus Team A's previously confirmed 387 bottles. **Do not rerun Stage 137/138 A-only baseline tests**, since B now exists. Stage 139 second phase (+1 Bottle to reach MATCHED) is **not approved or executed**; request explicit separate approval. Keep production and employee Save gated.
+
+
+## Stage 139 second phase approved and wrapper committed (2026-11-24)
+
+User explicitly said `do it, dont ask me` regarding the +1 Bottle Team B staging correction. Commit `37060162` adds no-argument `testStagingWriteCountB139MatchApproved()` to `staging/PalletTeamIsolationStaging.gs`, calling the already guarded `invStagingWriteCountB139_({phase:'MATCH',confirmation:'APPROVE STAGING TEAM B PLUS ONE MATCH'})`. This approval applies to the single named staging correction only. The assistant's available GitHub connector cannot execute Apps Script functions, so **the actual write has NOT been executed or verified**. After GitHub-to-staging sync, run the wrapper in the staging Apps Script editor and inspect the result for `COUNT_B_LIVE_MATCH`, `databaseWrites:1`, `status:MATCHED`, entry ID `STAGING-COUNT-B-139-CORRECTION`. Do not claim PASS until the execution log arrives. Do not touch production or enable employee Save.

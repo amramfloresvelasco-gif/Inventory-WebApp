@@ -1155,3 +1155,8 @@ User executed `testStagingMapIntegrity143()` in isolated staging Apps Script at 
 ## Stage 143 COMPLETE — green staging map retained (2026-11-24)
 
 After six pure integrity scenarios passed, user confirmed the staging map remains 'Hulk green' following the staging update. This is visual acceptance of the valid matched-location path: STAGING-LOC-001 remains green with previously confirmed A=7 entries, B=2, mismatches=0. Stage 143 complete for the valid path. **Invalid-data warning branch has been tested in pure code, not by intentionally corrupting live staging records.** No need to rerun; next work should advance new functionality without additional CountEntries writes or production changes. Employee pallet-family Save remains gated.
+
+
+## Stage 144 — active count-entry integrity checks prepared (2026-11-24)
+
+Commit `20cd487f` extends isolated `staging/StagingWebMap.gs` with `invStagingMapEntryIntegrity144_` and `testStagingMapEntryIntegrity144()`. Checks session-scoped active EntryID uniqueness/nonblank, valid A/B team, exactly one active ProductIndex record for non-EMPTY counts, and no product on EMPTY declarations. Invalid entries merge into the existing Stage 143 integrity warning, withholding green cards. Ten pure read-only scenarios cover valid/invalid and deleted/other-session exceptions. **Not yet executed in Apps Script or deployed to staging web app**. Next sync, run `testStagingMapEntryIntegrity144`, expect `pureScenariosPassed:10`, `databaseWrites:0`; then deploy new staging version and verify existing green location. No production changes or new count writes; employee pallet-family Save remains gated.

@@ -1,0 +1,33 @@
+<!DOCTYPE html><html><head><base target="_top"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+body{font:15px Arial,sans-serif;background:#f5f7fb;color:#17243b;margin:0}main{max-width:900px;margin:auto;padding:24px}
+h1{font-size:24px}.notice{background:#fff2cf;border:1px solid #c49a2e;padding:12px;border-radius:8px}
+button{background:#1755a5;color:white;border:0;border-radius:8px;padding:10px 16px;cursor:pointer}button:disabled{opacity:.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:18px}
+.cell{border:1px solid #aab4c2;border-radius:10px;padding:16px;color:#17243b;text-align:left;cursor:default}
+.neutral{background:#eef1f5}.yellow{background:#fff0ac}.red{background:#ffcece}.green{background:#bceac9}
+#status{margin:12px 0;white-space:pre-wrap}
+</style></head><body><main><h1>BMD Inventory — STAGING Map</h1>
+<p class="notice"><strong>ISOLATED STAGING — READ ONLY</strong><br>No counting, saving, deleting, or production access is available here.</p>
+<p>Session: STAGING-SESSION-001</p><button id="refresh" type="button">Refresh Map</button>
+<div id="status" role="status">Loading…</div><div id="grid" class="grid"></div>
+<script>
+function refresh(){
+ const btn=document.getElementById('refresh'),status=document.getElementById('status'),grid=document.getElementById('grid');
+ btn.disabled=true;status.textContent='Reading staging counts…';grid.replaceChildren();
+ google.script.run.withSuccessHandler(r=>{
+  btn.disabled=false;
+  if(!r.stagingOnly||!r.readOnly||r.databaseWrites!==0){status.textContent='Blocked: invalid staging response';return;}
+  const counts={neutral:0,yellow:0,red:0,green:0};
+  for(const x of r.cards){
+   if(!(x.color in counts)){status.textContent='Invalid map color';return;}
+   counts[x.color]++;
+   const c=document.createElement('div');c.className='cell '+x.color;
+   c.textContent=x.bay+' · '+x.locationId+' · '+x.color.toUpperCase();
+   const d=document.createElement('p');d.textContent='Team A: '+x.entryCountA+' entries | Team B: '+x.entryCountB+' entries | Mismatches: '+x.mismatchCount;
+   c.appendChild(d);grid.appendChild(c);
+  }
+  status.textContent='Neutral '+counts.neutral+' · Yellow '+counts.yellow+' · Red '+counts.red+' · Green '+counts.green;
+ }).withFailureHandler(e=>{btn.disabled=false;status.textContent='Error: '+(e.message||String(e));}).apiStagingMapReadOnly142();
+}
+document.getElementById('refresh').addEventListener('click',refresh);refresh();
+</script></main></body></html>

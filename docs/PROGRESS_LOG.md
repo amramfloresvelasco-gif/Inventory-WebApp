@@ -1031,3 +1031,8 @@ Commit `db39eebc` adds `invStagingLocationMapStatus140_()` and `testStagingLocat
 ## Stage 140 live map status verification PASS (2026-11-24, 8:16 AM)
 
 User ran `testStagingLocationMapLive140()` in staging Apps Script, execution 8:16:28–30 AM. Actual log: `{"phase":"LOCATION_MAP_LIVE_140","stagingOnly":true,"readOnly":true,"databaseWrites":0,"locationId":"STAGING-LOC-001","status":"MATCHED","teamAStarted":true,"teamBStarted":true,"mismatchCount":0,"activeEntries":9,"repeatReadStable":true,"expectedMapColor":"GREEN","actualWebMapRendered":false}`. Stage 140 read-only backend status derivation PASS. **The HTML web map has not been rendered or visually verified**; next is implement/wire actual map UI and test refresh. Preserve staging A/B counts, no more writes required. Employee pallet-family Save remains gated; production unchanged.
+
+
+## Stage 141 — map card payload verification prepared (2026-11-24)
+
+Inspection confirmed existing `src/Index.html` already renders location cards and calls `apiInventoryAdminLocationComparison`, implemented in `src/LocationComparison.gs` (live-sheet read-only comparison). Stage 140 did **not** mean the UI needed to be built from scratch. Commit `fc625e4f` adds staging-only read-only `testStagingLocationMapCard141()` to `staging/PalletTeamIsolationStaging.gs`, checking the existing map-card field contract against the live fixture: green, Team A 7 entries, Team B 2 entries, zero mismatches. **Not yet executed in staging Apps Script.** This is a parity check, not proof the actual deployed HTML map rendered. Next run the staging test, then verify the real deployed map after refresh, ensuring the deployed web app is isolated staging and not production. No writes; employee pallet-family Save remains gated.

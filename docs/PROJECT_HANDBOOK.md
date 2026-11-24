@@ -1085,3 +1085,8 @@ Commit `ee91987d` adds private `invStagingWriteCountB139_(input)` and `validExis
 ## Stage 139 first write explicitly approved — awaiting user execution (2026-11-24)
 
 User explicitly approved **one** staging Team B 386-bottle MISMATCH entry, not the later +1 MATCH entry. Commit `b6077a26` adds Apps Script no-argument wrapper `testStagingWriteCountB139MismatchApproved()` in `PalletTeamIsolationStaging.gs` to call the guarded private writer for the approved MISMATCH phase only. After staging GitHub sync, run this wrapper once and inspect logs for `COUNT_B_LIVE_MISMATCH`, `databaseWrites:1`, `status:MISMATCH`; if it errors, do not rerun with a new ID or change data. Real execution is pending; never claim write occurred without logs. The +1 correction remains unapproved and must not be executed. Production unchanged.
+
+
+## Stage 139 first live Team B staging write PASS (2026-11-24, 7:46 AM)
+
+User executed `testStagingWriteCountB139MismatchApproved()` in staging Apps Script. Log 7:46:29–34 AM: `{"phase":"COUNT_B_LIVE_MISMATCH","stagingOnly":true,"duplicate":false,"databaseWrites":1,"status":"MISMATCH","entryId":"STAGING-COUNT-B-139-MISMATCH"}`; execution completed. The approved Team B 386-bottle row was appended and comparison reports MISMATCH versus Team A's previously confirmed 387 bottles. **Do not rerun Stage 137/138 A-only baseline tests**, since B now exists. Stage 139 second phase (+1 Bottle to reach MATCHED) is **not approved or executed**; request explicit separate approval. Keep production and employee Save gated.

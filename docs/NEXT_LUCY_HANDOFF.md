@@ -1540,3 +1540,8 @@ User confirmed all four browser checks with 'yes yes yes and yes' after staging 
 ## Stage 146 — staging map location search implemented (2026-11-24)
 
 Commit `a4c02a67` adds a case-insensitive, browser-only search to `staging/StagingMap.html`, matching location ID, bay, or warehouse. Search composes with Stage 145 status filters, updates shown/total counts, offers Clear search, and persists through Refresh Map. Uses existing guarded read-only API only; no Apps Script functions, database writes, production deployment, or employee Save activation. **Browser acceptance pending.** After staging sync and new staging web-app deployment, verify `STAGING-LOC-001` finds green card, an unmatched query shows no locations, Clear search restores it, and search persists on Refresh Map. Keep existing staging fixture unchanged.
+
+
+## Stage 146 COMPLETE — location search browser acceptance PASS (2026-11-24)
+
+User confirmed all four staging web-map checks (`yes x4`): searching `STAGING-LOC-001` shows the matched green location; `NOT-EXIST` yields no locations; Clear search restores green; Refresh Map preserves the search query. Stage 146 browser acceptance PASS. No database writes or production changes. Do not repeat tests; continue with next safe staging development step while employee pallet-family Save remains gated.

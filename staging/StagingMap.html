@@ -25,16 +25,16 @@ function sortLocationCards(cards,sort){
 }
 function testSortSamples(){
  const samples=[
-  {locationId:'LOC-10',bay:'B-10',color:'green'},
-  {locationId:'LOC-2',bay:'B-2',color:'red'},
-  {locationId:'LOC-4',bay:'B-4',color:'neutral'},
+  {locationId:'LOC-10',bay:'B-1',color:'green'},
+  {locationId:'LOC-2',bay:'B-4',color:'red'},
+  {locationId:'LOC-4',bay:'B-2',color:'neutral'},
   {locationId:'LOC-3',bay:'B-3',color:'yellow'}
  ];
  const cases=[
   ['priority','LOC-2,LOC-3,LOC-4,LOC-10'],
   ['location-asc','LOC-2,LOC-3,LOC-4,LOC-10'],
   ['location-desc','LOC-10,LOC-4,LOC-3,LOC-2'],
-  ['bay','LOC-2,LOC-3,LOC-4,LOC-10']
+  ['bay','LOC-10,LOC-4,LOC-3,LOC-2']
  ];
  const failures=cases.filter(([mode,expected])=>sortLocationCards(samples.slice(),mode).map(x=>x.locationId).join(',')!==expected);
  document.getElementById('sort-test-result').textContent=failures.length

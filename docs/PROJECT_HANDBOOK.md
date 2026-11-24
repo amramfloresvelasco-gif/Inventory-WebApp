@@ -1200,3 +1200,8 @@ Commit `33c10555` adds browser-side sorting to isolated `staging/StagingMap.html
 ## Stage 147 sorting verification follow-up (2026-11-24)
 
 User correctly noted only ONE real staging location exists, so visual reordering cannot be assessed. Do not claim multi-location sorting passed. Commit `07a17c03` refactors the exact client sorting comparator into `sortLocationCards` and adds a `Test sorting (sample locations)` button to the isolated staging HTML. Four in-memory synthetic locations cover urgency, ID ascending, ID descending and bay ordering; bay order deliberately differs from urgency. Test displays PASS/FAIL in browser without calling Apps Script, modifying currentCards, or writing any spreadsheet data. **Pending:** sync, deploy new staging version, click Test sorting and report exact PASS/FAIL. Stage 147 remains unverified until then. Existing single green staging fixture unchanged; employee Save gate intact.
+
+
+## Stage 147 COMPLETE — browser sample sorting PASS (2026-11-24)
+
+User supplied staging map screenshot showing `SORT TEST PASS — 4 sample scenarios; no inventory data changed.` Screenshot also shows existing `STAGING-LOC-001` green, Team A 7 entries, Team B 2 entries, mismatches 0, with Bay A–Z selected. This validates the shared client comparator across four in-memory synthetic cases, without claiming multiple real warehouse locations were reordered. No DB writes. Stage 147 accepted; do not repeat. Continue toward actual staging inventory counting workflow, preserving employee pallet-family Save gate and production isolation.

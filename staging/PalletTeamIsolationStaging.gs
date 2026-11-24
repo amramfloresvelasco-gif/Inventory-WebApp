@@ -668,3 +668,40 @@ function testStagingLocationMapLive140() {
   console.log(JSON.stringify(result));
   return result;
 }
+
+
+/** Stage 141: read-only map-card contract against the live Stage 139 fixture.
+ * Mirrors the existing Index.html map color/status fields; no HTML deployment.
+ */
+function testStagingLocationMapCard141() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const sessionId='STAGING-SESSION-001',locationId='STAGING-LOC-001';
+  const location=invRows_('Locations').filter(x=>
+    String(x.LocationID)===locationId&&String(x.Active).toLowerCase()==='true');
+  if(location.length!==1)throw Error('BLOCKED: active map location not unique');
+  const rows=invRows_('CountEntries').filter(x=>
+    String(x.SessionID)===sessionId&&String(x.LocationID)===locationId&&
+    String(x.Status).toUpperCase()==='ACTIVE');
+  const summary=invStagingLocationMapStatus140_(sessionId,locationId);
+  const a=rows.filter(x=>String(x.Team).toUpperCase()==='A').length;
+  const b=rows.filter(x=>String(x.Team).toUpperCase()==='B').length;
+  const color=summary.status==='MATCHED'?'green':
+    summary.status==='MISMATCH'?'red':
+    summary.status==='IN_PROGRESS'?'yellow':'neutral';
+  const card={locationId,warehouse:String(location[0].Warehouse),
+    bay:String(location[0].Bay),color,startedA:summary.teamAStarted,
+    startedB:summary.teamBStarted,emptyA:false,emptyB:false,
+    entryCountA:a,entryCountB:b,mismatchCount:summary.mismatchCount,
+    differences:[]};
+  if(card.color!=='green'||!card.startedA||!card.startedB||
+     card.entryCountA!==7||card.entryCountB!==2||card.mismatchCount!==0)
+    throw Error('FAIL: map card contract: '+JSON.stringify(card));
+  const result={phase:'LOCATION_MAP_CARD_141',stagingOnly:true,
+    readOnly:true,databaseWrites:0,locationId,
+    color:card.color,entryCountA:a,entryCountB:b,
+    mismatchCount:card.mismatchCount,cardContractValid:true,
+    existingHtmlMapWired:true,actualWebMapRendered:false};
+  console.log(JSON.stringify(result));
+  return result;
+}

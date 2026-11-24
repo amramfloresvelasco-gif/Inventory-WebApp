@@ -1021,3 +1021,8 @@ User explicitly said `do it, dont ask me` regarding the +1 Bottle Team B staging
 ## Stage 139 live Team B correction PASS — full A/B transition validated (2026-11-24, 7:50 AM)
 
 User executed `testStagingWriteCountB139MatchApproved()` in staging Apps Script at 7:50:29–30 AM. Actual log: `{"phase":"COUNT_B_LIVE_MATCH","stagingOnly":true,"duplicate":false,"databaseWrites":1,"status":"MATCHED","entryId":"STAGING-COUNT-B-139-CORRECTION"}`; execution completed. Team A's established 387 bottles and Team B's initial 386 plus 1 correction now compare MATCHED (zero bottle difference). Stage 139 live sequence IN_PROGRESS -> MISMATCH -> MATCHED is verified by actual staging writes and logs. Do not rerun earlier A-only baseline tests. Next: inspect map/status persistence and safe refresh/read-only diagnostics; keep production and employee pallet-family Save gated. No more Stage 139 writes required.
+
+
+## Stage 140 — live location-map status read-only check prepared (2026-11-24)
+
+Commit `db39eebc` adds `invStagingLocationMapStatus140_()` and `testStagingLocationMapLive140()` in `staging/PalletTeamIsolationStaging.gs`. It reads actual active CountEntries and ProductIndex, normalizes finished-good cases to bottles per product, computes map-facing A/B status, reads twice to detect instability, and expects the Stage 139 fixture to be MATCHED, 0 mismatches, both teams started, 9 active rows, 1 active product, expected GREEN. No writes. **Not yet executed in Apps Script**. This verifies the data derivation, not the actual HTML map rendering; the existing web app map still needs separate wiring/visual verification. Do not rerun A-only tests. Keep employee Save gated and production untouched.

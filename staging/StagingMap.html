@@ -5,30 +5,48 @@ button{background:#1755a5;color:white;border:0;border-radius:8px;padding:10px 16
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:18px}
 .cell{border:1px solid #aab4c2;border-radius:10px;padding:16px;color:#17243b;text-align:left;cursor:default}
 .neutral{background:#eef1f5}.yellow{background:#fff0ac}.red{background:#ffcece}.green{background:#bceac9}
-#status{margin:12px 0;white-space:pre-wrap}
+#status{margin:12px 0;white-space:pre-wrap}.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.filters button{background:#e5eaf3;color:#17243b;border:1px solid #aab4c2}.filters button[aria-pressed="true"]{background:#1755a5;color:#fff}.filters button:disabled{opacity:.5}
 </style></head><body><main><h1>BMD Inventory — STAGING Map</h1>
 <p class="notice"><strong>ISOLATED STAGING — READ ONLY</strong><br>No counting, saving, deleting, or production access is available here.</p>
 <p>Session: STAGING-SESSION-001</p><button id="refresh" type="button">Refresh Map</button>
-<div id="status" role="status">Loading…</div><div id="grid" class="grid"></div>
+<div id="status" role="status">Loading…</div><div id="filters" class="filters" role="group" aria-label="Filter locations by status"><button type="button" data-color="all" aria-pressed="true">All</button><button type="button" data-color="red" aria-pressed="false">Red</button><button type="button" data-color="yellow" aria-pressed="false">Yellow</button><button type="button" data-color="green" aria-pressed="false">Green</button><button type="button" data-color="neutral" aria-pressed="false">Not started</button></div><div id="grid" class="grid"></div>
 <script>
+let currentCards=[],activeFilter='all',mapReady=false;
+const colors=['neutral','yellow','red','green'];
+function renderCards(){
+ const grid=document.getElementById('grid'),status=document.getElementById('status');
+ grid.replaceChildren();
+ if(!mapReady)return;
+ const counts={neutral:0,yellow:0,red:0,green:0};
+ for(const x of currentCards)counts[x.color]++;
+ const shown=currentCards.filter(x=>activeFilter==='all'||x.color===activeFilter);
+ for(const x of shown){
+  const c=document.createElement('div');c.className='cell '+x.color;
+  c.textContent=x.bay+' · '+x.locationId+' · '+x.color.toUpperCase();
+  const d=document.createElement('p');
+  d.textContent='Team A: '+x.entryCountA+' entries | Team B: '+x.entryCountB+' entries | Mismatches: '+x.mismatchCount;
+  c.appendChild(d);grid.appendChild(c);
+ }
+ status.textContent='Neutral '+counts.neutral+' · Yellow '+counts.yellow+' · Red '+counts.red+' · Green '+counts.green+' | Showing '+shown.length+' of '+currentCards.length+' locations';
+ if(!shown.length){const p=document.createElement('p');p.textContent='No locations match this filter.';grid.appendChild(p);}
+}
 function refresh(){
  const btn=document.getElementById('refresh'),status=document.getElementById('status'),grid=document.getElementById('grid');
- btn.disabled=true;status.textContent='Reading staging counts…';grid.replaceChildren();
+ btn.disabled=true;mapReady=false;currentCards=[];status.textContent='Reading staging counts…';grid.replaceChildren();
  google.script.run.withSuccessHandler(r=>{
   btn.disabled=false;
-  if(!r.stagingOnly||!r.readOnly||r.databaseWrites!==0){status.textContent='Blocked: invalid staging response';return;}
+  if(!r||!r.stagingOnly||!r.readOnly||r.databaseWrites!==0){status.textContent='Blocked: invalid staging response';return;}
   if(!r.integrity||!r.integrity.ok){status.textContent='INTEGRITY WARNING — map withheld. Duplicate locations: '+(r.integrity?.duplicateLocationIds?.length||0)+'; invalid active entries: '+(r.integrity?.invalidEntries?.length||0)+'. Contact administrator.';return;}
-  const counts={neutral:0,yellow:0,red:0,green:0};
-  for(const x of r.cards){
-   if(!(x.color in counts)){status.textContent='Invalid map color';return;}
-   counts[x.color]++;
-   const c=document.createElement('div');c.className='cell '+x.color;
-   c.textContent=x.bay+' · '+x.locationId+' · '+x.color.toUpperCase();
-   const d=document.createElement('p');d.textContent='Team A: '+x.entryCountA+' entries | Team B: '+x.entryCountB+' entries | Mismatches: '+x.mismatchCount;
-   c.appendChild(d);grid.appendChild(c);
-  }
-  status.textContent='Neutral '+counts.neutral+' · Yellow '+counts.yellow+' · Red '+counts.red+' · Green '+counts.green;
+  if(!Array.isArray(r.cards)||r.cards.some(x=>!colors.includes(x.color))){status.textContent='Blocked: invalid map cards';return;}
+  currentCards=r.cards;mapReady=true;renderCards();
  }).withFailureHandler(e=>{btn.disabled=false;status.textContent='Error: '+(e.message||String(e));}).apiStagingMapReadOnly142();
 }
+document.getElementById('filters').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-color]');
+ if(!b)return;
+ activeFilter=b.dataset.color;
+ for(const x of document.querySelectorAll('#filters button'))x.setAttribute('aria-pressed',String(x===b));
+ renderCards();
+});
 document.getElementById('refresh').addEventListener('click',refresh);refresh();
 </script></main></body></html>

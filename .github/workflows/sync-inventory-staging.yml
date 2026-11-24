@@ -14,6 +14,7 @@ on:
       - 'staging/PalletTeamIsolationStaging.gs'
       - 'staging/StagingWebMap.gs'
       - 'staging/StagingMap.html'
+      - 'staging/StagingEntryPreview.html'
       - '.github/workflows/sync-inventory-staging.yml'
 
 permissions:
@@ -78,6 +79,7 @@ jobs:
           done
           # Apps Script HTML files use .html unchanged.
           cp staging/StagingMap.html staging-sync/StagingMap.html
+          cp staging/StagingEntryPreview.html staging-sync/StagingEntryPreview.html
           cd staging-sync
           clasp status
       - name: Push staging test modules and read-only map only

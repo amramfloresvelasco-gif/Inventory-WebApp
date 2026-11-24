@@ -1470,3 +1470,8 @@ User ran `testStagingLocationMapLive140()` in staging Apps Script, execution 8:1
 ## Stage 141 — map card payload verification prepared (2026-11-24)
 
 Inspection confirmed existing `src/Index.html` already renders location cards and calls `apiInventoryAdminLocationComparison`, implemented in `src/LocationComparison.gs` (live-sheet read-only comparison). Stage 140 did **not** mean the UI needed to be built from scratch. Commit `fc625e4f` adds staging-only read-only `testStagingLocationMapCard141()` to `staging/PalletTeamIsolationStaging.gs`, checking the existing map-card field contract against the live fixture: green, Team A 7 entries, Team B 2 entries, zero mismatches. **Not yet executed in staging Apps Script.** This is a parity check, not proof the actual deployed HTML map rendered. Next run the staging test, then verify the real deployed map after refresh, ensuring the deployed web app is isolated staging and not production. No writes; employee pallet-family Save remains gated.
+
+
+## Stage 141 map-card contract PASS (2026-11-24, 8:18 AM)
+
+User executed `testStagingLocationMapCard141()` at 8:18:19–21 AM. Actual log: `{"phase":"LOCATION_MAP_CARD_141","stagingOnly":true,"readOnly":true,"databaseWrites":0,"locationId":"STAGING-LOC-001","color":"green","entryCountA":7,"entryCountB":2,"mismatchCount":0,"cardContractValid":true,"existingHtmlMapWired":true,"actualWebMapRendered":false}`. Stage 141 backend/map-card contract PASS. **Not** a browser rendering test. Next verify that the isolated staging web app's actual HTML location map renders green and stays green on browser refresh. Avoid production, keep employee Save gated, no new CountEntries writes.

@@ -5,11 +5,11 @@ button{background:#1755a5;color:white;border:0;border-radius:8px;padding:10px 16
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px;margin-top:18px}
 .cell{border:1px solid #aab4c2;border-radius:10px;padding:16px;color:#17243b;text-align:left;cursor:default}
 .neutral{background:#eef1f5}.yellow{background:#fff0ac}.red{background:#ffcece}.green{background:#bceac9}
-#status{margin:12px 0;white-space:pre-wrap}.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.filters button{background:#e5eaf3;color:#17243b;border:1px solid #aab4c2}.filters button[aria-pressed="true"]{background:#1755a5;color:#fff}.filters button:disabled{opacity:.5}
+#status{margin:12px 0;white-space:pre-wrap}.filters{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.filters button{background:#e5eaf3;color:#17243b;border:1px solid #aab4c2}.filters button[aria-pressed="true"]{background:#1755a5;color:#fff}.filters button:disabled{opacity:.5}.search{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:14px}.search label{font-weight:600}.search input{flex:1;min-width:170px;max-width:400px;padding:10px;border:1px solid #aab4c2;border-radius:8px;font:inherit}.search button{background:#e5eaf3;color:#17243b;border:1px solid #aab4c2}
 </style></head><body><main><h1>BMD Inventory — STAGING Map</h1>
 <p class="notice"><strong>ISOLATED STAGING — READ ONLY</strong><br>No counting, saving, deleting, or production access is available here.</p>
 <p>Session: STAGING-SESSION-001</p><button id="refresh" type="button">Refresh Map</button>
-<div id="status" role="status">Loading…</div><div id="filters" class="filters" role="group" aria-label="Filter locations by status"><button type="button" data-color="all" aria-pressed="true">All</button><button type="button" data-color="red" aria-pressed="false">Red</button><button type="button" data-color="yellow" aria-pressed="false">Yellow</button><button type="button" data-color="green" aria-pressed="false">Green</button><button type="button" data-color="neutral" aria-pressed="false">Not started</button></div><div id="grid" class="grid"></div>
+<div id="status" role="status">Loading…</div><div id="filters" class="filters" role="group" aria-label="Filter locations by status"><button type="button" data-color="all" aria-pressed="true">All</button><button type="button" data-color="red" aria-pressed="false">Red</button><button type="button" data-color="yellow" aria-pressed="false">Yellow</button><button type="button" data-color="green" aria-pressed="false">Green</button><button type="button" data-color="neutral" aria-pressed="false">Not started</button></div><div class="search"><label for="location-search">Find location</label><input id="location-search" type="search" placeholder="Location ID, bay, or warehouse" autocomplete="off"><button id="clear-search" type="button">Clear search</button></div><div id="grid" class="grid"></div>
 <script>
 let currentCards=[],activeFilter='all',mapReady=false;
 const colors=['neutral','yellow','red','green'];
@@ -19,7 +19,8 @@ function renderCards(){
  if(!mapReady)return;
  const counts={neutral:0,yellow:0,red:0,green:0};
  for(const x of currentCards)counts[x.color]++;
- const shown=currentCards.filter(x=>activeFilter==='all'||x.color===activeFilter);
+ const query=document.getElementById('location-search').value.trim().toLocaleLowerCase();
+ const shown=currentCards.filter(x=>(activeFilter==='all'||x.color===activeFilter)&&(!query||[x.locationId,x.bay,x.warehouse].some(v=>String(v||'').toLocaleLowerCase().includes(query))));
  for(const x of shown){
   const c=document.createElement('div');c.className='cell '+x.color;
   c.textContent=x.bay+' · '+x.locationId+' · '+x.color.toUpperCase();
@@ -48,5 +49,7 @@ document.getElementById('filters').addEventListener('click',e=>{
  for(const x of document.querySelectorAll('#filters button'))x.setAttribute('aria-pressed',String(x===b));
  renderCards();
 });
+document.getElementById('location-search').addEventListener('input',renderCards);
+document.getElementById('clear-search').addEventListener('click',()=>{const input=document.getElementById('location-search');input.value='';renderCards();input.focus();});
 document.getElementById('refresh').addEventListener('click',refresh);refresh();
 </script></main></body></html>

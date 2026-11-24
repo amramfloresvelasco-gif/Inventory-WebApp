@@ -1091,3 +1091,8 @@ User ran `testStagingMapEntryIntegrity144()` in staging Apps Script. Actual log:
 ## Stage 144 COMPLETE — deployed staging map remains green (2026-11-24)
 
 After `testStagingMapEntryIntegrity144()` passed all 10 pure scenarios with `databaseWrites:0`, user confirmed the updated staging web map remains green ('Kermit the Frog'). This completes Stage 144 valid-path visual acceptance, retaining the previously confirmed matched fixture (Team A 7 entries, Team B 2 entries, zero mismatches). Invalid-data fail-closed cases were verified by pure tests, not by corrupting the staging database. Preserve staging-only isolation, employee pallet-family Save gate, and no production deployment. Do not rerun Stage 144 tests.
+
+
+## Stage 145 — staging map status filters implemented (2026-11-24)
+
+Commit `6f828408` updates isolated `staging/StagingMap.html` with browser-side All / Red / Yellow / Green / Not started filters, selected-state accessibility, total status counts, shown/total count, and empty-filter message. All cards are sourced only from the existing guarded read-only API; no new server methods, DB writes or employee Save activation. Refresh preserves selected filter, clears stale cards while loading, and withholds cards on integrity or invalid response. **Not yet verified in deployed browser**. Next confirm staging sync and deploy a NEW staging web app version; click Green (expect existing single matched card), Red (expect zero cards), All (expect green card again), then Refresh Map. Production unchanged.

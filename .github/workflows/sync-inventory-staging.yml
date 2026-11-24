@@ -12,6 +12,8 @@ on:
       - 'staging/PalletPartialFailClosedStaging.gs'
       - 'staging/PalletRecoveryMatrixStaging.gs'
       - 'staging/PalletTeamIsolationStaging.gs'
+      - 'staging/StagingWebMap.gs'
+      - 'staging/StagingMap.html'
       - '.github/workflows/sync-inventory-staging.yml'
 
 permissions:
@@ -56,13 +58,13 @@ jobs:
             echo 'BLOCKED: production database ID present in staging project'; exit 1
           fi
           echo 'Staging identity and existing remote files verified.'
-      - name: Overlay repository staging test modules without deleting remote-only files
+      - name: Overlay approved staging modules and read-only map without deleting remote-only files
         shell: bash
         run: |
           set -euo pipefail
-          # Only add test modules; do not replace the remote staging writer,
+          # Only add approved staging modules and isolated read-only map; do not replace the remote staging writer,
           # Code.js, appsscript.json, or any production application module.
-          for f in staging/PalletAdminInspectionStaging.gs staging/PalletInterruptedSaveStaging.gs staging/PalletPartialFailClosedStaging.gs staging/PalletRecoveryMatrixStaging.gs staging/PalletTeamIsolationStaging.gs; do
+          for f in staging/PalletAdminInspectionStaging.gs staging/PalletInterruptedSaveStaging.gs staging/PalletPartialFailClosedStaging.gs staging/PalletRecoveryMatrixStaging.gs staging/PalletTeamIsolationStaging.gs staging/StagingWebMap.gs; do
             test -f "$f"
             base="$(basename "$f" .gs)"
             if test -f "staging-sync/$base.js"; then
@@ -74,9 +76,11 @@ jobs:
               cp "$f" "staging-sync/$base.gs"
             fi
           done
+          # Apps Script HTML files use .html unchanged.
+          cp staging/StagingMap.html staging-sync/StagingMap.html
           cd staging-sync
           clasp status
-      - name: Push staging test modules only
+      - name: Push staging test modules and read-only map only
         working-directory: staging-sync
         shell: bash
         env:
@@ -85,4 +89,4 @@ jobs:
           set -euo pipefail
           test "$STAGING_SCRIPT_ID" = '1M_H1tAwaHvUB-B7q4ahoQ702rF29m7uPx4XjwbHQWdzMCv4pXfdkc2NP'
           clasp push --force
-          echo 'Staging test modules synchronized; no Web App redeployment.'
+          echo 'Staging modules and read-only map synchronized; no Web App redeployment.'

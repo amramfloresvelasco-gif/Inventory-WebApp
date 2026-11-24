@@ -1101,3 +1101,8 @@ Commit `6f828408` updates isolated `staging/StagingMap.html` with browser-side A
 ## Stage 145 COMPLETE — staging map filter browser acceptance PASS (2026-11-24)
 
 User confirmed all four browser checks with 'yes yes yes and yes' after staging deployment: Green filter shows the matched location, Red shows none, All restores the green location, and Refresh Map preserves the selected filter. Stage 145 read-only status filtering accepted; no DB writes or production changes. Continue to next isolated staging development stage without rerunning completed tests. Employee pallet-family Save remains gated.
+
+
+## Stage 146 — staging map location search implemented (2026-11-24)
+
+Commit `a4c02a67` adds a case-insensitive, browser-only search to `staging/StagingMap.html`, matching location ID, bay, or warehouse. Search composes with Stage 145 status filters, updates shown/total counts, offers Clear search, and persists through Refresh Map. Uses existing guarded read-only API only; no Apps Script functions, database writes, production deployment, or employee Save activation. **Browser acceptance pending.** After staging sync and new staging web-app deployment, verify `STAGING-LOC-001` finds green card, an unmatched query shows no locations, Clear search restores it, and search persists on Refresh Map. Keep existing staging fixture unchanged.

@@ -1150,3 +1150,8 @@ Commits `b550a41b` and `62ef80ea` update `staging/StagingWebMap.gs` and `staging
 ## Stage 143 pure integrity tests PASS (2026-11-24, 8:27 AM)
 
 User executed `testStagingMapIntegrity143()` in isolated staging Apps Script at 8:27:40–41 AM. Actual log: `{"phase":"STAGING_MAP_INTEGRITY_143","stagingOnly":true,"readOnly":true,"databaseWrites":0,"pureScenariosPassed":6}`; execution completed. Stage 143 pure validation PASS. **Updated `/exec` deployment and real web-map display not yet verified**. Next deploy a new version of the isolated staging web app, then refresh and verify `STAGING-LOC-001` remains green with Team A 7, Team B 2, zero mismatches. Do not mutate counts or deploy production; employee pallet-family Save remains gated.
+
+
+## Stage 143 COMPLETE — green staging map retained (2026-11-24)
+
+After six pure integrity scenarios passed, user confirmed the staging map remains 'Hulk green' following the staging update. This is visual acceptance of the valid matched-location path: STAGING-LOC-001 remains green with previously confirmed A=7 entries, B=2, mismatches=0. Stage 143 complete for the valid path. **Invalid-data warning branch has been tested in pure code, not by intentionally corrupting live staging records.** No need to rerun; next work should advance new functionality without additional CountEntries writes or production changes. Employee pallet-family Save remains gated.

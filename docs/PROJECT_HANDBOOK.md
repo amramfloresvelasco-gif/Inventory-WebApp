@@ -1205,3 +1205,8 @@ User correctly noted only ONE real staging location exists, so visual reordering
 ## Stage 147 COMPLETE — browser sample sorting PASS (2026-11-24)
 
 User supplied staging map screenshot showing `SORT TEST PASS — 4 sample scenarios; no inventory data changed.` Screenshot also shows existing `STAGING-LOC-001` green, Team A 7 entries, Team B 2 entries, mismatches 0, with Bay A–Z selected. This validates the shared client comparator across four in-memory synthetic cases, without claiming multiple real warehouse locations were reordered. No DB writes. Stage 147 accepted; do not repeat. Continue toward actual staging inventory counting workflow, preserving employee pallet-family Save gate and production isolation.
+
+
+## Stage 148 — read-only location detail panel implemented (2026-11-24)
+
+Commit `8af74a52` makes staging map location cards keyboard-accessible buttons opening a read-only details panel: Location ID, warehouse, bay, status, Team A entry count, Team B entry count and mismatch count. Panel uses only already-validated `apiStagingMapReadOnly142` card data; no new RPC, no product-level disclosure, no database writes, no Save activation. Close details button; refresh closes stale panel and fail-closed map response continues to withhold cards. **Pending deployed-browser acceptance**: sync and deploy new staging version; click green `STAGING-LOC-001`, verify details (Team A 7, Team B 2, mismatches 0), close, refresh and ensure green remains. This is an admin read-only map drilldown, NOT the employee count-entry workflow; build employee UI separately behind current Save gate. Production unchanged.

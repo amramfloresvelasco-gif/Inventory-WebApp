@@ -607,3 +607,64 @@ function testStagingWriteCountB139MatchApproved() {
     confirmation:'APPROVE STAGING TEAM B PLUS ONE MATCH'
   });
 }
+
+
+/** Stage 140: map-facing status derived from persisted active staging counts.
+ * No LocationStatus write: the map must not depend on stale cached status.
+ */
+function invStagingLocationMapStatus140_(sessionId,locationId) {
+  invAssertStagingOnly_();
+  const products=invRows_('ProductIndex');
+  const entries=invRows_('CountEntries').filter(x=>
+    String(x.SessionID)===sessionId&&String(x.LocationID)===locationId);
+  const active=entries.filter(x=>String(x.Status).toUpperCase()==='ACTIVE');
+  const items=[...new Set(active.filter(x=>
+    String(x.EntryMethod).toUpperCase()!=='EMPTY').map(x=>String(x.WSItemID)))];
+  const converted=active.map(x=>{
+    if(String(x.EntryMethod).toUpperCase()==='EMPTY')return x;
+    const matches=products.filter(p=>String(p.WSItemID)===String(x.WSItemID));
+    if(matches.length!==1)throw Error('BLOCKED: missing or duplicate product');
+    if(String(matches[0].ClassOfMaterial).trim().toLowerCase()!=='finished good')
+      throw Error('BLOCKED: unexpected material class in staging map fixture');
+    const units=Number(matches[0].UnitsPerCase);
+    if(!Number.isSafeInteger(units)||units<=0)
+      throw Error('BLOCKED: invalid pack conversion');
+    const quantity=Number(x.Quantity);
+    if(!Number.isSafeInteger(quantity)||quantity<0)
+      throw Error('BLOCKED: invalid count quantity');
+    const uom=String(x.UOM).toUpperCase();
+    if(!['CASE','BOTTLE'].includes(uom))
+      throw Error('BLOCKED: invalid finished-good UOM');
+    const bottles=quantity*(uom==='CASE'?units:1);
+    if(!Number.isSafeInteger(bottles))throw Error('BLOCKED: conversion overflow');
+    return {...x,UOM:'Bottle',Quantity:bottles};
+  });
+  const result=invStagingCompareCountAB_(converted,1);
+  return {...result,sessionId,locationId,activeEntries:active.length,
+    activeProducts:items.length};
+}
+
+/** Stage 140: read-only verification of live map status and reload stability. */
+function testStagingLocationMapLive140() {
+  invAssertStagingOnly_();
+  invRequireAdmin_();
+  const sessionId='STAGING-SESSION-001',locationId='STAGING-LOC-001';
+  invSession_(sessionId);
+  const locations=invRows_('Locations').filter(x=>String(x.LocationID)===locationId);
+  if(locations.length!==1)throw Error('BLOCKED: staging location not unique');
+  const first=invStagingLocationMapStatus140_(sessionId,locationId);
+  const second=invStagingLocationMapStatus140_(sessionId,locationId);
+  if(JSON.stringify(first)!==JSON.stringify(second))
+    throw Error('FAIL: map status unstable on repeated read');
+  if(first.status!=='MATCHED'||!first.teamAStarted||!first.teamBStarted||
+     first.mismatchCount!==0||first.activeEntries!==9||first.activeProducts!==1)
+    throw Error('FAIL: live map status differs from expected match: '+JSON.stringify(first));
+  const result={phase:'LOCATION_MAP_LIVE_140',stagingOnly:true,readOnly:true,
+    databaseWrites:0,locationId,status:first.status,
+    teamAStarted:first.teamAStarted,teamBStarted:first.teamBStarted,
+    mismatchCount:first.mismatchCount,activeEntries:first.activeEntries,
+    repeatReadStable:true,expectedMapColor:'GREEN',
+    actualWebMapRendered:false};
+  console.log(JSON.stringify(result));
+  return result;
+}

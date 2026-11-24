@@ -595,3 +595,15 @@ function testStagingWriteCountB139MismatchApproved() {
     confirmation:'APPROVE STAGING TEAM B 386 MISMATCH'
   });
 }
+
+
+/** Stage 139: user-approved second-phase staging write (+1 Bottle).
+ * Reuses the guarded private writer; safe retries use its fixed entry ID.
+ */
+function testStagingWriteCountB139MatchApproved() {
+  invAssertStagingOnly_();
+  return invStagingWriteCountB139_({
+    phase:'MATCH',
+    confirmation:'APPROVE STAGING TEAM B PLUS ONE MATCH'
+  });
+}

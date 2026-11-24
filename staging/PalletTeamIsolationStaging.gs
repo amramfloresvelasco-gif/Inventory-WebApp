@@ -583,3 +583,15 @@ function validExistingMismatch139_(x,email) {
     String(x.Notes)==='STAGING Stage 139 Team B MISMATCH'&&
     String(x.Status).toUpperCase()==='ACTIVE';
 }
+
+
+/** Stage 139: explicitly approved first-phase staging write only.
+ * This wrapper does NOT authorize or execute the later MATCH correction.
+ */
+function testStagingWriteCountB139MismatchApproved() {
+  invAssertStagingOnly_();
+  return invStagingWriteCountB139_({
+    phase:'MISMATCH',
+    confirmation:'APPROVE STAGING TEAM B 386 MISMATCH'
+  });
+}

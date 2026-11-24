@@ -1081,3 +1081,8 @@ After six pure integrity scenarios passed, user confirmed the staging map remain
 ## Stage 144 — active count-entry integrity checks prepared (2026-11-24)
 
 Commit `20cd487f` extends isolated `staging/StagingWebMap.gs` with `invStagingMapEntryIntegrity144_` and `testStagingMapEntryIntegrity144()`. Checks session-scoped active EntryID uniqueness/nonblank, valid A/B team, exactly one active ProductIndex record for non-EMPTY counts, and no product on EMPTY declarations. Invalid entries merge into the existing Stage 143 integrity warning, withholding green cards. Ten pure read-only scenarios cover valid/invalid and deleted/other-session exceptions. **Not yet executed in Apps Script or deployed to staging web app**. Next sync, run `testStagingMapEntryIntegrity144`, expect `pureScenariosPassed:10`, `databaseWrites:0`; then deploy new staging version and verify existing green location. No production changes or new count writes; employee pallet-family Save remains gated.
+
+
+## Stage 144 pure entry integrity tests PASS (2026-11-24, 12:22 PM)
+
+User ran `testStagingMapEntryIntegrity144()` in staging Apps Script. Actual log: `{"phase":"STAGING_MAP_ENTRY_INTEGRITY_144","stagingOnly":true,"readOnly":true,"databaseWrites":0,"pureScenariosPassed":10}`; execution completed at 12:22:48 PM. All ten pure validation scenarios PASS; no inventory writes. **The updated staging `/exec` map has not yet been visually confirmed after redeployment**, so browser acceptance remains pending. Next deploy new version of isolated staging web app, refresh, confirm STAGING-LOC-001 stays green (A=7, B=2, mismatches=0). Do not repeat completed tests or change production/employee Save gate.

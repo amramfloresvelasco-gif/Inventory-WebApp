@@ -1086,3 +1086,8 @@ Commit `20cd487f` extends isolated `staging/StagingWebMap.gs` with `invStagingMa
 ## Stage 144 pure entry integrity tests PASS (2026-11-24, 12:22 PM)
 
 User ran `testStagingMapEntryIntegrity144()` in staging Apps Script. Actual log: `{"phase":"STAGING_MAP_ENTRY_INTEGRITY_144","stagingOnly":true,"readOnly":true,"databaseWrites":0,"pureScenariosPassed":10}`; execution completed at 12:22:48 PM. All ten pure validation scenarios PASS; no inventory writes. **The updated staging `/exec` map has not yet been visually confirmed after redeployment**, so browser acceptance remains pending. Next deploy new version of isolated staging web app, refresh, confirm STAGING-LOC-001 stays green (A=7, B=2, mismatches=0). Do not repeat completed tests or change production/employee Save gate.
+
+
+## Stage 144 COMPLETE — deployed staging map remains green (2026-11-24)
+
+After `testStagingMapEntryIntegrity144()` passed all 10 pure scenarios with `databaseWrites:0`, user confirmed the updated staging web map remains green ('Kermit the Frog'). This completes Stage 144 valid-path visual acceptance, retaining the previously confirmed matched fixture (Team A 7 entries, Team B 2 entries, zero mismatches). Invalid-data fail-closed cases were verified by pure tests, not by corrupting the staging database. Preserve staging-only isolation, employee pallet-family Save gate, and no production deployment. Do not rerun Stage 144 tests.

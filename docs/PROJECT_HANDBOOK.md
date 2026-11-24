@@ -1190,3 +1190,8 @@ Commit `a4c02a67` adds a case-insensitive, browser-only search to `staging/Stagi
 ## Stage 146 COMPLETE — location search browser acceptance PASS (2026-11-24)
 
 User confirmed all four staging web-map checks (`yes x4`): searching `STAGING-LOC-001` shows the matched green location; `NOT-EXIST` yields no locations; Clear search restores green; Refresh Map preserves the search query. Stage 146 browser acceptance PASS. No database writes or production changes. Do not repeat tests; continue with next safe staging development step while employee pallet-family Save remains gated.
+
+
+## Stage 147 — staging map sorting implemented (2026-11-24)
+
+Commit `33c10555` adds browser-side sorting to isolated `staging/StagingMap.html`: default needs-attention-first (red → yellow → neutral → green), Location ID A–Z, Location ID Z–A, and Bay A–Z. Stable deterministic tie-break by Location ID with numeric-aware text comparisons. Sort composes with Stage 145 color filters and Stage 146 location search; choice persists through Refresh Map, no new server endpoints or writes. **Browser acceptance pending** after staging sync and new staging web-app deployment. With only one current fixture, verify dropdown options and that Green/All/search/refresh still display the matched card; actual multi-location ordering cannot be visually proven until additional locations exist. No staging DB changes, production deployment or employee Save activation.

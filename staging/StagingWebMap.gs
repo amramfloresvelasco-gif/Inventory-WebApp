@@ -21,6 +21,58 @@ function invStagingMapIntegrity143_(locations,entries,sessionId) {
   return {ok:duplicateLocationIds.length===0&&invalidEntries.length===0,
     duplicateLocationIds,invalidEntries};
 }
+/** Stage 144: reject duplicate active entry IDs, invalid teams and unknown products.
+ * Only the requested session's active entries participate.
+ */
+function invStagingMapEntryIntegrity144_(entries,products,sessionId) {
+  const active=entries.filter(e=>String(e.SessionID)===sessionId&&String(e.Status).toUpperCase()==='ACTIVE');
+  const ids=new Set(),productCounts=new Map(),invalidEntries=[];
+  for(const p of products) {
+    if(String(p.Active).toLowerCase()!=='true')continue;
+    const id=String(p.WSItemID).trim();
+    productCounts.set(id,(productCounts.get(id)||0)+1);
+  }
+  for(const e of active) {
+    const id=String(e.EntryID).trim(),team=String(e.Team).toUpperCase();
+    const empty=String(e.EntryMethod).toUpperCase()==='EMPTY';
+    const product=String(e.WSItemID).trim();
+    let reason='';
+    if(!id||ids.has(id))reason='Blank or duplicate active EntryID';
+    else if(!['A','B'].includes(team))reason='Invalid team';
+    else if(!empty&&productCounts.get(product)!==1)reason='Missing or duplicate active product';
+    else if(empty&&product)reason='EMPTY declaration references product';
+    if(reason)invalidEntries.push({entryId:id,locationId:String(e.LocationID),reason});
+    ids.add(id);
+  }
+  return {ok:invalidEntries.length===0,invalidEntries};
+}
+/** Stage 144: pure fail-closed map entry integrity cases. */
+function testStagingMapEntryIntegrity144() {
+  invAssertStagingOnly_();invRequireAdmin_();
+  const product={WSItemID:'FG',Active:true};
+  const row=(id,team='A',item='FG')=>({EntryID:id,Team:team,WSItemID:item,
+    EntryMethod:'Manual',SessionID:'S',Status:'ACTIVE',LocationID:'L'});
+  const scenarios=[
+    ['valid',[row('E')],[product],true],
+    ['duplicate entry',[row('E'),row('E')],[product],false],
+    ['blank entry',[row('')],[product],false],
+    ['invalid team',[row('E','C')],[product],false],
+    ['unknown product',[row('E','A','OTHER')],[product],false],
+    ['duplicate product',[row('E')],[product,product],false],
+    ['deleted duplicate ignored',[row('E'),{...row('E'),Status:'DELETED'}],[product],true],
+    ['other session ignored',[row('E'),{...row('E'),SessionID:'OTHER'}],[product],true],
+    ['empty declaration', [{...row('E','B',''),EntryMethod:'EMPTY'}],[product],true],
+    ['empty with product', [{...row('E'),EntryMethod:'EMPTY'}],[product],false]
+  ];
+  for(const [name,rows,products,expected] of scenarios) {
+    const result=invStagingMapEntryIntegrity144_(rows,products,'S');
+    if(result.ok!==expected)throw Error('FAIL '+name+': '+JSON.stringify(result));
+  }
+  const result={phase:'STAGING_MAP_ENTRY_INTEGRITY_144',stagingOnly:true,
+    readOnly:true,databaseWrites:0,pureScenariosPassed:scenarios.length};
+  console.log(JSON.stringify(result));return result;
+}
+
 function apiStagingMapReadOnly142() {
   invAssertStagingOnly_();
   invRequireAdmin_();
@@ -29,6 +81,9 @@ function apiStagingMapReadOnly142() {
   const locations=invRows_('Locations').filter(x=>String(x.Active).toLowerCase()==='true');
   const entries=invRows_('CountEntries');
   const integrity=invStagingMapIntegrity143_(locations,entries,sessionId);
+  const entryIntegrity=invStagingMapEntryIntegrity144_(entries,invRows_('ProductIndex'),sessionId);
+  integrity.invalidEntries.push(...entryIntegrity.invalidEntries);
+  integrity.ok=integrity.ok&&entryIntegrity.ok;
   // Never publish a reassuring green card when the location index is corrupt.
   if(!integrity.ok)return {stagingOnly:true,readOnly:true,databaseWrites:0,
     sessionId,cards:[],integrity};

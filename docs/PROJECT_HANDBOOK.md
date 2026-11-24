@@ -1210,3 +1210,8 @@ User supplied staging map screenshot showing `SORT TEST PASS — 4 sample scenar
 ## Stage 148 — read-only location detail panel implemented (2026-11-24)
 
 Commit `8af74a52` makes staging map location cards keyboard-accessible buttons opening a read-only details panel: Location ID, warehouse, bay, status, Team A entry count, Team B entry count and mismatch count. Panel uses only already-validated `apiStagingMapReadOnly142` card data; no new RPC, no product-level disclosure, no database writes, no Save activation. Close details button; refresh closes stale panel and fail-closed map response continues to withhold cards. **Pending deployed-browser acceptance**: sync and deploy new staging version; click green `STAGING-LOC-001`, verify details (Team A 7, Team B 2, mismatches 0), close, refresh and ensure green remains. This is an admin read-only map drilldown, NOT the employee count-entry workflow; build employee UI separately behind current Save gate. Production unchanged.
+
+
+## Stage 148 — screenshot visual acceptance (2026-11-24)
+
+User screenshot confirms deployed isolated staging map opens the read-only location detail panel for `STAGING-LOC-001`: Warehouse `TEST-WAREHOUSE`, Bay `TEST-BAY`, Status `MATCHED`, Team A entries 7, Team B entries 2, mismatches 0. Green map card remains visible; Close details button rendered. **Screenshot does not demonstrate button closing or Refresh Map behavior**, so record visual/data acceptance PASS, interaction acceptance pending if separately tested. No evidence of database writes. Preserve employee pallet-family Save gate and production isolation. Next milestone should focus on actual employee counting workflow rather than more admin-map decoration.

@@ -1051,3 +1051,8 @@ User opened a staging `/exec` URL and saw `Script function not found: doGet`. In
 ## Stage 142 staging sync missing-file root cause fixed (2026-11-24)
 
 User screenshot of isolated staging Apps Script editor shows neither `StagingWebMap.gs` nor `StagingMap.html`. Found `.github/workflows/sync-inventory-staging.yml` only watched and overlaid five pre-existing `.gs` test files; new map files were omitted. Commit `07da0c1` adds both files to workflow push paths and overlays `StagingWebMap.gs` plus `StagingMap.html` while preserving remote-only files, staging script ID and DB guards. **Sync workflow success not yet verified**, and existing `/exec` still needs a new staging web app deployment version. Next verify GitHub Actions staging sync success, confirm files appear in Apps Script sidebar, then deploy staging-only new version and visually test map green after refresh. No production deployment or DB writes.
+
+
+## Stage 142 — isolated staging web map visually rendered PASS (2026-11-24)
+
+User provided screenshot showing actual `BMD Inventory — STAGING Map` page with `ISOLATED STAGING — READ ONLY`, session `STAGING-SESSION-001`, summary `Neutral 0 · Yellow 0 · Red 0 · Green 1`, and a green card `TEST-BAY · STAGING-LOC-001 · GREEN`, Team A 7 entries, Team B 2 entries, Mismatches 0. This confirms deployed staging `doGet`/HTML map renders successfully and matches live staging count comparison. **Full browser refresh persistence has not yet been separately confirmed.** Next ask for/verify browser reload with card still green; no new writes or production deployment. Keep employee pallet-family Save gated.

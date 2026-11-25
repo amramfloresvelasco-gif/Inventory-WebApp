@@ -121,3 +121,16 @@ function testStagingMapIntegrity143() {
     readOnly:true,databaseWrites:0,pureScenariosPassed:scenarios.length};
   console.log(JSON.stringify(result));return result;
 }
+
+/** Stage 150: admin-only staging location reference; no counts or writes. */
+function apiStagingEntryLocations150(){
+ invAssertStagingOnly_();invRequireAdmin_();
+ const rows=invRows_('Locations').filter(x=>String(x.Active).toLowerCase()==='true');
+ const ids=new Set();
+ const locations=rows.map(x=>{
+  const locationId=String(x.LocationID||'').trim(),warehouse=String(x.Warehouse||'').trim(),bay=String(x.Bay||'').trim();
+  if(!locationId||!warehouse||!bay||ids.has(locationId))throw Error('Invalid active staging location index');
+  ids.add(locationId);return {locationId,warehouse,bay};
+ });
+ return {stagingOnly:true,readOnly:true,databaseWrites:0,locations};
+}

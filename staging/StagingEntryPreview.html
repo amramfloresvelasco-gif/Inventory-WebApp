@@ -11,11 +11,11 @@ button:disabled{opacity:.5}#preview{white-space:pre-wrap;background:#eef2f7;padd
 small{color:#4a5870}a{color:#1755a5}
 </style></head><body><main>
 <h1>BMD Inventory — Employee Entry Preview</h1>
-<section class="notice"><strong>ISOLATED STAGING — PREVIEW ONLY</strong><p>Nothing on this page can save inventory. Barcode inputs and product details are not yet connected to master-data lookup.</p></section>
+<section class="notice"><strong>ISOLATED STAGING — PREVIEW ONLY</strong><p>Nothing on this page can save inventory. Manual location selection uses staging reference data. Barcode lookup and product lookup are not connected yet.</p></section>
 <section><h2>1. Team and location</h2>
 <label for="team">Counting team</label><select id="team"><option value="">Choose team</option><option value="A">Team A (Blue)</option><option value="B">Team B (Green)</option></select>
 <label for="location">Location barcode / location ID</label><input id="location" autocomplete="off" placeholder="Scan or enter location ID">
-<small>Warehouse → Bay → Location dropdowns will be connected in a later stage.</small>
+<div class="row"><div><label for="warehouse">Warehouse</label><select id="warehouse" disabled><option value="">Choose warehouse</option></select></div><div><label for="bay">Bay</label><select id="bay" disabled><option value="">Choose bay</option></select></div><div><label for="locationSelect">Location</label><select id="locationSelect" disabled><option value="">Choose location</option></select></div></div><p id="locationStatus" role="status">Loading staging locations…</p>
 </section>
 <section><h2>2. Product</h2>
 <label for="product">Product barcode / ID</label><input id="product" autocomplete="off" placeholder="Scan or enter product barcode">
@@ -51,5 +51,29 @@ function update(){
  '\nStatus: PREVIEW ONLY — NOT SAVED';
 }
 for(const id of ids)document.getElementById(id).addEventListener('input',update);
+let locations=[];
+const el=id=>document.getElementById(id);
+function options(id,values,placeholder){
+ const s=el(id);s.replaceChildren(new Option(placeholder,''));
+ for(const v of [...new Set(values)].sort((a,b)=>a.localeCompare(b,undefined,{numeric:true})))s.add(new Option(v,v));
+ s.disabled=!values.length;
+}
+function clearLocation(){el('location').value='';update();}
+function warehouseChanged(){
+ options('bay',locations.filter(x=>x.warehouse===el('warehouse').value).map(x=>x.bay),'Choose bay');
+ options('locationSelect',[],'Choose location');clearLocation();
+}
+function bayChanged(){
+ options('locationSelect',locations.filter(x=>x.warehouse===el('warehouse').value&&x.bay===el('bay').value).map(x=>x.locationId),'Choose location');clearLocation();
+}
+el('warehouse').addEventListener('change',warehouseChanged);
+el('bay').addEventListener('change',bayChanged);
+el('locationSelect').addEventListener('change',()=>{el('location').value=el('locationSelect').value;update();});
+el('location').addEventListener('input',()=>{el('warehouse').value='';options('bay',[],'Choose bay');options('locationSelect',[],'Choose location');});
+google.script.run.withSuccessHandler(r=>{
+ if(!r||r.stagingOnly!==true||r.readOnly!==true||r.databaseWrites!==0||!Array.isArray(r.locations)){el('locationStatus').textContent='Blocked: invalid staging location response';return;}
+ locations=r.locations;options('warehouse',locations.map(x=>x.warehouse),'Choose warehouse');
+ el('locationStatus').textContent=locations.length+' active staging location(s). Manual selection only; barcode lookup pending.';
+}).withFailureHandler(e=>{el('locationStatus').textContent='Location load failed: '+(e.message||String(e));}).apiStagingEntryLocations150();
 update();
 </script></body></html>
